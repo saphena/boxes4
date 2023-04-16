@@ -5,6 +5,77 @@ type AppVars struct {
 	Topmenu  string
 }
 
+var searchVars struct {
+	Apptitle string
+	NumBoxes int
+	NumDocs  int
+	NumLocns int
+}
+
+const searchHTML = `
+<p>Welcome to the {{.Apptitle}}.</p>
+
+<p>I'm currently minding <strong>{{.NumDocs}}</strong> individual files packed into
+<strong>{{.NumBoxes}}</strong> boxes stored in <strong>{{.NumLocns}}
+</strong> locations.</p>
+
+<form action="/find" onsubmit="return !isBadLength(this.FIND,1,'What would you have me look for illustrious one?');">
+<input type="hidden" name="CMD" value="SEARCH"/>
+<p>You can search the archives using a simple textsearch by entering the text you're looking for
+here <input type="text" autofocus name="FIND"/><input type="submit" value="Find it!"/><br />
+You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a year.
+Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</p></form>
+<p>If you want to search only for records belonging to particular partners or locations, <a href="index.php?CMD=PARAMS">specify search options here</a>.</p>
+<form action="/showbox"
+    onsubmit="return !isBadLength(this.BOXID,1,
+    'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');"><input type="hidden" name="CMD" value="SHOWBOX"/>
+<p>If you want to look at a particular box, enter its ID here
+<input type="text" name="BOXID" size="10"/><input type="submit" value="Show box"/></p></form>
+`
+
+type searchResultsVar struct {
+	Boxid    string
+	Partner  string
+	Client   string
+	Name     string
+	Contents string
+	Date     string
+	Find     string
+	Found    string
+}
+
+const searchResultsHdr = `
+<p>{{if .Find}}I was looking for <span class="errordata">{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
+<table class="searchresults">
+<thead>
+<tr>
+<th class="ourbox"><a href="/find?FIND={{.Find}}&ORDER=boxid{{if .Boxid}}&DESC=boxid{{end}}">Box ID</a></th>
+<th class="owner"><a href="/find?FIND={{.Find}}&ORDER=owner{{if .Partner}}&DESC=owner{{end}}">Partner</a></th>
+<th class="client"><a href="/find?FIND={{.Find}}&ORDER=client{{if .Client}}&DESC=client{{end}}">Client</a></th>
+<th class="name"><a href="/find?FIND={{.Find}}&ORDER=name{{if .Name}}&DESC=name{{end}}">Name</a></th>
+<th class="contents"><a href="/find?FIND={{.Find}}&ORDER=contents{{if .Contents}}&DESC=contents{{end}}">Contents</a></th>
+<th class="date"><a href="/find?FIND={{.Find}}&ORDER=review_date{{if .Date}}&DESC=review_date{{end}}">Review</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
+const searchResultsLine = `
+<tr>
+<td class="ourbox">{{.Boxid}}</td>
+<td class="owner">{{.Partner}}</td>
+<td class="client">{{.Client}}</td>
+<td class="name">{{.Name}}</td>
+<td class="contents">{{.Contents}}</td>
+<td class="date">{{.Date}}</td>
+</tr>
+`
+
+const searchResultsTrailer = `
+</tbody>
+</table>
+`
+
 const css = `
 body 				{
 	background-color: #FFFFE0;
@@ -101,23 +172,23 @@ em	{font-style: italic; font-size: larger;}
 `
 
 const basicMenu = `
-[<a href="index.php" accesskey="s">search</a>] 
-[<a href="index.php?CMD=SHOWLOCN" accesskey="l">locations</a>] 
-[<a href="index.php?CMD=SHOWPTNR" accesskey="p">partners</a>] 
-[<a href="index.php?CMD=BOXLIST" accesskey="b">boxes</a>] 
-[<a href="index.php?CMD=UPDATE" accesskey="u">update</a>] 
-[<a href="index.php?CMD=ABOUT" accesskey="a">about</a>] 
+[<a href="/search" accesskey="s">search</a>] 
+[<a href="/locations" accesskey="l">locations</a>] 
+[<a href="/partners" accesskey="p">partners</a>] 
+[<a href="/boxes" accesskey="b">boxes</a>] 
+[<a href="/update" accesskey="u">update</a>] 
+[<a href="/about" accesskey="a">about</a>] 
 
 `
 
 const updateMenu = `
-[<a href="index.php" accesskey="s">search</a>] 
-[<a href="index.php?CMD=SHOWLOCN" accesskey="l">locations</a>] 
-[<a href="index.php?CMD=SHOWPTNR" accesskey="p">partners</a>] 
-[<a href="index.php?CMD=BOXLIST" accesskey="b">boxes</a>] 
-[<a href="index.php?CMD=USERS" accesskey="u">users</a>] 
-[<a href="index.php?CMD=LOGOUT" accesskey="l">logout {{.Username}</a>] 
-[<a href="index.php?CMD=ABOUT" accesskey="a">about</a>] 
+[<a href="/search" accesskey="s">search</a>] 
+[<a href="/locations" accesskey="l">locations</a>] 
+[<a href="/partners" accesskey="p">partners</a>] 
+[<a href="/boxes" accesskey="b">boxes</a>] 
+[<a href="/users" accesskey="u">users</a>] 
+[<a href="/logout" accesskey="l">logout {{.Username}</a>] 
+[<a href="/about" accesskey="a">about</a>] 
 
 `
 
@@ -138,4 +209,25 @@ const html2 = `
 <body>
 <h1>{{.Apptitle}}</h1>
 <div class="topmenu">
+`
+
+type boxvars struct {
+	Boxid    string
+	Location string
+	Storeref string
+	Contents string
+	NumFiles int
+	Date     string
+}
+
+const boxhtml = `
+<table class="boxheader">
+<tr><td class="vlabel">Box ID : </td><td class="vdata">{{.Boxid}}</td></tr>
+<tr><td class="vlabel">Location : </td><td class="vdata"><a href="/showlocn?locn={{.Location}}">{{.Location}}</a></td></tr>
+<tr><td class="vlabel">Storage ref : </td><td class="vdata">{{.Storeref}}</td></tr>
+<tr><td class="vlabel">Contents : </td><td class="vdata">{{.Contents}}</td></tr>
+<tr><td class="vlabel">N<sup>o</sup> of files : </td><td class="vdata">{{.NumFiles}}</td></tr>
+<tr><td class="vlabel">Review date : </td><td class="vdata">{{.Date}}</td></tr>
+
+</table>
 `
