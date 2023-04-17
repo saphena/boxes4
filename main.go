@@ -74,12 +74,17 @@ func about(w http.ResponseWriter, r *http.Request) {
 
 func pagesize(r *http.Request) int {
 
-	return 60
+	n, _ := strconv.Atoi(r.FormValue("PAGESIZE"))
+	if r.FormValue("PAGESIZE") != "" {
+		return n
+	}
+	return 20
 }
 
 func rangeoffset(r *http.Request) int {
 
-	return 0
+	n, _ := strconv.Atoi(r.FormValue("OFFSET"))
+	return n
 
 }
 
@@ -107,13 +112,160 @@ func order_dir(r *http.Request, field string) string {
 	return "&amp;DESC=" + r.FormValue("ORDER")
 }
 
+func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totrows, offset, pagesize int) {
+
+	if pagesize < 1 {
+		return
+	}
+	numPages := totrows / pagesize
+	if numPages*pagesize < totrows {
+		numPages++
+	}
+	if numPages <= 1 {
+		return
+	}
+	varx := ""
+	vars := []string{"FIND", "ORDER", "DESC", "PAGESIZE"}
+	for _, v := range vars {
+		if r.FormValue(v) != "" {
+			if varx != "" {
+				varx += "&"
+			}
+			varx += v + "=" + r.FormValue(v)
+		}
+	}
+
+	fmt.Fprintf(w, `<div class="pagelinks">`)
+	thisPage := (offset / pagesize) + 1
+	if thisPage > 1 {
+		prevPageOffset := (thisPage * pagesize) - (2 * pagesize)
+		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="prevpage" href="/%v?%v&OFFSET=%v" title="Previous page">%v</a>&nbsp;&nbsp;`, cmd, varx, prevPageOffset, ArrowPrevPage)
+	}
+	minPage := 1
+	if thisPage > MaxAdjacentPagelinks {
+		minPage = thisPage - MaxAdjacentPagelinks
+	}
+	maxPage := numPages
+	if thisPage < numPages-MaxAdjacentPagelinks {
+		maxPage = thisPage + MaxAdjacentPagelinks
+	}
+	for pageNum := 1; pageNum <= numPages; pageNum++ {
+		if pageNum == 1 || pageNum == numPages || (pageNum >= minPage && pageNum <= maxPage) {
+			if pageNum == thisPage {
+				fmt.Fprintf(w, "[ <strong>%v</strong> ]", thisPage)
+			} else {
+				pOffset := (pageNum * pagesize) - pagesize
+
+				fmt.Fprintf(w, `[<a href="/%v?%v&OFFSET=%v" title="">%v</a>]`, cmd, varx, pOffset, strconv.Itoa(pageNum))
+			}
+		} else if pageNum == thisPage-(MaxAdjacentPagelinks+1) || pageNum == thisPage+MaxAdjacentPagelinks+1 {
+			fmt.Fprintf(w, " ... ")
+		}
+	}
+	if thisPage < numPages {
+		nextPageOffset := (thisPage * pagesize)
+		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="nextpage" href="/%v?%v&OFFSET=%v" title="Next page">%v</a>&nbsp;&nbsp;`, cmd, varx, nextPageOffset, ArrowNextPage)
+	}
+
+	fmt.Fprint(w, `<select onchange="changepagesize(this);">`)
+	pagesizes := []int{0, 20, 40, 60, 100}
+	for _, ps := range pagesizes {
+		fmt.Fprintf(w, `<option value="%v" `, ps)
+		if ps == pagesize {
+			fmt.Fprint(w, " selected ")
+		}
+		fmt.Fprint(w, `>`)
+		if ps < 1 {
+			fmt.Fprint(w, "show all")
+		} else {
+			fmt.Fprintf(w, "pagesize %v", ps)
+		}
+		fmt.Fprint(w, "</option>")
+	}
+	fmt.Fprint(w, "</select>")
+
+	fmt.Fprintf(w, `</div>`)
+}
+
+func showpartners(w http.ResponseWriter, r *http.Request) {
+
+	start_html(w)
+
+	sqlx := "SELECT DISTINCT TRIM(owner), COUNT(TRIM(owner)) AS numdocs FROM contents "
+	sqlx += "GROUP BY TRIM(owner) "
+	if r.FormValue("PTNR") != "" {
+		sqlx += "HAVING TRIM(owner) = '" + r.FormValue("PTNR") + "' "
+	}
+
+	if r.FormValue("ORDER") != "" {
+		sqlx += "ORDER BY " + r.FormValue("ORDER")
+		if r.FormValue("DESC") != "" {
+			sqlx += " DESC"
+		}
+	}
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	nrex := 0
+	for rows.Next() {
+		nrex++
+	}
+	rows.Close()
+
+	ps := pagesize(r)
+	ros := 0
+	if ps > 0 {
+		sqlx += " LIMIT "
+		ros = rangeoffset(r)
+		if ros > 0 {
+			sqlx += strconv.Itoa(ros) + ", "
+		}
+		sqlx += strconv.Itoa(ps)
+	}
+
+	rows, err = DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	emit_page_anchors(w, r, "partners", nrex, ros, ps)
+
+	var plv partnerlistvars
+
+	html, err := template.New("").Parse(partnerlisthdr)
+	if err != nil {
+		panic(err)
+	}
+	plv.Desc = r.FormValue("DESC") != r.FormValue("ORDER")
+	plv.NumOrder = r.FormValue("ORDER") == "numdocs"
+	html.Execute(w, plv)
+
+	html, err = template.New("").Parse(partnerlistline)
+	if err != nil {
+		panic(err)
+	}
+	for rows.Next() {
+		rows.Scan(&plv.Partner, &plv.NumFiles)
+		err := html.Execute(w, plv)
+		if err != nil {
+			panic(err)
+		}
+	}
+	fmt.Fprint(w, partnerlisttrailer)
+}
+
 func find(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w)
 
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
 	if r.FormValue("FIND") != "" {
-		sqlx += `WHERE ((contents.boxid = '?') 
+		sqlx += `WHERE ((contents.boxid = '?')
+		OR (boxes.storeref = '?') 
+		OR (boxes.overview LIKE '%?%')
         OR (contents.owner = '?') 
         OR (contents.client = '?') 
         OR (contents.contents LIKE '%?%') 
@@ -123,30 +275,32 @@ func find(w http.ResponseWriter, r *http.Request) {
 	}
 	sqlx = strings.ReplaceAll(sqlx, "?", strings.ReplaceAll(r.FormValue("FIND"), "'", "''"))
 	if r.FormValue("ORDER") != "" {
-		sqlx += " ORDER BY contents." + r.FormValue("ORDER")
+		sqlx += " ORDER BY TRIM(contents." + r.FormValue("ORDER") + ")"
 		if r.FormValue("DESC") != "" {
 			sqlx += " DESC"
 		}
 	}
 
+	// fmt.Println(sqlx)
+
+	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "Rexx", "0"))
+
 	ps := pagesize(r)
+	ros := 0
 	if ps > 0 {
 		sqlx += " LIMIT "
-		os := rangeoffset(r)
-		if os > 0 {
-			sqlx += strconv.Itoa(os) + " "
+		ros = rangeoffset(r)
+		if ros > 0 {
+			sqlx += strconv.Itoa(ros) + ", "
 		}
 		sqlx += strconv.Itoa(ps)
 	}
-
-	// fmt.Println(sqlx)
-
-	FoundRecCount := getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "Rexx", "0")
 
 	flds := "contents.BoxID,contents.Owner,contents.Client,contents.Name,contents.Contents,contents.Review_Date"
 
 	rows, err := DBH.Query("SELECT " + flds + sqlx)
 	if err != nil {
+		fmt.Printf("Omg! %v\n", sqlx)
 		panic(err)
 	}
 	html, err := template.New("main").Parse(searchResultsHdr)
@@ -160,8 +314,9 @@ func find(w http.ResponseWriter, r *http.Request) {
 	res.Name = order_dir(r, "name")
 	res.Date = order_dir(r, "review_date")
 	res.Find = r.FormValue("FIND")
-	res.Found = FoundRecCount
+	res.Found = strconv.Itoa(FoundRecCount)
 	html.Execute(w, res)
+	emit_page_anchors(w, r, "find", FoundRecCount, ros, ps)
 
 	for rows.Next() {
 		rows.Scan(&res.Boxid, &res.Partner, &res.Client, &res.Name, &res.Contents, &res.Date)
@@ -182,7 +337,8 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w)
 
-	sqlx := "SELECT * FROM boxes WHERE boxid='" + strings.ReplaceAll(r.FormValue("BOXID"), "'", "''") + "'"
+	sqlboxid := strings.ReplaceAll(r.FormValue("BOXID"), "'", "''")
+	sqlx := "SELECT * FROM boxes WHERE boxid='" + sqlboxid + "'"
 	rows, err := DBH.Query(sqlx)
 	if err != nil {
 		panic(err)
@@ -204,6 +360,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
+	showBoxfiles(w, sqlboxid)
 
 }
 func search(w http.ResponseWriter, r *http.Request) {
@@ -222,26 +379,47 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 	html.Execute(w, searchVars)
 
-	listBoxes(w)
-
 	fmt.Fprintln(w, "</body></html>")
 }
 
-func listBoxes(w http.ResponseWriter) {
-	sqlx := "SELECT storeref,boxid FROM boxes"
+func showBoxfiles(w http.ResponseWriter, boxid string) {
 
+	sqlx := "SELECT owner,client,name,contents,review_date FROM contents WHERE boxid='" + boxid + "'"
+	sqlx += " ORDER BY owner,client"
 	rows, _ := DBH.Query(sqlx)
 	defer rows.Close()
-	var storeref, boxid string
+
+	html, err := template.New("").Parse(boxfileshdr)
+	if err != nil {
+		panic(err)
+	}
+	err = html.Execute(w, "")
+	if err != nil {
+		panic(err)
+	}
+
+	var bfv boxfilevars
 
 	nrows := 0
+
+	html, err = template.New("").Parse(boxfilesline)
+	if err != nil {
+		panic(err)
+	}
+
 	for rows.Next() {
-		rows.Scan(&storeref, &boxid)
-		fmt.Fprintf(w, "Found box %v<br>\n", boxid)
-		nrows++
-		if nrows >= 10 {
-			break
+		rows.Scan(&bfv.Partner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date)
+		err = html.Execute(w, bfv)
+		if err != nil {
+			panic(err)
 		}
+
+		nrows++
+	}
+	html, err = template.New("").Parse(boxfilestrailer)
+	html.Execute(w, "")
+	if err != nil {
+		panic(err)
 	}
 
 }
@@ -267,6 +445,7 @@ func main() {
 	http.HandleFunc("/find", find)
 	http.HandleFunc("/about", about)
 	http.HandleFunc("/showbox", showbox)
+	http.HandleFunc("/partners", showpartners)
 
 	log.Fatal(http.ListenAndServe(":"+*serveport, nil))
 
