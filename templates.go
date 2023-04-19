@@ -1,11 +1,78 @@
 package main
 
+import (
+	"fmt"
+	"html/template"
+	"net/http"
+	"strconv"
+)
+
 // This is the maximum number of pagelinks to show
 // either side of the current page for paged lists
 const MaxAdjacentPagelinks = 10
 
 const ArrowPrevPage = `<span class="arrow">&#8666;</span>`
 const ArrowNextPage = `<span class="arrow">&#8667;</span>`
+
+// Accesslevels are both discrete and hierarchical by numeric value
+const ACCESSLEVEL_READONLY = 0
+const ACCESSLEVEL_UPDATE = 2
+const ACCESSLEVEL_SUPER = 9
+
+var ACCESSLEVELS = map[int]string{
+	ACCESSLEVEL_UPDATE:   "Can update",
+	ACCESSLEVEL_SUPER:    "Controller",
+	ACCESSLEVEL_READONLY: "View only",
+}
+
+var Field_Labels = map[string]string{
+	"boxid":           "BoxID",
+	"owner":           "Owner",
+	"contents":        "Contents",
+	"review_date":     "Review date",
+	"name":            "Name",
+	"client":          "Client",
+	"location":        "Location",
+	"numdocs":         "N<sup>o</sup> of files",
+	"min_review_date": "Min review date",
+	"max_review_date": "Max review date",
+	"userid":          "UserID",
+	"userpass":        "Password",
+	"accesslevel":     "Accesslevel",
+}
+
+// These labels, which must be unique, are used in URLs
+// URL components might be found using RE matching, hence the 'q'
+var Param_Labels = map[string]string{
+	"boxid":           "qbx",
+	"owner":           "qow",
+	"contents":        "qcn",
+	"review_date":     "qdt",
+	"name":            "qnm",
+	"client":          "qcl",
+	"location":        "qlo",
+	"numdocs":         "qnd",
+	"min_review_date": "qd1",
+	"max_review_date": "qd2",
+	"userid":          "quu",
+	"userpass":        "qup",
+	"accesslevel":     "qal",
+	"pagesize":        "qps",
+	"offset":          "qof",
+	"order":           "qor",
+	"find":            "qqq",
+}
+
+// Used to easily alter labels seen by user
+var Menu_Labels = map[string]string{
+	"search":    "search",
+	"locations": "locations",
+	"owners":    "owners",
+	"boxes":     "boxes",
+	"update":    "update",
+	"logout":    "logout",
+	"about":     "about",
+}
 
 type AppVars struct {
 	Apptitle string
@@ -19,30 +86,29 @@ var searchVars struct {
 	NumLocns int
 }
 
-const searchHTML = `
+var searchHTML = `
 <p>Welcome to the {{.Apptitle}}.</p>
 
 <p>I'm currently minding <strong>{{.NumDocs}}</strong> individual files packed into
 <strong>{{.NumBoxes}}</strong> boxes stored in <strong>{{.NumLocns}}
 </strong> locations.</p>
 
-<form action="/find" onsubmit="return !isBadLength(this.FIND,1,'What would you have me look for illustrious one?');">
-<input type="hidden" name="CMD" value="SEARCH"/>
+<form action="/find">
 <p>You can search the archives using a simple textsearch by entering the text you're looking for
-here <input type="text" autofocus name="FIND"/><input type="submit" value="Find it!"/><br />
+here <input type="text" autofocus name="` + Param_Labels["find"] + `"/><input type="submit" value="Find it!"/><br />
 You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a year.
 Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</p></form>
 <p>If you want to search only for records belonging to particular partners or locations, <a href="index.php?CMD=PARAMS">specify search options here</a>.</p>
 <form action="/showbox"
-    onsubmit="return !isBadLength(this.BOXID,1,
-    'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');"><input type="hidden" name="CMD" value="SHOWBOX"/>
+    onsubmit="return !isBadLength(this.` + Param_Labels["boxid"] + `,1,
+    'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');">
 <p>If you want to look at a particular box, enter its ID here
-<input type="text" name="BOXID" size="10"/><input type="submit" value="Show box"/></p></form>
+<input type="text" name="` + Param_Labels["boxid"] + `" size="10"/><input type="submit" value="Show box"/></p></form>
 `
 
 type searchResultsVar struct {
 	Boxid    string
-	Partner  string
+	Owner    string
 	Client   string
 	Name     string
 	Contents string
@@ -51,17 +117,19 @@ type searchResultsVar struct {
 	Found    string
 }
 
-const searchResultsHdr = `
+var searchResultsHdr1 = `
 <p>{{if .Find}}I was looking for <span class="errordata">{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
+`
+var searchResultsHdr2 = `
 <table class="searchresults">
 <thead>
 <tr>
-<th class="ourbox"><a href="/find?FIND={{.Find}}&ORDER=boxid{{if .Boxid}}&DESC=boxid{{end}}">Box ID</a></th>
-<th class="owner"><a href="/find?FIND={{.Find}}&ORDER=owner{{if .Partner}}&DESC=owner{{end}}">Partner</a></th>
-<th class="client"><a href="/find?FIND={{.Find}}&ORDER=client{{if .Client}}&DESC=client{{end}}">Client</a></th>
-<th class="name"><a href="/find?FIND={{.Find}}&ORDER=name{{if .Name}}&DESC=name{{end}}">Name</a></th>
-<th class="contents"><a href="/find?FIND={{.Find}}&ORDER=contents{{if .Contents}}&DESC=contents{{end}}">Contents</a></th>
-<th class="date"><a href="/find?FIND={{.Find}}&ORDER=review_date{{if .Date}}&DESC=review_date{{end}}">Review</a></th>
+<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=boxid{{if .Boxid}}&DESC=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
+<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=owner{{if .Owner}}&DESC=owner{{end}}">` + Field_Labels["owner"] + `</a></th>
+<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=client{{if .Client}}&DESC=client{{end}}">` + Field_Labels["client"] + `</a></th>
+<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=name{{if .Name}}&DESC=name{{end}}">` + Field_Labels["name"] + `</a></th>
+<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=contents{{if .Contents}}&DESC=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
+<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=review_date{{if .Date}}&DESC=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
 </tr>
 </thead>
 <tbody>
@@ -70,7 +138,7 @@ const searchResultsHdr = `
 const searchResultsLine = `
 <tr>
 <td class="ourbox"><a href="/showbox?BOXID={{.Boxid}}">{{.Boxid}}</a></td>
-<td class="owner">{{.Partner}}</td>
+<td class="owner">{{.Owner}}</td>
 <td class="client">{{.Client}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
@@ -179,28 +247,28 @@ em	{font-style: italic; font-size: larger;}
 }
 `
 
-const basicMenu = `
-[<a href="/search" accesskey="s">search</a>] 
-[<a href="/locations" accesskey="l">locations</a>] 
-[<a href="/partners" accesskey="p">partners</a>] 
-[<a href="/boxes" accesskey="b">boxes</a>] 
-[<a href="/update" accesskey="u">update</a>] 
-[<a href="/about" accesskey="a">about</a>] 
+var basicMenu = `
+[<a href="/search">` + Menu_Labels["search"] + `</a>] 
+[<a href="/locations">` + Menu_Labels["locations"] + `</a>] 
+[<a href="/owners">` + Menu_Labels["owners"] + `</a>] 
+[<a href="/boxes">` + Menu_Labels["boxes"] + `</a>] 
+[<a href="/update">` + Menu_Labels["update"] + `</a>] 
+[<a href="/about">` + Menu_Labels["about"] + `</a>] 
 
 `
 
-const updateMenu = `
-[<a href="/search" accesskey="s">search</a>] 
-[<a href="/locations" accesskey="l">locations</a>] 
-[<a href="/partners" accesskey="p">partners</a>] 
-[<a href="/boxes" accesskey="b">boxes</a>] 
-[<a href="/users" accesskey="u">users</a>] 
-[<a href="/logout" accesskey="l">logout {{.Username}</a>] 
-[<a href="/about" accesskey="a">about</a>] 
+var updateMenu = `
+[<a href="/search">` + Menu_Labels["search"] + `</a>] 
+[<a href="/locations">` + Menu_Labels["locations"] + `</a>] 
+[<a href="/owners">` + Menu_Labels["owners"] + `</a>] 
+[<a href="/boxes">` + Menu_Labels["boxes"] + `</a>] 
+[<a href="/update">` + Menu_Labels["update"] + `</a>] 
+[<a href="/about">` + Menu_Labels["about"] + `</a>] 
+[<a href="/logout">` + Menu_Labels["logout"] + ` {{.Username}</a>] 
 
 `
 
-const html1 = `
+var html1 = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -208,15 +276,24 @@ const html1 = `
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
+function isBadLength(sObj,iLen,sMsg) {
+
+    if (sObj.value.length < iLen) {
+      alert(sMsg)
+      sObj.focus()
+      return true
+    }
+  }
+
 function changepagesize(sel) {
 	let newpagesize = sel.value;
 	let url = window.location.href;
 	// Need to strip out any existing PAGESIZE
-	let ps = url.match(/(&|\?)PAGESIZE=\d+/);
-	console.log('url='+url+'; NP='+newpagesize);
+	let ps = url.match(/(&|\?)` + Param_Labels["pagesize"] + `\=\d+/);
+	console.log('url="'+url+'"; ps="'+ps+'"; NP='+newpagesize);
 	let cleanurl = url;
 	if (ps) {
-		cleanurl = url.replace(ps,'') + ps.substr(0,1);
+		cleanurl = cleanurl.replace(ps[0],'') + ps[0].substr(0,1);
 	} else {
 		if (cleanurl.indexOf('?') < 0) {
 			cleanurl += '?';
@@ -224,8 +301,8 @@ function changepagesize(sel) {
 			cleanurl += '&';
 		}
 	}
-
-	window.location.href = cleanurl + "PAGESIZE=" + newpagesize;
+	console.log("cleanurl='"+cleanurl+"'");
+	window.location.href = cleanurl + "` + Param_Labels["pagesize"] + `=" + newpagesize;
 }
 function trapkeys() {
 	document.getElementsByTagName('body')[0].onkeyup = function(e) { 
@@ -250,6 +327,7 @@ function trapkeys() {
 <style>
 
 `
+
 const html2 = `
 -->
 </style>
@@ -260,18 +338,18 @@ const html2 = `
 `
 
 type partnerlistvars struct {
-	Partner  string
+	Owner    string
 	NumFiles int
 	Desc     bool
 	NumOrder bool
 }
 
-const partnerlisthdr = `
-<table class="partnerlist">
+var partnerlisthdr = `
+<table class="ownerlist">
 <thead>
 <tr>
-<th class="partner"><a href="/partners?ORDER=owner{{if .Desc}}{{if .NumOrder}}{{else}}&DESC=owner{{end}}{{end}}">Partner</th>
-<th class="number"><a href="/partners?ORDER=numdocs{{if .Desc}}{{if .NumOrder}}&DESC=numdocs{{end}}{{end}}">N<sup>o</sup> of files</th>
+<th class="partner"><a href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}{{if .NumOrder}}{{else}}&` + Param_Labels["desc"] + `=owner{{end}}{{end}}">Partner</th>
+<th class="number"><a href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}{{if .NumOrder}}&` + Param_Labels["desc"] + `=numdocs{{end}}{{end}}">N<sup>o</sup> of files</th>
 </tr>
 </thead>
 <tbody>
@@ -279,7 +357,7 @@ const partnerlisthdr = `
 
 const partnerlistline = `
 <tr>
-<td class="partner">{{.Partner}}</td>
+<td class="owner">{{.Owner}}</td>
 <td class="number">{{.NumFiles}}</td>
 </tr>
 `
@@ -324,7 +402,7 @@ const boxfileshdr = `
 `
 
 type boxfilevars struct {
-	Partner  string
+	Owner    string
 	Client   string
 	Name     string
 	Contents string
@@ -333,7 +411,7 @@ type boxfilevars struct {
 
 const boxfilesline = `
 <tr>
-<td class="owner">{{.Partner}}</td>
+<td class="owner">{{.Owner}}</td>
 <td class="client">{{.Client}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
@@ -344,3 +422,109 @@ const boxfilestrailer = `
 </tbody>
 </table>
 `
+
+func start_html(w http.ResponseWriter) {
+
+	var ht string
+	if true {
+		ht = html1 + css + html2 + basicMenu + "</div>"
+	} else {
+		ht = html1 + css + html2 + updateMenu + "</div>"
+	}
+	html, err := template.New("main").Parse(ht)
+	if err != nil {
+		panic(err)
+	}
+
+	html.Execute(w, runvars)
+
+}
+
+func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totrows int) string {
+
+	pagesize := rangepagesize(r)
+	offset := 0
+	res := ""
+	if pagesize > 0 {
+		offset = rangeoffset(r)
+		res = " LIMIT " + strconv.Itoa(offset)
+		res += "," + strconv.Itoa(pagesize)
+	}
+
+	if pagesize < 1 {
+		return res
+	}
+	numPages := totrows / pagesize
+	if numPages*pagesize < totrows {
+		numPages++
+	}
+	if numPages <= 1 {
+		return res
+	}
+	varx := ""
+
+	for k, v := range Param_Labels {
+		if k != "offset" && r.FormValue(v) != "" {
+			if varx != "" {
+				varx += "&"
+			}
+			varx += Param_Labels[k] + "=" + r.FormValue(v)
+		}
+	}
+	if varx != "" {
+		varx += "&"
+	}
+
+	fmt.Fprintf(w, `<div class="pagelinks">`)
+	thisPage := (offset / pagesize) + 1
+	if thisPage > 1 {
+		prevPageOffset := (thisPage * pagesize) - (2 * pagesize)
+		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="prevpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Previous page">%v</a>&nbsp;&nbsp;`, cmd, varx, prevPageOffset, ArrowPrevPage)
+	}
+	minPage := 1
+	if thisPage > MaxAdjacentPagelinks {
+		minPage = thisPage - MaxAdjacentPagelinks
+	}
+	maxPage := numPages
+	if thisPage < numPages-MaxAdjacentPagelinks {
+		maxPage = thisPage + MaxAdjacentPagelinks
+	}
+	for pageNum := 1; pageNum <= numPages; pageNum++ {
+		if pageNum == 1 || pageNum == numPages || (pageNum >= minPage && pageNum <= maxPage) {
+			if pageNum == thisPage {
+				fmt.Fprintf(w, "[ <strong>%v</strong> ]", thisPage)
+			} else {
+				pOffset := (pageNum * pagesize) - pagesize
+
+				fmt.Fprintf(w, `[<a href="/%v?%v`+Param_Labels["offset"]+`=%v" title="">%v</a>]`, cmd, varx, pOffset, strconv.Itoa(pageNum))
+			}
+		} else if pageNum == thisPage-(MaxAdjacentPagelinks+1) || pageNum == thisPage+MaxAdjacentPagelinks+1 {
+			fmt.Fprintf(w, " ... ")
+		}
+	}
+	if thisPage < numPages {
+		nextPageOffset := (thisPage * pagesize)
+		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="nextpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Next page">%v</a>&nbsp;&nbsp;`, cmd, varx, nextPageOffset, ArrowNextPage)
+	}
+
+	fmt.Fprint(w, `<select onchange="changepagesize(this);">`)
+	pagesizes := []int{0, 20, 40, 60, 100}
+	for _, ps := range pagesizes {
+		fmt.Fprintf(w, `<option value="%v" `, ps)
+		if ps == pagesize {
+			fmt.Fprint(w, " selected ")
+		}
+		fmt.Fprint(w, `>`)
+		if ps < 1 {
+			fmt.Fprint(w, "show all")
+		} else {
+			fmt.Fprintf(w, "pagesize %v", ps)
+		}
+		fmt.Fprint(w, "</option>")
+	}
+	fmt.Fprint(w, "</select>")
+
+	fmt.Fprintf(w, `</div>`)
+
+	return res
+}
