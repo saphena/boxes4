@@ -38,7 +38,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	sqllimit := ""
 	if r.FormValue(Param_Labels["owner"]) == "" {
-		sqllimit = emit_page_anchors(w, r, "partners", nrex)
+		sqllimit = emit_page_anchors(w, r, "owners", nrex)
 	}
 	rows, err = DBH.Query(sqlx + sqllimit)
 	if err != nil {
@@ -46,9 +46,9 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 
-	var plv partnerlistvars
+	var plv ownerlistvars
 
-	html, err := template.New("").Parse(partnerlisthdr)
+	html, err := template.New("").Parse(ownerlisthdr)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +56,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	plv.NumOrder = r.FormValue(Param_Labels["order"]) == Param_Labels["numdocs"]
 	html.Execute(w, plv)
 
-	html, err = template.New("").Parse(partnerlistline)
+	html, err = template.New("").Parse(ownerlistline)
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-	fmt.Fprint(w, partnerlisttrailer)
+	fmt.Fprint(w, ownerlisttrailer)
 
 	if r.FormValue(Param_Labels["owner"]) == "" {
 		return
@@ -77,13 +77,39 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	sqlx = " FROM contents WHERE owner='" + strings.ReplaceAll(r.FormValue(Param_Labels["owner"]), "'", "''") + "'"
 	NumRows, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex"+sqlx, "rex", "0"))
+	if r.FormValue(Param_Labels["order"]) != "" {
+		sqlx += " ORDER BY Upper(Trim(contents." + r.FormValue(Param_Labels["order"]) + "))"
+		if r.FormValue(Param_Labels["desc"]) != "" {
+			sqlx += " DESC"
+		}
+	}
 
-	sqllimit = emit_page_anchors(w, r, "partners", NumRows)
+	sqllimit = emit_page_anchors(w, r, "owners", NumRows)
 
-	rows, err = DBH.Query("SELECT * " + sqlx + sqllimit)
+	rows, err = DBH.Query("SELECT boxid,client,name,contents,review_date " + sqlx + sqllimit)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
+	var ofv ownerfilesvar
+	ofv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+	ofv.Owner = r.FormValue((Param_Labels["owner"]))
+	html, err = template.New("").Parse(ownerfileshdr)
+	if err != nil {
+		panic(err)
+	}
+	err = html.Execute(w, ofv)
+	if err != nil {
+		panic(err)
+	}
 
+	html, err = template.New("").Parse(ownerfilesline)
+	if err != nil {
+		panic(err)
+	}
+	for rows.Next() {
+		rows.Scan(&ofv.Boxid, &ofv.Client, &ofv.Name, &ofv.Contents, &ofv.Date)
+		err = html.Execute(w, ofv)
+	}
+	fmt.Fprint(w, ownerfilestrailer)
 }

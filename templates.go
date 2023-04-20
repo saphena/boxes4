@@ -39,6 +39,7 @@ var Field_Labels = map[string]string{
 	"userid":          "UserID",
 	"userpass":        "Password",
 	"accesslevel":     "Accesslevel",
+	"storeref":        "Storage ref",
 }
 
 // These labels, which must be unique, are used in URLs
@@ -61,6 +62,8 @@ var Param_Labels = map[string]string{
 	"offset":          "qof",
 	"order":           "qor",
 	"find":            "qqq",
+	"desc":            "qds",
+	"field":           "qfd",
 }
 
 // Used to easily alter labels seen by user
@@ -99,7 +102,7 @@ here <input type="text" autofocus name="` + Param_Labels["find"] + `"/><input ty
 You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a year.
 Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</p></form>
 <p>If you want to search only for records belonging to particular partners or locations, <a href="index.php?CMD=PARAMS">specify search options here</a>.</p>
-<form action="/showbox"
+<form action="/boxes"
     onsubmit="return !isBadLength(this.` + Param_Labels["boxid"] + `,1,
     'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');">
 <p>If you want to look at a particular box, enter its ID here
@@ -115,29 +118,33 @@ type searchResultsVar struct {
 	Date     string
 	Find     string
 	Found    string
+	Desc     bool
+	Storeref string
+	Overview string
+	Field    string
 }
 
 var searchResultsHdr1 = `
-<p>{{if .Find}}I was looking for <span class="errordata">{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
+<p>{{if .Find}}I was looking for <span class="errordata">{{if .Field}}{{.Field}} = {{end}}{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
 `
 var searchResultsHdr2 = `
 <table class="searchresults">
 <thead>
 <tr>
-<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=boxid{{if .Boxid}}&DESC=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
-<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=owner{{if .Owner}}&DESC=owner{{end}}">` + Field_Labels["owner"] + `</a></th>
-<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=client{{if .Client}}&DESC=client{{end}}">` + Field_Labels["client"] + `</a></th>
-<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=name{{if .Name}}&DESC=name{{end}}">` + Field_Labels["name"] + `</a></th>
-<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=contents{{if .Contents}}&DESC=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
-<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&ORDER=review_date{{if .Date}}&DESC=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
+<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
+<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + Field_Labels["owner"] + `</a></th>
+<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
+<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
+<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
+<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.Find}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
 </tr>
 </thead>
 <tbody>
 `
 
-const searchResultsLine = `
+var searchResultsLine = `
 <tr>
-<td class="ourbox"><a href="/showbox?BOXID={{.Boxid}}">{{.Boxid}}</a></td>
+<td class="ourbox"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
 <td class="owner">{{.Owner}}</td>
 <td class="client">{{.Client}}</td>
 <td class="name">{{.Name}}</td>
@@ -337,32 +344,72 @@ const html2 = `
 <div class="topmenu">
 `
 
-type partnerlistvars struct {
+type ownerlistvars struct {
 	Owner    string
 	NumFiles int
 	Desc     bool
 	NumOrder bool
 }
 
-var partnerlisthdr = `
+var ownerlisthdr = `
 <table class="ownerlist">
 <thead>
 <tr>
-<th class="partner"><a href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}{{if .NumOrder}}{{else}}&` + Param_Labels["desc"] + `=owner{{end}}{{end}}">Partner</th>
-<th class="number"><a href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}{{if .NumOrder}}&` + Param_Labels["desc"] + `=numdocs{{end}}{{end}}">N<sup>o</sup> of files</th>
+<th class="owner"><a href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}{{if .NumOrder}}{{else}}&` + Param_Labels["desc"] + `=owner{{end}}{{end}}">` + Field_Labels["owner"] + `</th>
+<th class="number"><a href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}{{if .NumOrder}}&` + Param_Labels["desc"] + `=numdocs{{end}}{{end}}">` + Field_Labels["numdocs"] + `</th>
 </tr>
 </thead>
 <tbody>
 `
 
-const partnerlistline = `
+var ownerlistline = `
 <tr>
-<td class="owner">{{.Owner}}</td>
+<td class="owner"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}">{{.Owner}}</a></td>
 <td class="number">{{.NumFiles}}</td>
 </tr>
 `
 
-const partnerlisttrailer = `
+const ownerlisttrailer = `
+</tbody>
+</table>
+`
+
+type ownerfilesvar struct {
+	Owner    string
+	Boxid    string
+	Client   string
+	Name     string
+	Contents string
+	Date     string
+	Desc     bool
+}
+
+var ownerfileshdr = `
+<table class="boxfiles">
+<thead>
+<tr>
+<th class="owner"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
+<th class="client"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
+<th class="name"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
+<th class="contents"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
+<th class="review_date"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
+var ownerfilesline = `
+<tr>
+<td class="boxid"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
+<td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.Client}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
+<td class="name">{{if .Name}}<a href="/find?` + Param_Labels["find"] + `={{.Name}}&` + Param_Labels["field"] + `=name">{{end}}{{.Name}}{{if .Name}}</a>{{end}}</td>
+<td class="contents">{{if .Contents}}<a href="/find?` + Param_Labels["find"] + `={{.Contents}}&` + Param_Labels["field"] + `=contents">{{end}}{{.Contents}}{{if .Contents}}</a>{{end}}</td>
+<td class="review_date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
+
+</tr>
+`
+
+const ownerfilestrailer = `
 </tbody>
 </table>
 `
@@ -374,39 +421,47 @@ type boxvars struct {
 	Contents string
 	NumFiles int
 	Date     string
+	Desc     bool
 }
 
-const boxhtml = `
+var boxhtml = `
 <table class="boxheader">
-<tr><td class="vlabel">Box ID : </td><td class="vdata">{{.Boxid}}</td></tr>
-<tr><td class="vlabel">Location : </td><td class="vdata"><a href="/showlocn?locn={{.Location}}">{{.Location}}</a></td></tr>
-<tr><td class="vlabel">Storage ref : </td><td class="vdata">{{.Storeref}}</td></tr>
-<tr><td class="vlabel">Contents : </td><td class="vdata">{{.Contents}}</td></tr>
-<tr><td class="vlabel">N<sup>o</sup> of files : </td><td class="vdata">{{.NumFiles}}</td></tr>
-<tr><td class="vlabel">Review date : </td><td class="vdata">{{.Date}}</td></tr>
+
+
+<tr><td class="vlabel"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">` + Field_Labels["boxid"] + `</a> : </td><td class="vdata">{{.Boxid}}</td></tr>
+<tr><td class="vlabel">` + Field_Labels["location"] + ` : </td><td class="vdata"><a href="/showlocn?` + Param_Labels["location"] + `={{.Location}}">{{.Location}}</a></td></tr>
+<tr><td class="vlabel">` + Field_Labels["storeref"] + ` : </td><td class="vdata">{{.Storeref}}</td></tr>
+<tr><td class="vlabel">` + Field_Labels["contents"] + ` : </td><td class="vdata">{{.Contents}}</td></tr>
+<tr><td class="vlabel">` + Field_Labels["numdocs"] + ` : </td><td class="vdata">{{.NumFiles}}</td></tr>
+<tr><td class="vlabel">` + Field_Labels["review_date"] + ` : </td><td class="vdata">{{.Date}}</td></tr>
 
 </table>
 `
-const boxfileshdr = `
+
+var boxfileshdr = `
 <table class="boxfiles">
 <thead>
 <tr>
-<th class="owner">Partner</th>
-<th class="client">Client</th>
-<th class="name">Name</th>
-<th class="contents">Contents</th>
-<th class="date">Review</th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + Field_Labels["owner"] + `</a></th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
+
+
 </tr>
 </thead>
 <tbody>
 `
 
 type boxfilevars struct {
+	Boxid    string
 	Owner    string
 	Client   string
 	Name     string
 	Contents string
 	Date     string
+	Desc     bool
 }
 
 const boxfilesline = `

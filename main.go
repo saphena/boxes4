@@ -44,7 +44,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 	} else {
 		fmt.Fprint(w, "Not updated")
 	}
-	fmt.Fprint(w, `Click [update] above and login as a user with CONTROLLER accesslevel to get more info. `)
+	fmt.Fprint(w, `<p>Click [update] above and login as a user with CONTROLLER accesslevel to get more info. `)
 	var uids []string
 	rows, err := DBH.Query("SELECT userid FROM users WHERE accesslevel >= " + strconv.Itoa(ACCESSLEVEL_UPDATE))
 	if err != nil {
@@ -56,7 +56,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&uid)
 		uids = append(uids, uid)
 	}
-	fmt.Fprintf(w, `<p>The following userids have that accesslevel: <strong>%v</strong></p>`, uids)
+	fmt.Fprintf(w, ` The following userids have that accesslevel: <strong>%v</strong></p>`, uids)
 	tables := []string{"BOXES", "CONTENTS", "HISTORY", "LOCATIONS", "USERS"}
 
 	fmt.Fprint(w, "<ul>")
@@ -90,7 +90,7 @@ func main() {
 	http.HandleFunc("/search", show_search)
 	http.HandleFunc("/find", exec_search)
 	http.HandleFunc("/about", about)
-	http.HandleFunc("/showbox", showbox)
+	http.HandleFunc("/boxes", showbox)
 	http.HandleFunc("/owners", showowners)
 
 	log.Fatal(http.ListenAndServe(":"+*serveport, nil))

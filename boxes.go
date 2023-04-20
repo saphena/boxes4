@@ -18,13 +18,15 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	start_html(w)
 
 	sqlboxid := strings.ReplaceAll(r.FormValue(Param_Labels["boxid"]), "'", "''")
-	sqlx := "SELECT * FROM boxes WHERE boxid='" + sqlboxid + "'"
+	sqlx := "SELECT storeref,boxid,location,overview,numdocs,min_review_date,max_review_date FROM boxes WHERE boxid='" + sqlboxid + "'"
 	rows, err := DBH.Query(sqlx)
 	if err != nil {
 		panic(err)
 	}
 	defer rows.Close()
 	var bv boxvars
+	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+
 	if !rows.Next() {
 		fmt.Fprintf(w, "<p>Bugger! %v</p>", r.FormValue(Param_Labels["boxid"]))
 		return
@@ -47,9 +49,17 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
-	sqllimit := emit_page_anchors(w, r, "showbox", NumFiles)
+	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
 	sqlx := "SELECT owner,client,name,contents,review_date FROM contents WHERE boxid='" + boxid + "'"
-	sqlx += " ORDER BY owner,client"
+
+	if r.FormValue(Param_Labels["order"]) != "" {
+		sqlx += " ORDER BY TRIM(contents." + r.FormValue(Param_Labels["order"]) + ")"
+		if r.FormValue(Param_Labels["desc"]) != "" {
+			sqlx += " DESC"
+		}
+	} else {
+		sqlx += " ORDER BY owner,client"
+	}
 	rows, _ := DBH.Query(sqlx + sqllimit)
 	defer rows.Close()
 
@@ -57,15 +67,17 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	if err != nil {
 		panic(err)
 	}
-	err = html.Execute(w, "")
+
+	var bfv boxfilevars
+	bfv.Boxid = boxid
+	bfv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+
+	err = html.Execute(w, bfv)
 	if err != nil {
 		panic(err)
 	}
 
-	var bfv boxfilevars
-
 	nrows := 0
-
 	html, err = template.New("").Parse(boxfilesline)
 	if err != nil {
 		panic(err)
