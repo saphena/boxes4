@@ -76,7 +76,7 @@ func main() {
 	if *serveport == "" {
 		*serveport = "8081"
 	}
-	runvars = AppVars{"DOCUMENT ARCHIVES", basicMenu}
+	runvars = AppVars{`DOCUMENT ARCHIVES`, basicMenu}
 	DBH, err = sql.Open("sqlite3", dbx)
 	if err != nil {
 		panic(err)
@@ -90,7 +90,7 @@ func main() {
 	http.HandleFunc("/search", show_search)
 	http.HandleFunc("/find", exec_search)
 	http.HandleFunc("/about", about)
-	http.HandleFunc("/boxes", showbox)
+	http.HandleFunc("/boxes", showboxes)
 	http.HandleFunc("/owners", showowners)
 
 	log.Fatal(http.ListenAndServe(":"+*serveport, nil))

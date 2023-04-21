@@ -47,6 +47,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	var plv ownerlistvars
+	plv.Single = r.FormValue(Param_Labels["owner"]) != ""
 
 	html, err := template.New("").Parse(ownerlisthdr)
 	if err != nil {

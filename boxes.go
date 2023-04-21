@@ -8,6 +8,71 @@ import (
 	"strings"
 )
 
+func showboxes(w http.ResponseWriter, r *http.Request) {
+
+	if r.FormValue(Param_Labels["boxid"]) != "" {
+		showbox(w, r)
+		return
+	}
+
+	start_html(w)
+
+	sqlx := " FROM boxes "
+
+	NumBoxes, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "rex", "0"))
+
+	if r.FormValue(Param_Labels["order"]) != "" {
+		sqlx += "ORDER BY " + r.FormValue(Param_Labels["order"])
+		if r.FormValue(Param_Labels["desc"]) != "" {
+			sqlx += " DESC"
+		}
+	} else {
+		sqlx += "ORDER BY boxid"
+	}
+
+	flds := " storeref,boxid,location,overview,numdocs,min_review_date,max_review_date "
+	sqlx += emit_page_anchors(w, r, "boxes", NumBoxes)
+	rows, err := DBH.Query("SELECT  " + flds + sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	var box boxvars
+	box.Single = r.FormValue(Param_Labels["boxid"]) != ""
+	box.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
+
+	html, err := template.New("").Parse(boxtablehdr)
+	if err != nil {
+		panic(err)
+	}
+	err = html.Execute(w, box)
+	if err != nil {
+		panic(err)
+	}
+
+	html, err = template.New("").Parse(boxtablerow)
+	if err != nil {
+		panic(err)
+	}
+	for rows.Next() {
+		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumFiles, &box.Min_review_date, &box.Max_review_date)
+		if box.Max_review_date == box.Min_review_date {
+			box.Date = box.Max_review_date
+			box.Single = true
+		} else {
+			box.Date = box.Min_review_date + " to " + box.Max_review_date
+			box.Single = false
+		}
+		err := html.Execute(w, box)
+		if err != nil {
+			panic(err)
+		}
+	}
+	fmt.Fprint(w, ownerlisttrailer)
+
+}
+
 func showbox(w http.ResponseWriter, r *http.Request) {
 
 	if r.FormValue(Param_Labels["boxid"]) == "" {
@@ -25,6 +90,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	}
 	defer rows.Close()
 	var bv boxvars
+	bv.Single = r.FormValue(Param_Labels["boxid"]) != ""
 	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 
 	if !rows.Next() {

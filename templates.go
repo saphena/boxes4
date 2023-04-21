@@ -33,7 +33,7 @@ var Field_Labels = map[string]string{
 	"name":            "Name",
 	"client":          "Client",
 	"location":        "Location",
-	"numdocs":         "N<sup>o</sup> of files",
+	"numdocs":         "&#8470; of files",
 	"min_review_date": "Min review date",
 	"max_review_date": "Max review date",
 	"userid":          "UserID",
@@ -125,7 +125,7 @@ type searchResultsVar struct {
 }
 
 var searchResultsHdr1 = `
-<p>{{if .Find}}I was looking for <span class="errordata">{{if .Field}}{{.Field}} = {{end}}{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
+<p>{{if .Find}}I was looking for <span class="searchedfor">{{if .Field}}{{.Field}} = {{end}}{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
 `
 var searchResultsHdr2 = `
 <table class="searchresults">
@@ -145,11 +145,11 @@ var searchResultsHdr2 = `
 var searchResultsLine = `
 <tr>
 <td class="ourbox"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
-<td class="owner">{{.Owner}}</td>
-<td class="client">{{.Client}}</td>
+<td class="owner"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}">{{.Owner}}</a></td>
+<td class="client"><a href="/find?` + Param_Labels["find"] + `={{.Client}}&` + Param_Labels["field"] + `=client">{{.Client}}</a></td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
-<td class="date">{{.Date}}</td>
+<td class="date"><a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date{{.Date}}">{{.Date}}</a></td>
 </tr>
 `
 
@@ -159,37 +159,31 @@ const searchResultsTrailer = `
 `
 
 const css = `
-body 				{
-	background-color: #FFFFE0;
-	font-family:Verdana, Arial;
-	font-size: 10pt;
-	margin: 1em;
-	margin-top: 6px;
-	margin-bottom: 6px;
+:root	{
+	--regular-background	: #ffffe0;
+	--regular-foreground	: black;
+	--hilite-background		: yellow;
+	--hilite-foreground		: black;
+	--link-color			: blue;
 }
-div.topmenu a       { text-decoration: none; }
-div.pagelinks a		{ text-decoration: none; }
+body 				{
+	background-color		: var(--regular-background);
+	font-family				: Verdana, Arial, Helvetica, sans-serif; 
+	font-size				: 16px; /*calc(8pt + 1vmin); */
+	margin					: 1em;
+	margin-top				: 6px;
+	margin-bottom			: 6px;
+}
+a					{ text-decoration: none; color: var(--link-color); }
+a:visited			{ color: var(--link-color); }
 a:hover             { text-transform: uppercase; font-weight: bold; }
-p 					{ font-family: Verdana, Arial, Helvetica; font-size: 10pt; }
 p.center			{ text-align: center; }
-address 			{ font-family: Verdana, Arial, Helvetica; font-size: 8pt; }
-span				{ font-family: Verdana, Arial, Helvetica; font-size: 10pt; }
+address 			{ font-size: 8pt; }
+td 					{ padding: 4px; text-align: left; }
 
-td 					{ font-family: Verdana, Arial, Helvetica;  padding: 4px; text-align: left; }
-span.print			{ font-size: 8pt; }
 
-span.required 		{ font-size: 8pt; color: #bb0000; }
-span.small 			{ font-size: 8pt; }
-span.pagetitle		{ font-size: 12pt; font-weight: bold; text-align: center; }
-span.bold			{ font-weight: bold; }
-span.italic			{ font-style: italic; }
-
-table.hide			{ width: 100%; border-color: #ffffff; }
-table.width100		{ width: 100%; border-color: #000000; border-style: solid; border-width: 1px; }
-table.width75		{ width: 75%;  border-color: #000000; border-style: solid; border-width: 1px; }
-table.width60		{ width: 60%;  border-color: #000000; border-style: solid; border-width: 1px; }
-table.width50		{ width: 50%;  border-color: #000000; border-style: solid; border-width: 1px; }
-table       		{              border-color: #bb0000; border-style: solid; border-width: 2px; }
+.pagelinks			{ padding: 2px 0 6px; 0 }
+.numdocs			{ text-align: center; }
 
 td             		{ background: white; font-weight: bold; border-color: #bb0000; border-style: solid; border-width: 3px; }
 
@@ -234,12 +228,24 @@ span.news-date		{ font-style: italic; font-size: 8pt; }
 
 th                  { text-align: left; padding: 2px;}
 th.vertical         { text-align: right; font-weight: normal;}
-h1                  { text-align: center; text-transform:uppercase; }
+h1                  { 
+						text-align: center; 
+						text-transform:uppercase; 
+						/* color: blue; */
+						text-shadow: -3px 3px 3px rgba(26, 205, 214, 1);
+						}
 
 .copyrite	{ font-size: xx-small; }
 .infohilite		{ background-color: yellow; color: black; font-weight: bold; padding-top: 4px; padding-bottom: 4px; }
 .errormsg           { background-color: red; color: yellow; padding: 4px;}
 .errordata          { background-color: red; color: white; font-weight: bold; font-size: larger; padding: 4px;}
+.searchedfor		{ 
+						background-color: var(--hilite-background); 
+						color: var(--hilite-foreground); 
+						font-weight: bold;
+						font-size: larger;
+						padding: 4px;
+					}
 .number             { text-align: right; }
 .ourbox             { font-weight: bold; color: #bb0000; }
 
@@ -300,7 +306,7 @@ function changepagesize(sel) {
 	console.log('url="'+url+'"; ps="'+ps+'"; NP='+newpagesize);
 	let cleanurl = url;
 	if (ps) {
-		cleanurl = cleanurl.replace(ps[0],'') + ps[0].substr(0,1);
+		cleanurl = cleanurl.replace(ps[0],'') + ps[1];
 	} else {
 		if (cleanurl.indexOf('?') < 0) {
 			cleanurl += '?';
@@ -328,7 +334,92 @@ function trapkeys() {
 			return false;
 	    } 
 	}
+
+	let el = document.querySelector('body');
+	swipedetect(el, function(swipedir){
+		/* swipedir contains either "none", "left", "right", "top", or "down" */
+		if (swipedir =='left') {
+			console.log("swiped left");
+			let pp = document.getElementById('prevpage');
+			if (pp) {
+				window.location.href = pp.getAttribute('href');
+			}
+		}
+		else if (swipedir =='right') {
+			alert("swiped right");
+			let pp = document.getElementById('nextpage');
+			if (pp) {
+				window.location.href = pp.getAttribute('href');
+			}
+		}
+
+	})
+	
+
+
+
 }
+
+
+function swipedetect(el, callback){
+  
+    var touchsurface = el,
+    swipedir,
+    startX,
+    startY,
+    distX,
+    distY,
+    threshold = 150, //required min distance traveled to be considered swipe
+    restraint = 100, // maximum distance allowed at the same time in perpendicular direction
+    allowedTime = 300, // maximum time allowed to travel that distance
+    elapsedTime,
+    startTime,
+    handleswipe = callback || function(swipedir){}
+  
+    touchsurface.addEventListener('touchstart', function(e){
+        var touchobj = e.changedTouches[0]
+        swipedir = 'none'
+        dist = 0
+        startX = touchobj.pageX
+        startY = touchobj.pageY
+        startTime = new Date().getTime() // record time when finger first makes contact with surface
+        e.preventDefault()
+    }, false)
+  
+    touchsurface.addEventListener('touchmove', function(e){
+        e.preventDefault() // prevent scrolling when inside DIV
+    }, false)
+  
+    touchsurface.addEventListener('touchend', function(e){
+        var touchobj = e.changedTouches[0]
+        distX = touchobj.pageX - startX // get horizontal dist traveled by finger while in contact with surface
+        distY = touchobj.pageY - startY // get vertical dist traveled by finger while in contact with surface
+        elapsedTime = new Date().getTime() - startTime // get time elapsed
+        if (elapsedTime <= allowedTime){ // first condition for awipe met
+            if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint){ // 2nd condition for horizontal swipe met
+                swipedir = (distX < 0)? 'left' : 'right' // if dist traveled is negative, it indicates left swipe
+            }
+            else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint){ // 2nd condition for vertical swipe met
+                swipedir = (distY < 0)? 'up' : 'down' // if dist traveled is negative, it indicates up swipe
+            }
+        }
+        handleswipe(swipedir)
+        e.preventDefault()
+    }, false)
+}
+  
+//USAGE:
+/*
+var el = document.getElementById('someel')
+swipedetect(el, function(swipedir){
+    swipedir contains either "none", "left", "right", "top", or "down"
+    if (swipedir =='left')
+        alert('You just swiped left!')
+})
+*/
+
+
+
 </script>
 
 <style>
@@ -340,7 +431,7 @@ const html2 = `
 </style>
 </head>
 <body onload="trapkeys();">
-<h1>{{.Apptitle}}</h1>
+<h1><a href="/">&#9783; {{.Apptitle}}</a></h1>
 <div class="topmenu">
 `
 
@@ -349,14 +440,17 @@ type ownerlistvars struct {
 	NumFiles int
 	Desc     bool
 	NumOrder bool
+	Single   bool
 }
 
 var ownerlisthdr = `
 <table class="ownerlist">
 <thead>
 <tr>
-<th class="owner"><a href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}{{if .NumOrder}}{{else}}&` + Param_Labels["desc"] + `=owner{{end}}{{end}}">` + Field_Labels["owner"] + `</th>
-<th class="number"><a href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}{{if .NumOrder}}&` + Param_Labels["desc"] + `=numdocs{{end}}{{end}}">` + Field_Labels["numdocs"] + `</th>
+
+
+<th class="owner">{{if .Single}}{{else}}<a href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+<th class="number">{{if .Single}}{{else}}<a href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
 </tr>
 </thead>
 <tbody>
@@ -364,7 +458,7 @@ var ownerlisthdr = `
 
 var ownerlistline = `
 <tr>
-<td class="owner"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}">{{.Owner}}</a></td>
+<td class="owner">{{if .Single}}{{else}}<a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}">{{end}}{{.Owner}}{{if .Single}}{{else}}</a>{{end}}</td>
 <td class="number">{{.NumFiles}}</td>
 </tr>
 `
@@ -385,9 +479,10 @@ type ownerfilesvar struct {
 }
 
 var ownerfileshdr = `
-<table class="boxfiles">
+<table class="ownerfiles">
 <thead>
 <tr>
+
 <th class="owner"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
 <th class="client"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
 <th class="name"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
@@ -402,8 +497,8 @@ var ownerfilesline = `
 <tr>
 <td class="boxid"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.Client}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
-<td class="name">{{if .Name}}<a href="/find?` + Param_Labels["find"] + `={{.Name}}&` + Param_Labels["field"] + `=name">{{end}}{{.Name}}{{if .Name}}</a>{{end}}</td>
-<td class="contents">{{if .Contents}}<a href="/find?` + Param_Labels["find"] + `={{.Contents}}&` + Param_Labels["field"] + `=contents">{{end}}{{.Contents}}{{if .Contents}}</a>{{end}}</td>
+<td class="name">{{.Name}}</td>
+<td class="contents">{{.Contents}}</td>
 <td class="review_date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
 
 </tr>
@@ -415,20 +510,24 @@ const ownerfilestrailer = `
 `
 
 type boxvars struct {
-	Boxid    string
-	Location string
-	Storeref string
-	Contents string
-	NumFiles int
-	Date     string
-	Desc     bool
+	Boxid           string
+	Location        string
+	Storeref        string
+	Contents        string
+	NumFiles        int
+	Overview        string
+	Min_review_date string
+	Max_review_date string
+	Date            string
+	Desc            bool
+	Single          bool
 }
 
 var boxhtml = `
 <table class="boxheader">
 
 
-<tr><td class="vlabel"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">` + Field_Labels["boxid"] + `</a> : </td><td class="vdata">{{.Boxid}}</td></tr>
+<tr><td class="vlabel">{{if .Single}}{{else}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td class="vdata">{{.Boxid}}</td></tr>
 <tr><td class="vlabel">` + Field_Labels["location"] + ` : </td><td class="vdata"><a href="/showlocn?` + Param_Labels["location"] + `={{.Location}}">{{.Location}}</a></td></tr>
 <tr><td class="vlabel">` + Field_Labels["storeref"] + ` : </td><td class="vdata">{{.Storeref}}</td></tr>
 <tr><td class="vlabel">` + Field_Labels["contents"] + ` : </td><td class="vdata">{{.Contents}}</td></tr>
@@ -436,6 +535,34 @@ var boxhtml = `
 <tr><td class="vlabel">` + Field_Labels["review_date"] + ` : </td><td class="vdata">{{.Date}}</td></tr>
 
 </table>
+`
+
+var boxtablehdr = `
+<table class="boxlist">
+<thead>
+<tr>
+
+
+<th class="boxid"><a href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
+<th class="location"><a href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + Field_Labels["location"] + `</a></th>
+<th class="storeref"><a href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + Field_Labels["storeref"] + `</a></th>
+<th class="contents"><a href="/boxes?` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
+<th class="boxid"><a href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + Field_Labels["numdocs"] + `</a></th>
+<th class="boxid"><a href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
+var boxtablerow = `
+<tr>
+<td class="boxid"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
+<td class="location"><a href="/locations?` + Param_Labels["location"] + `={{.Location}}">{{.Location}}</a></td>
+<td class="storeref"><a href="/find?` + Param_Labels["find"] + `={{.Storeref}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td>
+<td class="overview">{{.Overview}}</td>
+<td class="numdocs">{{.NumFiles}}</td>
+<td class="review_date">{{if .Single}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Single}}</a>{{end}}</td>
+</tr>
 `
 
 var boxfileshdr = `
@@ -464,15 +591,16 @@ type boxfilevars struct {
 	Desc     bool
 }
 
-const boxfilesline = `
+var boxfilesline = `
 <tr>
-<td class="owner">{{.Owner}}</td>
-<td class="client">{{.Client}}</td>
+<td class="owner"><a href="/owners?` + Param_Labels["owner"] + `={{.Owner}}">{{.Owner}}</a></td>
+<td class="client"><a href="/find?` + Param_Labels["find"] + `={{.Client}}&` + Param_Labels["field"] + `=client">{{.Client}}</a></td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
-<td class="date">{{.Date}}</td>
+<td class="date"><a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{.Date}}</a></td>
 </tr>
 `
+
 const boxfilestrailer = `
 </tbody>
 </table>
