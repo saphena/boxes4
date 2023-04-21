@@ -34,12 +34,14 @@ var Field_Labels = map[string]string{
 	"client":          "Client",
 	"location":        "Location",
 	"numdocs":         "&#8470; of files",
+	"numboxes":        "&#8470; of boxes",
 	"min_review_date": "Min review date",
 	"max_review_date": "Max review date",
 	"userid":          "UserID",
 	"userpass":        "Password",
 	"accesslevel":     "Accesslevel",
 	"storeref":        "Storage ref",
+	"overview":        "Contents",
 }
 
 // These labels, which must be unique, are used in URLs
@@ -64,6 +66,7 @@ var Param_Labels = map[string]string{
 	"find":            "qqq",
 	"desc":            "qds",
 	"field":           "qfd",
+	"overview":        "qov",
 }
 
 // Used to easily alter labels seen by user
@@ -435,6 +438,36 @@ const html2 = `
 <div class="topmenu">
 `
 
+type locationlistvars struct {
+	Location    string
+	LocationUrl string
+	Id          int
+	NumBoxes    int
+	Desc        bool
+	NumOrder    bool
+	Single      bool
+}
+
+var locationlisthdr = `
+<table class="locationlist">
+<thead>
+<tr>
+
+
+<th class="location">{{if .Single}}{{else}}<a href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+<th class="numboxes">{{if .Single}}{{else}}<a href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+</tr>
+</thead>
+<tbody>
+`
+
+var locationlistline = `
+<tr>
+<td class="location">{{if .Single}}{{else}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{.Location}}{{if .Single}}{{else}}</a>{{end}}</td>
+<td class="numboxes">{{.NumBoxes}}</td>
+</tr>
+`
+
 type ownerlistvars struct {
 	Owner    string
 	NumFiles int
@@ -512,6 +545,7 @@ const ownerfilestrailer = `
 type boxvars struct {
 	Boxid           string
 	Location        string
+	LocationUrl     string
 	Storeref        string
 	Contents        string
 	NumFiles        int
@@ -546,7 +580,7 @@ var boxtablehdr = `
 <th class="boxid"><a href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
 <th class="location"><a href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + Field_Labels["location"] + `</a></th>
 <th class="storeref"><a href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + Field_Labels["storeref"] + `</a></th>
-<th class="contents"><a href="/boxes?` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
+<th class="contents"><a href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + Field_Labels["overview"] + `</a></th>
 <th class="boxid"><a href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + Field_Labels["numdocs"] + `</a></th>
 <th class="boxid"><a href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
 </tr>

@@ -92,6 +92,7 @@ func main() {
 	http.HandleFunc("/about", about)
 	http.HandleFunc("/boxes", showboxes)
 	http.HandleFunc("/owners", showowners)
+	http.HandleFunc("/locations", showlocations)
 
 	log.Fatal(http.ListenAndServe(":"+*serveport, nil))
 
