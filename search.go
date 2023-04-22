@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -28,7 +29,8 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		`
 		}
 	}
-	sqlx = strings.ReplaceAll(sqlx, "?", strings.ReplaceAll(r.FormValue(Param_Labels["find"]), "'", "''"))
+	x, _ := url.QueryUnescape(r.FormValue(Param_Labels["find"]))
+	sqlx = strings.ReplaceAll(sqlx, "?", strings.ReplaceAll(x, "'", "''"))
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY Upper(Trim(contents." + r.FormValue(Param_Labels["order"]) + "))"
 		if r.FormValue(Param_Labels["desc"]) != "" {
@@ -43,11 +45,15 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 
 	res.Boxid = order_dir(r, "boxid")
+	res.BoxidUrl = template.URLQueryEscaper(res.Boxid)
 	res.Owner = order_dir(r, "owner")
+	res.OwnerUrl = template.URLQueryEscaper(res.Owner)
 	res.Client = order_dir(r, "client")
+	res.ClientUrl = template.URLQueryEscaper(res.Client)
 	res.Name = order_dir(r, "name")
 	res.Date = order_dir(r, "review_date")
-	res.Find = r.FormValue(Param_Labels["find"])
+	res.Find = x
+	res.FindUrl = template.URLQueryEscaper(res.Find)
 	res.Found = strconv.Itoa(FoundRecCount)
 	res.Field = Field_Labels[r.FormValue(Param_Labels["field"])]
 
@@ -80,6 +86,10 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	}
 	for rows.Next() {
 		rows.Scan(&res.Boxid, &res.Owner, &res.Client, &res.Name, &res.Contents, &res.Date, &res.Storeref, &res.Overview)
+		res.BoxidUrl = template.URLQueryEscaper(res.Boxid)
+		res.OwnerUrl = template.URLQueryEscaper(res.Owner)
+		res.ClientUrl = template.URLQueryEscaper(res.Client)
+		res.StorerefUrl = template.URLQueryEscaper(res.Storeref)
 		err = html.Execute(w, res)
 		if err != nil {
 			panic(err)

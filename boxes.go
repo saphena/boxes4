@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -57,6 +58,9 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	}
 	for rows.Next() {
 		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumFiles, &box.Min_review_date, &box.Max_review_date)
+		box.StorerefUrl = template.URLQueryEscaper(box.Storeref)
+		box.BoxidUrl = template.URLQueryEscaper(box.Boxid)
+		box.LocationUrl = template.URLQueryEscaper(box.Location)
 		if box.Max_review_date == box.Min_review_date {
 			box.Date = box.Max_review_date
 			box.Single = true
@@ -82,7 +86,8 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w)
 
-	sqlboxid := strings.ReplaceAll(r.FormValue(Param_Labels["boxid"]), "'", "''")
+	sqlboxid, _ := url.QueryUnescape(r.FormValue(Param_Labels["boxid"]))
+	sqlboxid = strings.ReplaceAll(sqlboxid, "'", "''")
 	sqlx := "SELECT storeref,boxid,location,overview,numdocs,min_review_date,max_review_date FROM boxes WHERE boxid='" + sqlboxid + "'"
 	rows, err := DBH.Query(sqlx)
 	if err != nil {
@@ -151,6 +156,8 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 	for rows.Next() {
 		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date)
+		bfv.OwnerUrl = template.URLQueryEscaper(bfv.Owner)
+		bfv.ClientUrl = template.URLQueryEscaper(bfv.Client)
 		err = html.Execute(w, bfv)
 		if err != nil {
 			panic(err)

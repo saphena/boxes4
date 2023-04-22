@@ -143,8 +143,9 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 			bv.Date = mindate + " to " + maxdate
 			bv.Single = false
 		}
-		bv.LocationUrl = url.QueryEscape(loc.Location)
-
+		bv.LocationUrl = template.URLQueryEscaper(loc.Location)
+		bv.StorerefUrl = template.URLQueryEscaper(bv.Storeref)
+		bv.BoxidUrl = template.URLQueryEscaper(bv.Boxid)
 		err = temp.Execute(w, bv)
 		if err != nil {
 			panic(err)
@@ -193,6 +194,8 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 	for rows.Next() {
 		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date)
+		bfv.OwnerUrl = template.URLQueryEscaper(bfv.Owner)
+		bfv.ClientUrl = template.URLQueryEscaper(bfv.Client)
 		err = temp.Execute(w, bfv)
 		if err != nil {
 			panic(err)

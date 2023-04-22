@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"html/template"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -12,10 +13,11 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w)
 
+	owner, _ := url.QueryUnescape(r.FormValue(Param_Labels["owner"]))
 	sqlx := "SELECT DISTINCT TRIM(owner), COUNT(TRIM(owner)) AS numdocs FROM contents "
 	sqlx += "GROUP BY TRIM(owner) "
-	if r.FormValue(Param_Labels["owner"]) != "" {
-		sqlx += "HAVING TRIM(owner) = '" + r.FormValue(Param_Labels["owner"]) + "' "
+	if owner != "" {
+		sqlx += "HAVING TRIM(owner) = '" + strings.ReplaceAll(owner, "'", "''") + "' "
 	}
 
 	if r.FormValue(Param_Labels["order"]) != "" {
@@ -37,7 +39,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	rows.Close()
 
 	sqllimit := ""
-	if r.FormValue(Param_Labels["owner"]) == "" {
+	if owner == "" {
 		sqllimit = emit_page_anchors(w, r, "owners", nrex)
 	}
 	rows, err = DBH.Query(sqlx + sqllimit)
@@ -47,7 +49,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 
 	var plv ownerlistvars
-	plv.Single = r.FormValue(Param_Labels["owner"]) != ""
+	plv.Single = owner != ""
 
 	html, err := template.New("").Parse(ownerlisthdr)
 	if err != nil {
@@ -63,6 +65,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	}
 	for rows.Next() {
 		rows.Scan(&plv.Owner, &plv.NumFiles)
+		plv.OwnerUrl = template.URLQueryEscaper(plv.Owner)
 		err := html.Execute(w, plv)
 		if err != nil {
 			panic(err)
@@ -70,13 +73,13 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, ownerlisttrailer)
 
-	if r.FormValue(Param_Labels["owner"]) == "" {
+	if owner == "" {
 		return
 	}
 
 	rows.Close()
 
-	sqlx = " FROM contents WHERE owner='" + strings.ReplaceAll(r.FormValue(Param_Labels["owner"]), "'", "''") + "'"
+	sqlx = " FROM contents WHERE owner='" + strings.ReplaceAll(owner, "'", "''") + "'"
 	NumRows, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex"+sqlx, "rex", "0"))
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY Upper(Trim(contents." + r.FormValue(Param_Labels["order"]) + "))"
@@ -94,7 +97,8 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	var ofv ownerfilesvar
 	ofv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
-	ofv.Owner = r.FormValue((Param_Labels["owner"]))
+	ofv.Owner = owner
+	ofv.OwnerUrl = template.URLQueryEscaper(ofv.Owner)
 	html, err = template.New("").Parse(ownerfileshdr)
 	if err != nil {
 		panic(err)
@@ -110,6 +114,8 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	}
 	for rows.Next() {
 		rows.Scan(&ofv.Boxid, &ofv.Client, &ofv.Name, &ofv.Contents, &ofv.Date)
+		ofv.BoxidUrl = template.URLQueryEscaper(ofv.Boxid)
+		ofv.ClientUrl = template.URLQueryEscaper(ofv.Client)
 		err = html.Execute(w, ofv)
 	}
 	fmt.Fprint(w, ownerfilestrailer)
