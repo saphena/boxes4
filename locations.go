@@ -28,7 +28,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sqlx += " GROUP BY locations.location "
-	if r.FormValue(Param_Labels["order"]) != "" {
+	if r.FormValue(Param_Labels["order"]) != "" && r.FormValue(Param_Labels["location"]) == "" {
 		sqlx += "ORDER BY locations." + r.FormValue(Param_Labels["order"])
 		if r.FormValue(Param_Labels["desc"]) != "" {
 			sqlx += " DESC"
@@ -38,7 +38,10 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	flds := " id,locations.location, Count(boxid) As NumBoxes "
-	sqlx += emit_page_anchors(w, r, "locations", NumLocations)
+	if r.FormValue(Param_Labels["location"]) == "" {
+		sqlx += emit_page_anchors(w, r, "locations", NumLocations)
+	}
+	//fmt.Printf("DEBUG: SELECT %v%v\n", flds, sqlx)
 	rows, err := DBH.Query("SELECT  " + flds + sqlx)
 	if err != nil {
 		panic(err)
@@ -58,20 +61,21 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	temp, err = template.New("locationlistline2").Parse(locationlistline)
-	if err != nil {
-		panic(err)
-	}
-	for rows.Next() {
-		rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
-		loc.LocationUrl = url.QueryEscape(loc.Location)
-		err := temp.Execute(w, loc)
+	if true {
+		temp, err = template.New("locationlistline2").Parse(locationlistline)
 		if err != nil {
 			panic(err)
 		}
+		for rows.Next() {
+			rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
+			loc.LocationUrl = url.QueryEscape(loc.Location)
+			err := temp.Execute(w, loc)
+			if err != nil {
+				panic(err)
+			}
+		}
+		fmt.Fprint(w, ownerlisttrailer)
 	}
-	fmt.Fprint(w, ownerlisttrailer)
-
 	if sqllocation != "" {
 		showlocation(w, r, sqllocation, loc.NumBoxes)
 	}
@@ -87,10 +91,13 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 
 	var loc locationlistvars
 	loc.Single = true
-	loc.Location = r.FormValue(Param_Labels["location"])
+	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+	loc.Location, _ = url.QueryUnescape(r.FormValue(Param_Labels["location"]))
+	loc.LocationUrl = r.FormValue(Param_Labels["location"])
 	loc.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As rex FROM boxes WHERE location='"+sqllocation+"'", "rex", "0"))
+	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
-	temp, err := template.New("locationlisthdr").Parse(locationlisthdr)
+	temp, err := template.New("locboxtablehdr").Parse(locboxtablehdr)
 	if err != nil {
 		panic(err)
 	}
@@ -99,6 +106,16 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 		panic(err)
 	}
 	sqlx := "SELECT storeref,boxid,location,overview,numdocs,min_review_date,max_review_date FROM boxes WHERE location='" + sqllocation + "'"
+
+	if r.FormValue(Param_Labels["order"]) != "" {
+		sqlx += " ORDER BY " + r.FormValue(Param_Labels["order"])
+		if r.FormValue(Param_Labels["desc"]) != "" {
+			sqlx += " DESC"
+		}
+	} else {
+		sqlx += " ORDER BY boxid"
+	}
+
 	//sqllimit := emit_page_anchors(w, r, "locations?"+Param_Labels["location"]+"="+url.QueryEscape(r.FormValue(Param_Labels["location"])), loc.NumBoxes)
 	sqllimit := emit_page_anchors(w, r, "locations", loc.NumBoxes)
 	//fmt.Print("DEBUG: " + sqlx)
@@ -109,9 +126,9 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	defer rows.Close()
 	var bv boxvars
 	bv.Single = r.FormValue(Param_Labels["location"]) != ""
-	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
-	temp, err = template.New("locationlistline1").Parse(boxtablerow)
+	temp, err = template.New("locboxtablerow").Parse(locboxtablerow)
 	if err != nil {
 		panic(err)
 	}
@@ -119,7 +136,13 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	for rows.Next() {
 		var mindate, maxdate string
 		rows.Scan(&bv.Storeref, &bv.Boxid, &bv.Location, &bv.Contents, &bv.NumFiles, &mindate, &maxdate)
-		bv.Date = mindate + " to " + maxdate
+		if mindate == maxdate {
+			bv.Date = mindate
+			bv.Single = true
+		} else {
+			bv.Date = mindate + " to " + maxdate
+			bv.Single = false
+		}
 		bv.LocationUrl = url.QueryEscape(loc.Location)
 
 		err = temp.Execute(w, bv)
@@ -148,7 +171,7 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	rows, _ := DBH.Query(sqlx + sqllimit)
 	defer rows.Close()
 
-	temp, err := template.New("boxfilehdr").Parse(boxfileshdr)
+	temp, err := template.New("boxfileshdr").Parse(boxfileshdr)
 	if err != nil {
 		panic(err)
 	}

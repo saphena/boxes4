@@ -168,6 +168,8 @@ const css = `
 	--hilite-background		: yellow;
 	--hilite-foreground		: black;
 	--link-color			: blue;
+	--link-hilite-fore		: black;
+	--link-hilite-back		: orange;
 }
 body 				{
 	background-color		: var(--regular-background);
@@ -177,16 +179,28 @@ body 				{
 	margin-top				: 6px;
 	margin-bottom			: 6px;
 }
-a					{ text-decoration: none; color: var(--link-color); }
+a					{ 
+						text-decoration: none;  
+						color: var(--link-color); 
+						font-family: monospace; 
+						font-size: 1.2em;
+						padding: 0 .5em 0 .5em;
+					}
 a:visited			{ color: var(--link-color); }
-a:hover             { text-transform: uppercase; font-weight: bold; }
+a:hover             { 
+						text-transform: uppercase; 
+						font-weight: bold;
+						color: var(--link-hilite-fore);
+						background-color: var(--link-hilite-back);
+					}
 p.center			{ text-align: center; }
 address 			{ font-size: 8pt; }
 td 					{ padding: 4px; text-align: left; }
 
 
 .pagelinks			{ padding: 2px 0 6px; 0 }
-.numdocs			{ text-align: center; }
+.numdocs,
+.numboxes			{ text-align: center; }
 
 td             		{ background: white; font-weight: bold; border-color: #bb0000; border-style: solid; border-width: 3px; }
 
@@ -588,12 +602,38 @@ var boxtablehdr = `
 <tbody>
 `
 
+// Header for box listing by location
+var locboxtablehdr = `
+<table class="boxlist">
+<thead>
+<tr>
+<th class="boxid"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
+<th class="storeref"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + Field_Labels["storeref"] + `</a></th>
+<th class="contents"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + Field_Labels["overview"] + `</a></th>
+<th class="boxid"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + Field_Labels["numdocs"] + `</a></th>
+<th class="boxid"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
 var boxtablerow = `
 <tr>
 <td class="boxid"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
 <td class="location"><a href="/locations?` + Param_Labels["location"] + `={{.Location}}">{{.Location}}</a></td>
 <td class="storeref"><a href="/find?` + Param_Labels["find"] + `={{.Storeref}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td>
 <td class="overview">{{.Overview}}</td>
+<td class="numdocs">{{.NumFiles}}</td>
+<td class="review_date">{{if .Single}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Single}}</a>{{end}}</td>
+</tr>
+`
+
+// Header for box listing by location
+var locboxtablerow = `
+<tr>
+<td class="boxid"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}">{{.Boxid}}</a></td>
+<td class="storeref"><a href="/find?` + Param_Labels["find"] + `={{.Storeref}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td>
+<td class="overview">{{.Contents}}</td>
 <td class="numdocs">{{.NumFiles}}</td>
 <td class="review_date">{{if .Single}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Single}}</a>{{end}}</td>
 </tr>
