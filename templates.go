@@ -84,6 +84,7 @@ var Menu_Labels = map[string]string{
 type AppVars struct {
 	Apptitle string
 	Topmenu  string
+	Userid   string
 }
 
 var searchVars struct {
@@ -203,7 +204,7 @@ a:hover             {
 p.center			{ text-align: center; }
 address 			{ font-size: 8pt; }
 td 					{ padding: 4px; text-align: left; }
-
+li					{ list-style-type: none; }
 
 .pagelinks			{ padding: 2px 0 6px; 0 }
 .numdocs,
@@ -299,10 +300,8 @@ var updateMenu = `
 [<a href="/locations">` + Menu_Labels["locations"] + `</a>] 
 [<a href="/owners">` + Menu_Labels["owners"] + `</a>] 
 [<a href="/boxes">` + Menu_Labels["boxes"] + `</a>] 
-[<a href="/update">` + Menu_Labels["update"] + `</a>] 
+[<a href="/logout">` + Menu_Labels["logout"] + ` {{.Userid}}</a>] 
 [<a href="/about">` + Menu_Labels["about"] + `</a>] 
-[<a href="/logout">` + Menu_Labels["logout"] + ` {{.Username}</a>] 
-
 `
 
 var html1 = `
@@ -696,15 +695,35 @@ const boxfilestrailer = `
 </table>
 `
 
-func start_html(w http.ResponseWriter) {
+var loginscreen = `
+<main>
+<h2>Authentication required</h2>
+<form action="/login" method="post">
+<label for="userid">` + Field_Labels["userid"] + ` </label>
+<input type="text" autofocus id="userid" name="` + Param_Labels["userid"] + `">
+<label for="userpass">` + Field_Labels["userpass"] + ` </label>
+<input type="password" id="userpass" name="` + Param_Labels["userpass"] + `">
+<input type="submit" value="Authenticate!">
+</form>
+</main>
+`
+
+func start_html(w http.ResponseWriter, r *http.Request) {
 
 	var ht string
-	if true {
+	updating, usr := updateok(r)
+	//fmt.Printf("DEBUG: updating=%v usr=%v\n", updating, usr)
+	if !updating {
 		ht = html1 + css + html2 + basicMenu + "</div>"
 	} else {
+		if usr != nil {
+			runvars.Userid = usr.(string)
+		} else {
+			runvars.Userid = ""
+		}
 		ht = html1 + css + html2 + updateMenu + "</div>"
 	}
-	html, err := template.New("main").Parse(ht)
+	html, err := template.New("mainmenu").Parse(ht)
 	if err != nil {
 		panic(err)
 	}

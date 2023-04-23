@@ -22,7 +22,7 @@ var runvars AppVars
 
 func about(w http.ResponseWriter, r *http.Request) {
 
-	start_html(w)
+	start_html(w, r)
 	fmt.Fprint(w, "<h2>BOXES version 4.0</h2>")
 	fmt.Fprint(w, "<p class='copyrite'>Copyright &copy; 2023 Bob Stammers &lt;stammers.bob@gmail.com&gt; </p>")
 
@@ -76,7 +76,7 @@ func main() {
 	if *serveport == "" {
 		*serveport = "8081"
 	}
-	runvars = AppVars{`DOCUMENT ARCHIVES`, basicMenu}
+	runvars = AppVars{`DOCUMENT ARCHIVES`, basicMenu, ""}
 	DBH, err = sql.Open("sqlite3", dbx)
 	if err != nil {
 		panic(err)
@@ -93,6 +93,10 @@ func main() {
 	http.HandleFunc("/boxes", showboxes)
 	http.HandleFunc("/owners", showowners)
 	http.HandleFunc("/locations", showlocations)
+	http.HandleFunc("/login", login)
+	http.HandleFunc("/logout", logout)
+	http.HandleFunc("/update", update)
+	http.HandleFunc("/secret", secret)
 
 	log.Fatal(http.ListenAndServe(":"+*serveport, nil))
 

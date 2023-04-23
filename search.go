@@ -11,7 +11,7 @@ import (
 
 func exec_search(w http.ResponseWriter, r *http.Request) {
 
-	start_html(w)
+	start_html(w, r)
 
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
 	if r.FormValue(Param_Labels["find"]) != "" {
@@ -102,7 +102,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 func show_search(w http.ResponseWriter, r *http.Request) {
 
-	start_html(w)
+	start_html(w, r)
 
 	searchVars.Apptitle = "DOCUMENT ARCHIVES"
 	searchVars.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM boxes", "Rex", "-1"))

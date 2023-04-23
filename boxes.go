@@ -16,7 +16,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start_html(w)
+	start_html(w, r)
 
 	sqlx := " FROM boxes "
 
@@ -84,7 +84,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	start_html(w)
+	start_html(w, r)
 
 	sqlboxid, _ := url.QueryUnescape(r.FormValue(Param_Labels["boxid"]))
 	sqlboxid = strings.ReplaceAll(sqlboxid, "'", "''")

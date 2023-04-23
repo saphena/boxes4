@@ -11,7 +11,7 @@ import (
 
 func showlocations(w http.ResponseWriter, r *http.Request) {
 
-	start_html(w)
+	start_html(w, r)
 
 	sqlx := " FROM locations "
 

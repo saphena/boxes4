@@ -11,7 +11,7 @@ import (
 
 func showowners(w http.ResponseWriter, r *http.Request) {
 
-	start_html(w)
+	start_html(w, r)
 
 	owner, _ := url.QueryUnescape(r.FormValue(Param_Labels["owner"]))
 	sqlx := "SELECT DISTINCT TRIM(owner), COUNT(TRIM(owner)) AS numdocs FROM contents "
