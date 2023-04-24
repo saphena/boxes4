@@ -26,6 +26,8 @@ var ACCESSLEVELS = map[int]string{
 	ACCESSLEVEL_READONLY: "View only",
 }
 
+const MAX_BOX_CONTENTS = 70
+
 var Field_Labels = map[string]string{
 	"boxid":           "BoxID",
 	"owner":           "Owner",
@@ -154,7 +156,7 @@ var searchResultsHdr2 = `
 
 var searchResultsLine = `
 <tr>
-<td class="ourbox">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a></td>
+<td class="ourbox">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
 <td class="owner">{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}</td>
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
@@ -260,7 +262,7 @@ h1                  {
 						text-shadow: -3px 3px 3px rgba(26, 205, 214, 1);
 						}
 
-.copyrite	{ font-size: xx-small; }
+.copyrite	{ font-size: small; }
 .infohilite		{ background-color: yellow; color: black; font-weight: bold; padding-top: 4px; padding-bottom: 4px; }
 .errormsg           { background-color: red; color: yellow; padding: 4px;}
 .errordata          { background-color: red; color: white; font-weight: bold; font-size: larger; padding: 4px;}
@@ -273,6 +275,8 @@ h1                  {
 					}
 .number             { text-align: right; }
 .ourbox             { font-weight: bold; color: #bb0000; }
+.upper				{ text-transform: uppercase; }
+.lower				{ text-transform: lowercase; }
 
 em	{font-style: italic; font-size: larger;}
 .arrow				{ font-size: large; }
@@ -308,7 +312,7 @@ var html1 = `
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>{{.Apptitle}}</title>
+<title>{{.Apptitle}}{{if .Userid}}&#9997;{{end}}</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <script>
@@ -454,7 +458,7 @@ const html2 = `
 </style>
 </head>
 <body onload="trapkeys();">
-<h1><a href="/">&#9783; {{.Apptitle}}</a></h1>
+<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Userid}} <span style="font-size: 1.2em;" title="Update mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu">
 `
 
@@ -711,7 +715,7 @@ var loginscreen = `
 func start_html(w http.ResponseWriter, r *http.Request) {
 
 	var ht string
-	updating, usr := updateok(r)
+	updating, usr, _ := updateok(r)
 	//fmt.Printf("DEBUG: updating=%v usr=%v\n", updating, usr)
 	if !updating {
 		ht = html1 + css + html2 + basicMenu + "</div>"

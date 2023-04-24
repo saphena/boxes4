@@ -63,22 +63,27 @@ func login(w http.ResponseWriter, r *http.Request) {
 	// Set user as authenticated
 	session.Values["authenticated"] = true
 	session.Values["userid"] = r.FormValue(Param_Labels["userid"])
+	session.Values["accesslevel"] = alevel
 	session.Options.MaxAge = 0
+	session.Options.HttpOnly = true
+	session.Options.SameSite = http.SameSiteStrictMode
+
+	session.Options.Secure = false // we connect using http.
 	session.Save(r, w)
 	//http.Redirect(w, r, "/search", http.StatusAccepted)
 	show_search(w, r)
 }
 
-func updateok(r *http.Request) (bool, any) {
+func updateok(r *http.Request) (bool, any, any) {
 
 	session, err := store.Get(r, cookie_name)
 	if err != nil {
 		panic(err)
 	}
 	if session.Values["authenticated"] == nil || session.Values["authenticated"].(bool) != true {
-		return false, session.Values[""]
+		return false, "", ACCESSLEVEL_READONLY
 	}
-	return true, session.Values["userid"]
+	return true, session.Values["userid"], session.Values["accesslevel"]
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
@@ -86,6 +91,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 
 	// Revoke users authentication
 	session.Values["authenticated"] = false
+	session.Values["userid"] = ""
 	session.Save(r, w)
 	show_search(w, r)
 }

@@ -5,6 +5,15 @@ import (
 	"strconv"
 )
 
+func contains(elems []string, v string) bool {
+	for _, s := range elems {
+		if v == s {
+			return true
+		}
+	}
+	return false
+}
+
 func getValueFromDB(sqlx string, col string, defval string) string {
 
 	rows, err := DBH.Query(sqlx)

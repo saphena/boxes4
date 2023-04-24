@@ -57,7 +57,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Found = strconv.Itoa(FoundRecCount)
 	res.Field = Field_Labels[r.FormValue(Param_Labels["field"])]
 
-	html, err := template.New("main").Parse(searchResultsHdr1)
+	html, err := template.New("searchResultsHdr1").Parse(searchResultsHdr1)
 	if err != nil {
 		panic(err)
 	}
@@ -74,13 +74,13 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Omg! %v\n", sqlx)
 		panic(err)
 	}
-	html, err = template.New("main").Parse(searchResultsHdr2)
+	html, err = template.New("searchResultsHdr2").Parse(searchResultsHdr2)
 	if err != nil {
 		panic(err)
 	}
 	html.Execute(w, res)
 
-	html, err = template.New("main").Parse(searchResultsLine)
+	html, err = template.New("searchResultsLine").Parse(searchResultsLine)
 	if err != nil {
 		panic(err)
 	}
@@ -95,7 +95,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-	html, _ = template.New("main").Parse(searchResultsTrailer)
+	html, _ = template.New("searchResultsTrailer").Parse(searchResultsTrailer)
 	html.Execute(w, "")
 
 }
@@ -109,7 +109,7 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 	searchVars.NumDocs, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM contents", "Rex", "-1"))
 	searchVars.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "Rex", "-1"))
 
-	html, err := template.New("main").Parse(searchHTML)
+	html, err := template.New("searchHTML").Parse(searchHTML)
 	if err != nil {
 		panic(err)
 	}
