@@ -1,13 +1,43 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 )
+
+// These table definitions are used as templates for
+// dumping to CSV files, probably for use in spreadsheets.
+type table_boxes struct {
+	Storeref        string
+	Boxid           string
+	Location        string
+	Overview        string
+	NumDocs         int
+	Min_Review_date string
+	Max_Review_date string
+}
+type csv_boxes [7]string
+
+type table_contents struct {
+	Id          int
+	Boxid       string
+	Review_date string
+	Contents    string
+	Owner       string
+	Name        string
+	Client      string
+}
+
+type table_locations struct {
+	Location string
+}
 
 var boxes_with_contents int
 var boxes_with_contents_updates int
@@ -251,4 +281,350 @@ func list_big_boxes() {
 		rows.Scan(&boxid)
 		big_boxes = append(big_boxes, boxid)
 	}
+}
+
+func csvexp(w http.ResponseWriter, r *http.Request) {
+
+	tab := r.FormValue(Param_Labels["table"])
+	if tab == "" {
+		show_search(w, r)
+		return
+	}
+	if tab == "boxes" {
+		export_boxes_csv(w)
+		return
+	}
+	if tab == "contents" {
+		export_contents_csv(w)
+		return
+	}
+	if tab == "locations" {
+		export_locations_csv(w)
+		return
+	}
+	show_search(w, r)
+}
+
+func csvquote(x string) string {
+
+	return `"` + strings.ReplaceAll(strings.Trim(x, " "), `"`, `""`) + `"`
+
+}
+func jsonexp(w http.ResponseWriter, r *http.Request) {
+
+	tab := r.FormValue(Param_Labels["table"])
+	if tab == "" {
+		show_search(w, r)
+		return
+	}
+	if tab == "boxes" {
+		export_boxes_json(w)
+		return
+	}
+	if tab == "contents" {
+		export_contents_json(w)
+		return
+	}
+	if tab == "locations" {
+		export_locations_json(w)
+		return
+	}
+	show_search(w, r)
+}
+
+func export_boxes_csv(w http.ResponseWriter) {
+
+	var box table_boxes
+	boxx := []string{"storeref", "boxid", "location", "overview", "numdocs", "min_review_date", "max_review_date"}
+
+	for ix, bx := range boxx {
+		boxx[ix] = strings.ReplaceAll(Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
+	}
+	sqlx := "SELECT * FROM boxes ORDER BY boxid" // Must match cols in tablerow
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	buffer := &bytes.Buffer{}
+	writer := bufio.NewWriter(buffer)
+	defer writer.Flush()
+
+	for _, x := range boxx {
+		_, err = writer.WriteString(`"` + x + `",`)
+		if err != nil {
+			panic(err)
+		}
+	}
+	writer.WriteString("\r\n")
+
+	for rows.Next() {
+
+		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumDocs, &box.Min_Review_date, &box.Max_Review_date)
+
+		_, err = writer.WriteString(csvquote(box.Storeref) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Boxid) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Location) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Overview) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(strconv.Itoa(box.NumDocs) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Min_Review_date) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Max_Review_date))
+		if err != nil {
+			panic(err)
+		}
+
+		writer.WriteString("\r\n")
+
+	}
+	writer.Flush()
+
+	w.Header().Set("Content-Type", "text/csv") // setting the content type header to text/csv
+	w.Header().Set("Content-Disposition", "attachment;filename=boxes.csv")
+	w.Write(buffer.Bytes())
+
+}
+
+func export_boxes_json(w http.ResponseWriter) {
+
+	var box table_boxes
+
+	w.Header().Set("Content-Type", "text/json") // setting the content type header to text/json
+	w.Header().Set("Content-Disposition", "attachment;filename=boxes.json")
+
+	fmt.Fprintln(w, "[")
+
+	sqlx := "SELECT * FROM boxes ORDER BY boxid" // Must match cols in tablerow
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	commaNeeded := false
+	for rows.Next() {
+
+		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumDocs, &box.Min_Review_date, &box.Max_Review_date)
+		b, err := json.Marshal(box)
+		if err != nil {
+			panic(err)
+		}
+		if commaNeeded {
+			fmt.Fprint(w, ",\n")
+		}
+		fmt.Fprint(w, string(b))
+		commaNeeded = true
+
+	}
+	fmt.Fprintf(w, "\n]\n")
+
+}
+
+func export_contents_csv(w http.ResponseWriter) {
+
+	var box table_contents
+	boxx := []string{"id", "boxid", "review_date", "contents", "owner", "name", "client"}
+
+	for ix, bx := range boxx {
+		boxx[ix] = strings.ReplaceAll(Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
+	}
+	sqlx := "SELECT * FROM contents ORDER BY boxid,client" // Must match cols in tablerow
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	buffer := &bytes.Buffer{}
+	writer := bufio.NewWriter(buffer)
+	defer writer.Flush()
+
+	for _, x := range boxx {
+		_, err = writer.WriteString(`"` + x + `",`)
+		if err != nil {
+			panic(err)
+		}
+	}
+	writer.WriteString("\r\n")
+
+	for rows.Next() {
+
+		rows.Scan(&box.Id, &box.Boxid, &box.Review_date, &box.Contents, &box.Owner, &box.Name, &box.Client)
+
+		_, err = writer.WriteString(strconv.Itoa(box.Id) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Boxid) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Review_date) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Contents) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Owner) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Name) + ",")
+		if err != nil {
+			panic(err)
+		}
+		_, err = writer.WriteString(csvquote(box.Client))
+		if err != nil {
+			panic(err)
+		}
+
+		writer.WriteString("\r\n")
+
+	}
+	writer.Flush()
+
+	w.Header().Set("Content-Type", "text/csv") // setting the content type header to text/csv
+	w.Header().Set("Content-Disposition", "attachment;filename=contents.csv")
+	w.Write(buffer.Bytes())
+
+}
+
+func export_contents_json(w http.ResponseWriter) {
+
+	var box table_contents
+
+	w.Header().Set("Content-Type", "text/json") // setting the content type header to text/json
+	w.Header().Set("Content-Disposition", "attachment;filename=contents.json")
+
+	fmt.Fprintln(w, "[")
+
+	sqlx := "SELECT * FROM contents ORDER BY boxid,client" // Must match cols in tablerow
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	commaNeeded := false
+	for rows.Next() {
+
+		rows.Scan(&box.Id, &box.Boxid, &box.Review_date, &box.Contents, &box.Owner, &box.Name, &box.Client)
+		b, err := json.Marshal(box)
+		if err != nil {
+			panic(err)
+		}
+		if commaNeeded {
+			fmt.Fprint(w, ",\n")
+		}
+		fmt.Fprint(w, string(b))
+		commaNeeded = true
+
+	}
+	fmt.Fprintf(w, "\n]\n")
+
+}
+
+func export_locations_csv(w http.ResponseWriter) {
+
+	var box table_boxes
+	boxx := []string{"location"}
+
+	for ix, bx := range boxx {
+		boxx[ix] = strings.ReplaceAll(Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
+	}
+	sqlx := "SELECT location FROM locations ORDER BY location" // Must match cols in tablerow
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+	buffer := &bytes.Buffer{}
+	writer := bufio.NewWriter(buffer)
+	defer writer.Flush()
+
+	for _, x := range boxx {
+		_, err = writer.WriteString(`"` + x + `",`)
+		if err != nil {
+			panic(err)
+		}
+	}
+	writer.WriteString("\r\n")
+
+	for rows.Next() {
+
+		rows.Scan(&box.Location)
+
+		_, err = writer.WriteString(csvquote(box.Location) + ",")
+		if err != nil {
+			panic(err)
+		}
+
+		writer.WriteString("\r\n")
+
+	}
+	writer.Flush()
+
+	w.Header().Set("Content-Type", "text/csv") // setting the content type header to text/csv
+	w.Header().Set("Content-Disposition", "attachment;filename=locations.csv")
+	w.Write(buffer.Bytes())
+
+}
+
+func export_locations_json(w http.ResponseWriter) {
+
+	var box table_locations
+
+	w.Header().Set("Content-Type", "text/json") // setting the content type header to text/json
+	w.Header().Set("Content-Disposition", "attachment;filename=locations.json")
+
+	fmt.Fprintln(w, "[")
+
+	sqlx := "SELECT location FROM locations ORDER BY location" // Must match cols in tablerow
+
+	rows, err := DBH.Query(sqlx)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	commaNeeded := false
+	for rows.Next() {
+
+		rows.Scan(&box.Location)
+		b, err := json.Marshal(box)
+		if err != nil {
+			panic(err)
+		}
+		if commaNeeded {
+			fmt.Fprint(w, ",\n")
+		}
+		fmt.Fprint(w, string(b))
+		commaNeeded = true
+
+	}
+	fmt.Fprintf(w, "\n]\n")
+
 }

@@ -58,16 +58,28 @@ func about(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<p>I am a server application running on a computer called %v</p>`, servername)
 	exPath := filepath.Dir(ex)
 	fmt.Fprintf(w, "<p>I'm installed in the folder <strong>%v</strong></p>", exPath)
-	tables := []string{"BOXES", "CONTENTS", "HISTORY", "LOCATIONS", "USERS"}
+
+	type tabledtl struct {
+		Table string
+		Csvok bool
+	}
+	tables := []tabledtl{{"boxes", true}, {"contents", true}, {"locations", true}, {"history", false}, {"users", false}}
 
 	fmt.Fprint(w, "<ul>")
 	for _, tab := range tables {
-		sqlx := "SELECT Count(*) As Rex FROM " + tab
+		sqlx := "SELECT Count(*) As Rex FROM " + tab.Table
 		rex := getValueFromDB(sqlx, "Rex", "0")
-		fmt.Fprintf(w, "<li>Table %v has <strong>%v</strong> records</li>", tab, rex)
+		fmt.Fprintf(w, `<li>Table <span class="keydata">%v</span> has <span class="keydata">%v</span> records `, tab.Table, rex)
+
+		if tab.Csvok {
+			fmt.Fprintf(w, ` &nbsp;&nbsp;[<a href="/csvexp?%v=%v">Save as CSV</a>]`, Param_Labels["table"], tab.Table)
+			fmt.Fprintf(w, ` &nbsp;&nbsp;[<a href="/jsonexp?%v=%v">Save as JSON</a>]`, Param_Labels["table"], tab.Table)
+		}
+
+		fmt.Fprint(w, `</li>`)
 	}
 	fmt.Fprint(w, "</ul><hr>")
 
-	fmt.Fprint(w, `<a href="/check">Check database</a>`)
+	fmt.Fprint(w, `<p><a class="btn" href="/check">Check database</a></p>`)
 
 }

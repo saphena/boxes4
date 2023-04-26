@@ -45,6 +45,7 @@ var Field_Labels = map[string]string{
 	"accesslevel":     "Accesslevel",
 	"storeref":        "Storage ref",
 	"overview":        "Contents",
+	"id":              "Id",
 }
 
 // These labels, which must be unique, are used in URLs
@@ -70,6 +71,7 @@ var Param_Labels = map[string]string{
 	"desc":            "qds",
 	"field":           "qfd",
 	"overview":        "qov",
+	"table":           "qtb",
 }
 
 // Used to easily alter labels seen by user
@@ -211,8 +213,28 @@ li					{ list-style-type: none; }
 .pagelinks			{ padding: 2px 0 6px; 0 }
 .numdocs,
 .numboxes			{ text-align: center; }
+.keydata			{ font-weight: bold; text-transform: uppercase; }
 
-td             		{ background: white; font-weight: bold; border-color: #bb0000; border-style: solid; border-width: 3px; }
+.btn {
+	-webkit-border-radius: 5;
+	-moz-border-radius: 5;
+	border-radius: 5px;
+	color: black;
+	font-size: 20px;
+	background: #9ea4a8;
+	padding: 10px 20px 10px 20px;
+	text-decoration: none;
+  }
+  
+  .btn:hover {
+	background: var(--link-hilite-back);
+	color: var(--link-hilite-fore);
+	text-decoration: none;
+	text-transform: none;
+  }
+  
+ 
+  td             		{ background: white; font-weight: bold; border-color: #bb0000; border-style: solid; border-width: 3px; }
 
 td.center			{ text-align: center; }
 td.left				{ text-align: left; }
