@@ -12,17 +12,24 @@ import (
 const dbx = "boxes.db"
 
 var DBH *sql.DB
-var err error
 var runvars AppVars
+var prefs userpreferences
 
 func main() {
 
+	cfgfile := flag.String("cfg", "", "Path to YAML configuration file")
 	serveport := flag.String("port", "", "HTTP port to serve on")
 	flag.Parse()
-	if *serveport == "" {
-		*serveport = "8081"
+	loadConfiguration(cfgfile)
+
+	if *serveport != "" {
+		prefs.HttpPort = *serveport
+	} else if prefs.HttpPort == "" {
+		prefs.HttpPort = "8081"
 	}
-	runvars = AppVars{`DOCUMENT ARCHIVES`, basicMenu, ""}
+
+	runvars = AppVars{prefs.AppTitle, ""}
+	var err error
 	DBH, err = sql.Open("sqlite3", dbx)
 	if err != nil {
 		panic(err)
@@ -41,8 +48,9 @@ func main() {
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)
 	http.HandleFunc("/update", update)
+	http.HandleFunc("/users", showusers)
 	http.HandleFunc("/secret", secret)
 
-	log.Fatal(http.ListenAndServe(":"+*serveport, nil))
+	log.Fatal(http.ListenAndServe(":"+prefs.HttpPort, nil))
 
 }

@@ -11,6 +11,34 @@ import (
 
 func showowners(w http.ResponseWriter, r *http.Request) {
 
+	var ownerlisthdr = `
+<table class="ownerlist">
+<thead>
+<tr>
+
+
+<th class="owner">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + prefs.Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+<th class="number">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + prefs.Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+</tr>
+</thead>
+<tbody>
+`
+
+	var ownerfileshdr = `
+<table class="ownerfiles">
+<thead>
+<tr>
+
+<th class="owner"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="client"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="name"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="contents"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="review_date"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
 	start_html(w, r)
 
 	owner, _ := url.QueryUnescape(r.FormValue(Param_Labels["owner"]))
@@ -66,6 +94,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		rows.Scan(&plv.Owner, &plv.NumFiles)
 		plv.OwnerUrl = template.URLQueryEscaper(plv.Owner)
+		plv.NumFilesX = commas(plv.NumFiles)
 		err := html.Execute(w, plv)
 		if err != nil {
 			panic(err)

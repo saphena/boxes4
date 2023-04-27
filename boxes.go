@@ -11,6 +11,23 @@ import (
 
 func showboxes(w http.ResponseWriter, r *http.Request) {
 
+	var boxtablehdr = `
+<table class="boxlist">
+<thead>
+<tr>
+
+
+<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="location"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + prefs.Field_Labels["location"] + `</a></th>
+<th class="storeref"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
+<th class="contents"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
+<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
+<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
 	if r.FormValue(Param_Labels["boxid"]) != "" {
 		showbox(w, r)
 		return
@@ -61,6 +78,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 		box.StorerefUrl = template.URLQueryEscaper(box.Storeref)
 		box.BoxidUrl = template.URLQueryEscaper(box.Boxid)
 		box.LocationUrl = template.URLQueryEscaper(box.Location)
+		box.NumFilesX = commas(box.NumFiles)
 		if box.Max_review_date == box.Min_review_date {
 			box.Date = box.Max_review_date
 			box.Single = true
@@ -78,6 +96,20 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 }
 
 func showbox(w http.ResponseWriter, r *http.Request) {
+
+	var boxhtml = `
+<table class="boxheader">
+
+
+<tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + prefs.Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td class="vdata">{{.Boxid}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["location"] + ` : </td><td class="vdata"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{.Location}}</a></td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["storeref"] + ` : </td><td class="vdata"><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["contents"] + ` : </td><td class="vdata">{{.Contents}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["numdocs"] + ` : </td><td class="vdata numdocs">{{.NumFilesX}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td class="vdata">{{.Date}}</td></tr>
+
+</table>
+`
 
 	if r.FormValue(Param_Labels["boxid"]) == "" {
 		show_search(w, r)
@@ -102,9 +134,12 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<p>Bugger! %v</p>", r.FormValue(Param_Labels["boxid"]))
 		return
 	}
+	xx := prefs.Field_Labels["boxid"]
+	fmt.Printf("xx=%v\n", xx)
 	var mindate, maxdate string
 	rows.Scan(&bv.Storeref, &bv.Boxid, &bv.Location, &bv.Contents, &bv.NumFiles, &mindate, &maxdate)
 	bv.Date = mindate + " to " + maxdate
+	bv.NumFilesX = commas(bv.NumFiles)
 	html, err := template.New("main").Parse(boxhtml)
 	if err != nil {
 		panic(err)
@@ -118,6 +153,22 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 }
 
 func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
+
+	var boxfileshdr = `
+<table class="boxfiles">
+<thead>
+<tr>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+
+
+</tr>
+</thead>
+<tbody>
+`
 
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)

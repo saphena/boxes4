@@ -43,7 +43,6 @@ var boxes_with_contents int
 var boxes_with_contents_updates int
 
 var orphaned_boxes []string
-var duff_key_boxes []string
 var empty_boxes []string
 var big_boxes []string
 
@@ -108,7 +107,7 @@ func check_boxes_with_contents(w http.ResponseWriter, r *http.Request) {
 			sqlx += ",min_review_date = '" + con_mindate + "'"
 			sqlx += ",max_review_date = '" + con_maxdate + "'"
 			sqlx += " WHERE boxid = '" + boxid + "'"
-			fmt.Fprintf(w, "%v<br>", sqlx)
+			//fmt.Fprintf(w, "%v<br>", sqlx)
 			update_commands = append(update_commands, sqlx)
 		}
 	}
@@ -119,7 +118,7 @@ func check_boxes_with_contents(w http.ResponseWriter, r *http.Request) {
 		DBExec(updt)
 	}
 	fmt.Fprintf(w, "<h2>Database integrity checked, all ok now.</h2>")
-	fmt.Fprintf(w, "<p>I checked a total of <strong>%v</strong> boxes with contents of which <strong>%v</strong> needed to be fixed.</p>", boxes_with_contents, boxes_with_contents_updates)
+	fmt.Fprintf(w, "<p>I checked a total of <strong>%v</strong> boxes with contents of which <strong>%v</strong> needed to be fixed.</p>", commas(boxes_with_contents), commas(boxes_with_contents_updates))
 
 }
 
@@ -142,7 +141,6 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 	boxes_with_contents_updates = 0
 
 	orphaned_boxes = []string{}
-	duff_key_boxes = []string{}
 	empty_boxes = []string{}
 	big_boxes = []string{}
 
@@ -154,16 +152,17 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 		for _, box := range orphaned_boxes {
 			sqlx := "UPDATE boxes SET numdocs=0 WHERE boxid='" + DBEscape(box) + "'"
 			res := DBExec(sqlx)
-			r, err := res.RowsAffected()
+			_, err := res.RowsAffected()
 			if err != nil {
 				panic(err)
 			}
-			fmt.Fprintf(w, "<p>Orphaned box '%v' updated=%v</p>", orphaned_boxes, r)
+			//fmt.Fprintf(w, "<p>Orphaned box '%v' updated=%v</p>", orphaned_boxes, r)
 		}
+		zbox := `<em title="Hebrew term for a bereaved parent. Robbed of offspring, like a bear whose cubs have been taken away.&#10;&#10;Box claimed to have contents but none were found.">shakul</em>`
 		if n == 1 {
-			fmt.Fprint(w, `<p>Found and zeroed one zombie box</p>`)
+			fmt.Fprintf(w, `<p>Found and zeroed one %v box</p>`, zbox)
 		} else {
-			fmt.Fprintf(w, `<p>Found and zeroed %v zombie boxes</p>`, n)
+			fmt.Fprintf(w, `<p>Found and zeroed %v %v boxes</p>`, commas(n), zbox)
 		}
 	}
 	//fmt.Println("Checked for zombies")
@@ -174,7 +173,7 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 		if n == 1 {
 			fmt.Fprintf(w, `<p>I found an empty box <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a>.</p>`, url.QueryEscape(empty_boxes[0]), empty_boxes[0])
 		} else {
-			fmt.Fprintf(w, `<p>I found %v empty boxes `, n)
+			fmt.Fprintf(w, `<p>I found %v empty boxes `, commas(n))
 			for _, box := range empty_boxes {
 				fmt.Fprintf(w, ` <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a> `, url.QueryEscape(box), box)
 			}
@@ -186,9 +185,9 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 	if len(big_boxes) > 0 {
 		n := len(big_boxes)
 		if n == 1 {
-			fmt.Fprintf(w, `<p>I found a very full (&gt;%v) box <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a>.</p>`, MAX_BOX_CONTENTS, url.QueryEscape(big_boxes[0]), big_boxes[0])
+			fmt.Fprintf(w, `<p>I found a very full (&gt;%v) box <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a>.</p>`, prefs.MaxBoxContents, url.QueryEscape(big_boxes[0]), big_boxes[0])
 		} else {
-			fmt.Fprintf(w, `<p>I found %v boxes with a very large (&gt;%v) number of contents: `, n, MAX_BOX_CONTENTS)
+			fmt.Fprintf(w, `<p>I found %v boxes with a very large (&gt;%v) number of contents: `, commas(n), prefs.MaxBoxContents)
 			for _, box := range big_boxes {
 				fmt.Fprintf(w, ` <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a> `, url.QueryEscape(box), box)
 			}
@@ -196,40 +195,33 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	find_duff_keys()
-	if len(duff_key_boxes) > 0 {
-		n := len(duff_key_boxes)
-		txt := "with files having a space before either partner initials or client number"
-		if n == 1 {
-			fmt.Fprintf(w, `<p>I found one box <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a> %v.</p>`, url.QueryEscape(duff_key_boxes[0]), duff_key_boxes[0], txt)
-		} else {
-			fmt.Fprintf(w, `<p>I found %v boxes %v:`, n, txt)
-			for _, box := range duff_key_boxes {
-				fmt.Fprintf(w, ` <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a> `, url.QueryEscape(box), box)
-			}
-			fmt.Fprintf(w, `</p>`)
-		}
+	n := find_duff_keys()
+	if n == 1 {
+		fmt.Fprint(w, "<p>One record had a key field fixed.</p>")
+	} else if n > 1 {
+		fmt.Fprintf(w, "<p>%v records had a key field fixed.</p>", commas(int(n)))
 	}
 
 	tx.Commit()
 
 }
 
-func find_duff_keys() {
+func find_duff_keys() int64 {
 
-	sqlx := "SELECT boxid FROM contents WHERE owner LIKE ' %' OR client LIKE ' %'"
-	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
+	update_commands := []string{}
+	update_commands = append(update_commands, "UPDATE locations SET location=Trim(location) WHERE location LIKE ' %'")
+	update_commands = append(update_commands, "UPDATE contents SET boxid=Trim(boxid),owner=Trim(owner),client=Trim(client) WHERE boxid LIKE ' %' OR owner LIKE ' %' OR client LIKE ' %'")
+	update_commands = append(update_commands, "UPDATE boxes SET boxid=TRIM(boxid),location=Trim(location),storeref=Trim(storeref) WHERE boxid LIKE ' %' OR location LIKE ' %' OR storeref LIKE ' %'")
+
+	var nrex int64
+	for _, uc := range update_commands {
+		//fmt.Println(uc)
+		ucr := DBExec(uc)
+		n, _ := ucr.RowsAffected()
+		nrex += n
 	}
-	defer rows.Close()
-	var boxid string
-	for rows.Next() {
-		rows.Scan(&boxid)
-		if !contains(duff_key_boxes, boxid) {
-			duff_key_boxes = append(duff_key_boxes, boxid)
-		}
-	}
+
+	return nrex
 }
 
 func list_orphaned_boxes() {
@@ -270,7 +262,7 @@ func list_empty_boxes() {
 
 func list_big_boxes() {
 
-	sqlx := "SELECT boxid FROM boxes WHERE numdocs>" + strconv.Itoa(MAX_BOX_CONTENTS)
+	sqlx := "SELECT boxid FROM boxes WHERE numdocs>" + strconv.Itoa(prefs.MaxBoxContents)
 	rows, err := DBH.Query(sqlx)
 	if err != nil {
 		panic(err)
@@ -338,7 +330,7 @@ func export_boxes_csv(w http.ResponseWriter) {
 	boxx := []string{"storeref", "boxid", "location", "overview", "numdocs", "min_review_date", "max_review_date"}
 
 	for ix, bx := range boxx {
-		boxx[ix] = strings.ReplaceAll(Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
+		boxx[ix] = strings.ReplaceAll(prefs.Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
 	}
 	sqlx := "SELECT * FROM boxes ORDER BY boxid" // Must match cols in tablerow
 
@@ -445,7 +437,7 @@ func export_contents_csv(w http.ResponseWriter) {
 	boxx := []string{"id", "boxid", "review_date", "contents", "owner", "name", "client"}
 
 	for ix, bx := range boxx {
-		boxx[ix] = strings.ReplaceAll(Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
+		boxx[ix] = strings.ReplaceAll(prefs.Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
 	}
 	sqlx := "SELECT * FROM contents ORDER BY boxid,client" // Must match cols in tablerow
 
@@ -552,7 +544,7 @@ func export_locations_csv(w http.ResponseWriter) {
 	boxx := []string{"location"}
 
 	for ix, bx := range boxx {
-		boxx[ix] = strings.ReplaceAll(Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
+		boxx[ix] = strings.ReplaceAll(prefs.Field_Labels[bx], "&#8470; of ", "Num") // Yes I know
 	}
 	sqlx := "SELECT location FROM locations ORDER BY location" // Must match cols in tablerow
 

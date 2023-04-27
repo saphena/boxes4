@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-// This is the maximum number of pagelinks to show
-// either side of the current page for paged lists
-const MaxAdjacentPagelinks = 10
-
 const ArrowPrevPage = `<span class="arrow">&#8666;</span>`
 const ArrowNextPage = `<span class="arrow">&#8667;</span>`
 
@@ -19,34 +15,6 @@ const ArrowNextPage = `<span class="arrow">&#8667;</span>`
 const ACCESSLEVEL_READONLY = 0
 const ACCESSLEVEL_UPDATE = 2
 const ACCESSLEVEL_SUPER = 9
-
-var ACCESSLEVELS = map[int]string{
-	ACCESSLEVEL_UPDATE:   "Can update",
-	ACCESSLEVEL_SUPER:    "Controller",
-	ACCESSLEVEL_READONLY: "View only",
-}
-
-const MAX_BOX_CONTENTS = 70
-
-var Field_Labels = map[string]string{
-	"boxid":           "BoxID",
-	"owner":           "Owner",
-	"contents":        "Contents",
-	"review_date":     "Review date",
-	"name":            "Name",
-	"client":          "Client",
-	"location":        "Location",
-	"numdocs":         "&#8470; of files",
-	"numboxes":        "&#8470; of boxes",
-	"min_review_date": "Min review date",
-	"max_review_date": "Max review date",
-	"userid":          "UserID",
-	"userpass":        "Password",
-	"accesslevel":     "Accesslevel",
-	"storeref":        "Storage ref",
-	"overview":        "Contents",
-	"id":              "Id",
-}
 
 // These labels, which must be unique, are used in URLs
 // URL components might be found using RE matching, hence the 'q'
@@ -74,49 +42,20 @@ var Param_Labels = map[string]string{
 	"table":           "qtb",
 }
 
-// Used to easily alter labels seen by user
-var Menu_Labels = map[string]string{
-	"search":    "search",
-	"locations": "locations",
-	"owners":    "owners",
-	"boxes":     "boxes",
-	"update":    "update",
-	"logout":    "logout",
-	"about":     "about",
-}
-
 type AppVars struct {
 	Apptitle string
-	Topmenu  string
 	Userid   string
 }
 
 var searchVars struct {
-	Apptitle string
-	NumBoxes int
-	NumDocs  int
-	NumLocns int
+	Apptitle  string
+	NumBoxes  int
+	NumBoxesX string
+	NumDocs   int
+	NumDocsX  string
+	NumLocns  int
+	NumLocnsX string
 }
-
-var searchHTML = `
-<p>Welcome to the {{.Apptitle}}.</p>
-
-<p>I'm currently minding <strong>{{.NumDocs}}</strong> individual files packed into
-<strong>{{.NumBoxes}}</strong> boxes stored in <strong>{{.NumLocns}}
-</strong> locations.</p>
-
-<form action="/find">
-<p>You can search the archives using a simple textsearch by entering the text you're looking for
-here <input type="text" autofocus name="` + Param_Labels["find"] + `"/><input type="submit" value="Find it!"/><br />
-You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a year.
-Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</p></form>
-<p>If you want to search only for records belonging to particular partners or locations, <a href="index.php?CMD=PARAMS">specify search options here</a>.</p>
-<form action="/boxes"
-    onsubmit="return !isBadLength(this.` + Param_Labels["boxid"] + `,1,
-    'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');">
-<p>If you want to look at a particular box, enter its ID here
-<input type="text" name="` + Param_Labels["boxid"] + `" size="10"/><input type="submit" value="Show box"/></p></form>
-`
 
 type searchResultsVar struct {
 	Boxid       string
@@ -138,22 +77,8 @@ type searchResultsVar struct {
 	Field       string
 }
 
-var searchResultsHdr1 = `
+const searchResultsHdr1 = `
 <p>{{if .Find}}I was looking for <span class="searchedfor">{{if .Field}}{{.Field}} = {{end}}{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
-`
-var searchResultsHdr2 = `
-<table class="searchresults">
-<thead>
-<tr>
-<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
-<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + Field_Labels["owner"] + `</a></th>
-<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
-<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
-<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
-<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
-</tr>
-</thead>
-<tbody>
 `
 
 var searchResultsLine = `
@@ -309,25 +234,6 @@ em	{font-style: italic; font-size: larger;}
 	margin-bottom: 3px;
 	width: 100%;
 }
-`
-
-var basicMenu = `
-[<a href="/search">` + Menu_Labels["search"] + `</a>] 
-[<a href="/locations">` + Menu_Labels["locations"] + `</a>] 
-[<a href="/owners">` + Menu_Labels["owners"] + `</a>] 
-[<a href="/boxes">` + Menu_Labels["boxes"] + `</a>] 
-[<a href="/update">` + Menu_Labels["update"] + `</a>] 
-[<a href="/about">` + Menu_Labels["about"] + `</a>] 
-
-`
-
-var updateMenu = `
-[<a href="/search">` + Menu_Labels["search"] + `</a>] 
-[<a href="/locations">` + Menu_Labels["locations"] + `</a>] 
-[<a href="/owners">` + Menu_Labels["owners"] + `</a>] 
-[<a href="/boxes">` + Menu_Labels["boxes"] + `</a>] 
-[<a href="/logout">` + Menu_Labels["logout"] + ` {{.Userid}}</a>] 
-[<a href="/about">` + Menu_Labels["about"] + `</a>] 
 `
 
 var html1 = `
@@ -489,57 +395,33 @@ type locationlistvars struct {
 	LocationUrl string
 	Id          int
 	NumBoxes    int
+	NumBoxesX   string
 	Desc        bool
 	NumOrder    bool
 	Single      bool
 }
 
-var locationlisthdr = `
-<table class="locationlist">
-<thead>
-<tr>
-
-
-<th class="location">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-</tr>
-</thead>
-<tbody>
-`
-
 var locationlistline = `
 <tr>
 <td class="location">{{if .Single}}{{else}}{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{end}}{{.Location}}{{if .Single}}{{else}}{{if .Location}}</a>{{end}}{{end}}</td>
-<td class="numboxes">{{.NumBoxes}}</td>
+<td class="numboxes">{{.NumBoxesX}}</td>
 </tr>
 `
 
 type ownerlistvars struct {
-	Owner    string
-	OwnerUrl string
-	NumFiles int
-	Desc     bool
-	NumOrder bool
-	Single   bool
+	Owner     string
+	OwnerUrl  string
+	NumFiles  int
+	NumFilesX string
+	Desc      bool
+	NumOrder  bool
+	Single    bool
 }
-
-var ownerlisthdr = `
-<table class="ownerlist">
-<thead>
-<tr>
-
-
-<th class="owner">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-<th class="number">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-</tr>
-</thead>
-<tbody>
-`
 
 var ownerlistline = `
 <tr>
 <td class="owner">{{if .Single}}{{else}}{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{end}}{{.Owner}}{{if .Single}}{{else}}{{if .Owner}}</a>{{end}}{{end}}</td>
-<td class="number">{{.NumFiles}}</td>
+<td class="number">{{.NumFilesX}}</td>
 </tr>
 `
 
@@ -560,21 +442,6 @@ type ownerfilesvar struct {
 	Date      string
 	Desc      bool
 }
-
-var ownerfileshdr = `
-<table class="ownerfiles">
-<thead>
-<tr>
-
-<th class="owner"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
-<th class="client"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
-<th class="name"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
-<th class="contents"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
-<th class="review_date"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
-</tr>
-</thead>
-<tbody>
-`
 
 var ownerfilesline = `
 <tr>
@@ -601,6 +468,7 @@ type boxvars struct {
 	StorerefUrl     string
 	Contents        string
 	NumFiles        int
+	NumFilesX       string
 	Overview        string
 	Min_review_date string
 	Max_review_date string
@@ -609,59 +477,13 @@ type boxvars struct {
 	Single          bool
 }
 
-var boxhtml = `
-<table class="boxheader">
-
-
-<tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td class="vdata">{{.Boxid}}</td></tr>
-<tr><td class="vlabel">` + Field_Labels["location"] + ` : </td><td class="vdata"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{.Location}}</a></td></tr>
-<tr><td class="vlabel">` + Field_Labels["storeref"] + ` : </td><td class="vdata"><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td></tr>
-<tr><td class="vlabel">` + Field_Labels["contents"] + ` : </td><td class="vdata">{{.Contents}}</td></tr>
-<tr><td class="vlabel">` + Field_Labels["numdocs"] + ` : </td><td class="vdata numdocs">{{.NumFiles}}</td></tr>
-<tr><td class="vlabel">` + Field_Labels["review_date"] + ` : </td><td class="vdata">{{.Date}}</td></tr>
-
-</table>
-`
-
-var boxtablehdr = `
-<table class="boxlist">
-<thead>
-<tr>
-
-
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
-<th class="location"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + Field_Labels["location"] + `</a></th>
-<th class="storeref"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + Field_Labels["storeref"] + `</a></th>
-<th class="contents"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + Field_Labels["overview"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + Field_Labels["numdocs"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
-</tr>
-</thead>
-<tbody>
-`
-
-// Header for box listing by location
-var locboxtablehdr = `
-<table class="boxlist">
-<thead>
-<tr>
-<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + Field_Labels["boxid"] + `</a></th>
-<th class="storeref"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + Field_Labels["storeref"] + `</a></th>
-<th class="contents"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + Field_Labels["overview"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + Field_Labels["numdocs"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
-</tr>
-</thead>
-<tbody>
-`
-
 var boxtablerow = `
 <tr>
 <td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
 <td class="location">{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{.Location}}{{if .Location}}</a>{{end}}</td>
 <td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 <td class="overview">{{.Overview}}</td>
-<td class="numdocs">{{.NumFiles}}</td>
+<td class="numdocs">{{.NumFilesX}}</td>
 <td class="review_date">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.Date}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 </tr>
 `
@@ -675,22 +497,6 @@ var locboxtablerow = `
 <td class="numdocs">{{.NumFiles}}</td>
 <td class="review_date">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.Date}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 </tr>
-`
-
-var boxfileshdr = `
-<table class="boxfiles">
-<thead>
-<tr>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + Field_Labels["owner"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + Field_Labels["client"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + Field_Labels["name"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + Field_Labels["contents"] + `</a></th>
-<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + Field_Labels["review_date"] + `</a></th>
-
-
-</tr>
-</thead>
-<tbody>
 `
 
 type boxfilevars struct {
@@ -721,20 +527,26 @@ const boxfilestrailer = `
 </table>
 `
 
-var loginscreen = `
-<main>
-<h2>Authentication required</h2>
-<form action="/login" method="post">
-<label for="userid">` + Field_Labels["userid"] + ` </label>
-<input type="text" autofocus id="userid" name="` + Param_Labels["userid"] + `">
-<label for="userpass">` + Field_Labels["userpass"] + ` </label>
-<input type="password" id="userpass" name="` + Param_Labels["userpass"] + `">
-<input type="submit" value="Authenticate!">
-</form>
-</main>
-`
-
 func start_html(w http.ResponseWriter, r *http.Request) {
+	var basicMenu = `
+	[<a href="/search">` + prefs.Menu_Labels["search"] + `</a>] 
+	[<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a>] 
+	[<a href="/owners">` + prefs.Menu_Labels["owners"] + `</a>] 
+	[<a href="/boxes">` + prefs.Menu_Labels["boxes"] + `</a>] 
+	[<a href="/update">` + prefs.Menu_Labels["update"] + `</a>] 
+	[<a href="/about">` + prefs.Menu_Labels["about"] + `</a>] 
+	
+	`
+
+	var updateMenu = `
+	[<a href="/search">` + prefs.Menu_Labels["search"] + `</a>] 
+	[<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a>] 
+	[<a href="/owners">` + prefs.Menu_Labels["owners"] + `</a>] 
+	[<a href="/boxes">` + prefs.Menu_Labels["boxes"] + `</a>] 
+	[<a href="/users">` + prefs.Menu_Labels["users"] + `</a>]
+	[<a href="/logout">` + prefs.Menu_Labels["logout"] + ` {{.Userid}}</a>] 
+	[<a href="/about">` + prefs.Menu_Labels["about"] + `</a>] 
+	`
 
 	var ht string
 	updating, usr, _ := updateok(r)
@@ -801,12 +613,12 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="prevpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Previous page">%v</a>&nbsp;&nbsp;`, cmd, varx, prevPageOffset, ArrowPrevPage)
 	}
 	minPage := 1
-	if thisPage > MaxAdjacentPagelinks {
-		minPage = thisPage - MaxAdjacentPagelinks
+	if thisPage > prefs.MaxAdjacentPagelinks {
+		minPage = thisPage - prefs.MaxAdjacentPagelinks
 	}
 	maxPage := numPages
-	if thisPage < numPages-MaxAdjacentPagelinks {
-		maxPage = thisPage + MaxAdjacentPagelinks
+	if thisPage < numPages-prefs.MaxAdjacentPagelinks {
+		maxPage = thisPage + prefs.MaxAdjacentPagelinks
 	}
 	for pageNum := 1; pageNum <= numPages; pageNum++ {
 		if pageNum == 1 || pageNum == numPages || (pageNum >= minPage && pageNum <= maxPage) {
@@ -817,7 +629,7 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 
 				fmt.Fprintf(w, `[<a href="/%v?%v`+Param_Labels["offset"]+`=%v" title="">%v</a>]`, cmd, varx, pOffset, strconv.Itoa(pageNum))
 			}
-		} else if pageNum == thisPage-(MaxAdjacentPagelinks+1) || pageNum == thisPage+MaxAdjacentPagelinks+1 {
+		} else if pageNum == thisPage-(prefs.MaxAdjacentPagelinks+1) || pageNum == thisPage+prefs.MaxAdjacentPagelinks+1 {
 			fmt.Fprintf(w, " ... ")
 		}
 	}
@@ -847,3 +659,71 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 
 	return res
 }
+
+type userpreferences struct {
+	HttpPort             string            `yaml:"httpPort"`
+	MaxAdjacentPagelinks int               `yaml:"MaxAdjacentPagelinks"`
+	Accesslevels         map[int]string    `yaml:"AccesslevelNames"`
+	MaxBoxContents       int               `yaml:"MaxBoxContents"`
+	Field_Labels         map[string]string `yaml:"FieldLabels"`
+	Menu_Labels          map[string]string `yaml:"MenuLabels"`
+	AppTitle             string            `yaml:"AppTitle"`
+}
+
+const partial_config = `
+
+httpPort: 4042
+
+`
+
+// YAML format configuration
+const internal_config = `
+
+
+AppTitle: 'document archives'
+
+httpPort: 8081
+
+# This is the maximum number of pagelinks to show
+# either side of the current page for paged lists
+MaxAdjacentPagelinks: 10
+
+AccesslevelNames: 
+  0: 'View only'
+  2: 'Can update'
+  9: 'Controller'
+
+
+# Boxes containing more than this number of files are considered
+# to be 'very large'
+MaxBoxContents: 70
+
+FieldLabels:
+  boxid:           'BoxID'
+  owner:           'Owner'
+  contents:        'Contents'
+  review_date:     'Review date'
+  name:            'Name'
+  client:          'Client'
+  location:        'Location'
+  numdocs:         '&#8470; of files'
+  numboxes:        '&#8470; of boxes'
+  min_review_date: 'Min review date'
+  max_review_date: 'Max review date'
+  userid:          'UserID'
+  userpass:        'Password'
+  accesslevel:     'Accesslevel'
+  storeref:        'Storage ref'
+  overview:        'Contents'
+  id:              'Id'
+
+MenuLabels:
+  search:    search
+  locations: locations
+  owners:    owners
+  boxes:     boxes
+  update:    update
+  users:     users
+  logout:    logout
+  about:     about
+`

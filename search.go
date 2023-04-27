@@ -11,21 +11,47 @@ import (
 
 func exec_search(w http.ResponseWriter, r *http.Request) {
 
+	// This needs to be here in order to collect runtime values from prefs
+	var searchResultsHdr2 = `
+	<table class="searchresults">
+	<thead>
+	<tr>
+	<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+	<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+	<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+	<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+	<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+	<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+	</tr>
+	</thead>
+	<tbody>
+	`
+
 	start_html(w, r)
 
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
 	if r.FormValue(Param_Labels["find"]) != "" {
 		if r.FormValue(Param_Labels["field"]) != "" {
-			sqlx += `WHERE ` + r.FormValue((Param_Labels["field"])) + `= '?'`
+			sqlx += `WHERE `
+			if r.FormValue((Param_Labels["field"])) == "review_date" {
+				sqlx += `review_date LIKE '?%'`
+			} else if r.FormValue((Param_Labels["field"])) == "contents" {
+				sqlx += `contents LIKE '%?%'`
+			} else if r.FormValue((Param_Labels["field"])) == "name" {
+				sqlx += `name LIKE '%?%'`
+			} else {
+				sqlx += r.FormValue((Param_Labels["field"])) + `= '?'`
+			}
 		} else {
 			sqlx += `WHERE ((contents.boxid = '?')
-		OR (boxes.storeref = '?') 
-		OR (boxes.overview LIKE '%?%')
-        OR (contents.owner = '?') 
-        OR (contents.client = '?') 
-        OR (contents.contents LIKE '%?%') 
-        OR (contents.name LIKE '%?%')) 
-		OR (contents.review_date = '?')
+			OR (boxes.storeref = '?') 
+			OR (boxes.overview LIKE '%?%')
+        	OR (contents.owner = '?') 
+        	OR (contents.client = '?') 
+        	OR (contents.contents LIKE '%?%') 
+        	OR (contents.name LIKE '%?%')) 
+			OR (contents.review_date = '?')
+			OR (contents.review_date LIKE '?%')
 		`
 		}
 	}
@@ -55,7 +81,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Find = x
 	res.FindUrl = template.URLQueryEscaper(res.Find)
 	res.Found = strconv.Itoa(FoundRecCount)
-	res.Field = Field_Labels[r.FormValue(Param_Labels["field"])]
+	res.Field = prefs.Field_Labels[r.FormValue(Param_Labels["field"])]
 
 	html, err := template.New("searchResultsHdr1").Parse(searchResultsHdr1)
 	if err != nil {
@@ -102,12 +128,47 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 func show_search(w http.ResponseWriter, r *http.Request) {
 
+	var searchHTML = `
+<p>I'm currently minding <strong>{{.NumDocsX}}</strong> individual files packed into
+<strong>{{.NumBoxesX}}</strong> boxes stored in <strong>{{.NumLocnsX}}
+</strong> locations.</p>
+
+<form action="/find">
+<main>You can search the archives using a simple textsearch by entering the text you're looking for
+here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
+<details title="Fields to search" style="display:inline;">
+<summary><strong>&#8799;</strong></summary>
+<select name="` + Param_Labels["field"] + `">
+<option value="">any field</option>
+<option value="client">` + prefs.Field_Labels["client"] + `</option>
+<option value="name">` + prefs.Field_Labels["name"] + `</option>
+<option value="owner">` + prefs.Field_Labels["owner"] + `</option>
+<option value="contents">` + prefs.Field_Labels["contents"] + `</option>
+<option value="review_date">` + prefs.Field_Labels["review_date"] + `</option>
+<option value="storeref">` + prefs.Field_Labels["storeref"] + `</option>
+<option value="boxid">` + prefs.Field_Labels["boxid"] + `</option>
+</select>
+</details>
+<input type="submit" value="Find it!"/><br />
+You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a review date or year.<br>
+Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</main></form>
+<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="index.php?CMD=PARAMS">specify search options here</a>.</p>
+<form action="/boxes"
+    onsubmit="return !isBadLength(this.` + Param_Labels["boxid"] + `,1,
+    'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');">
+<p>If you want to look at a particular box, enter its ID here
+<input type="text" name="` + Param_Labels["boxid"] + `" size="10"/><input type="submit" value="Show box"/></p></form>
+`
+
 	start_html(w, r)
 
 	searchVars.Apptitle = "DOCUMENT ARCHIVES"
 	searchVars.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM boxes", "Rex", "-1"))
+	searchVars.NumBoxesX = commas(searchVars.NumBoxes)
 	searchVars.NumDocs, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM contents", "Rex", "-1"))
+	searchVars.NumDocsX = commas(searchVars.NumDocs)
 	searchVars.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "Rex", "-1"))
+	searchVars.NumLocnsX = commas(searchVars.NumLocns)
 
 	html, err := template.New("searchHTML").Parse(searchHTML)
 	if err != nil {

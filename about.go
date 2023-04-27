@@ -12,7 +12,7 @@ import (
 func about(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w, r)
-	fmt.Fprint(w, "<h2>BOXES version 4.0</h2>")
+	fmt.Fprint(w, "<h2>BOXES4 version 0.1</h2>")
 	fmt.Fprint(w, `<p class='copyrite'>Copyright &copy; 2023 Bob Stammers <a href="mailto:stammers.bob@gmail.com">stammers.bob@gmail.com</a> </p>`)
 
 	ex, err := os.Executable()
@@ -34,7 +34,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !updating {
-		fmt.Fprint(w, `<p>Click [update] above and login as a user with CONTROLLER accesslevel to get more info. `)
+		fmt.Fprint(w, `<p>Click [`+prefs.Field_Labels["update"]+`] above and login as a user with CONTROLLER accesslevel to get more info. `)
 		var uids []string
 		rows, err := DBH.Query("SELECT userid FROM users WHERE accesslevel >= " + strconv.Itoa(ACCESSLEVEL_UPDATE))
 		if err != nil {
@@ -51,7 +51,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, `<p>You are logged in as <span class="upper">%v</span> with access level <span class="upper">%v</span></p><hr>`, usr, ACCESSLEVELS[alevel.(int)])
+	fmt.Fprintf(w, `<p>You are logged in as <span class="upper">%v</span> with access level <span class="upper">%v</span></p><hr>`, usr, prefs.Accesslevels[alevel.(int)])
 
 	servername, _ := os.Hostname()
 
@@ -60,19 +60,22 @@ func about(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "<p>I'm installed in the folder <strong>%v</strong></p>", exPath)
 
 	type tabledtl struct {
-		Table string
-		Csvok bool
+		Table  string
+		Csvok  bool
+		Jsonok bool
 	}
-	tables := []tabledtl{{"boxes", true}, {"contents", true}, {"locations", true}, {"history", false}, {"users", false}}
+	tables := []tabledtl{{"boxes", true, true}, {"contents", true, true}, {"locations", true, true}, {"users", false, false}} // history omitted
 
 	fmt.Fprint(w, "<ul>")
 	for _, tab := range tables {
 		sqlx := "SELECT Count(*) As Rex FROM " + tab.Table
-		rex := getValueFromDB(sqlx, "Rex", "0")
-		fmt.Fprintf(w, `<li>Table <span class="keydata">%v</span> has <span class="keydata">%v</span> records `, tab.Table, rex)
+		rex, _ := strconv.Atoi(getValueFromDB(sqlx, "Rex", "0"))
+		fmt.Fprintf(w, `<li>Table <span class="keydata">%v</span> has <span class="keydata">%v</span> records `, tab.Table, commas(rex))
 
 		if tab.Csvok {
 			fmt.Fprintf(w, ` &nbsp;&nbsp;[<a href="/csvexp?%v=%v">Save as CSV</a>]`, Param_Labels["table"], tab.Table)
+		}
+		if tab.Jsonok {
 			fmt.Fprintf(w, ` &nbsp;&nbsp;[<a href="/jsonexp?%v=%v">Save as JSON</a>]`, Param_Labels["table"], tab.Table)
 		}
 
