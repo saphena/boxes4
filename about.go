@@ -70,7 +70,8 @@ func about(w http.ResponseWriter, r *http.Request) {
 	for _, tab := range tables {
 		sqlx := "SELECT Count(*) As Rex FROM " + tab.Table
 		rex, _ := strconv.Atoi(getValueFromDB(sqlx, "Rex", "0"))
-		fmt.Fprintf(w, `<li>Table <span class="keydata">%v</span> has <span class="keydata">%v</span> records `, tab.Table, commas(rex))
+		tabname := prefs.Table_Labels[tab.Table]
+		fmt.Fprintf(w, `<li>Table <span class="keydata">%v</span> has <span class="keydata">%v</span> records `, tabname, commas(rex))
 
 		if tab.Csvok {
 			fmt.Fprintf(w, ` &nbsp;&nbsp;[<a href="/csvexp?%v=%v">Save as CSV</a>]`, Param_Labels["table"], tab.Table)

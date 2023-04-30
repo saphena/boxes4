@@ -64,7 +64,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	session.Values["authenticated"] = true
 	session.Values["userid"] = r.FormValue(Param_Labels["userid"])
 	session.Values["accesslevel"] = alevel
-	session.Options.MaxAge = 0
+	session.Options.MaxAge = 60 * prefs.CookieMaxAgeMins
 	session.Options.HttpOnly = true
 	session.Options.SameSite = http.SameSiteStrictMode
 

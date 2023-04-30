@@ -80,7 +80,10 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Date = order_dir(r, "review_date")
 	res.Find = x
 	res.FindUrl = template.URLQueryEscaper(res.Find)
-	res.Found = strconv.Itoa(FoundRecCount)
+	res.Found = commas(FoundRecCount)
+	res.Found0 = FoundRecCount == 0
+	res.Found1 = FoundRecCount == 1
+	res.Found2 = FoundRecCount > 1
 	res.Field = prefs.Field_Labels[r.FormValue(Param_Labels["field"])]
 
 	html, err := template.New("searchResultsHdr1").Parse(searchResultsHdr1)
@@ -133,12 +136,12 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 <strong>{{.NumBoxesX}}</strong> boxes stored in <strong>{{.NumLocnsX}}
 </strong> locations.</p>
 
-<form action="/find">
+<form action="/find" onsubmit="if (this.fld.value=='') { this.fld.name=''; }">
 <main>You can search the archives using a simple textsearch by entering the text you're looking for
 here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
 <details title="Fields to search" style="display:inline;">
 <summary><strong>&#8799;</strong></summary>
-<select name="` + Param_Labels["field"] + `">
+<select id="fld" name="` + Param_Labels["field"] + `">
 <option value="">any field</option>
 <option value="client">` + prefs.Field_Labels["client"] + `</option>
 <option value="name">` + prefs.Field_Labels["name"] + `</option>

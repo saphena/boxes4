@@ -282,16 +282,20 @@ func csvexp(w http.ResponseWriter, r *http.Request) {
 		show_search(w, r)
 		return
 	}
+	txtname := r.FormValue(Param_Labels["textfile"])
+	if txtname == "" {
+		txtname = prefs.Table_Labels[tab] + ".csv"
+	}
 	if tab == "boxes" {
-		export_boxes_csv(w)
+		export_boxes_csv(w, txtname)
 		return
 	}
 	if tab == "contents" {
-		export_contents_csv(w)
+		export_contents_csv(w, txtname)
 		return
 	}
 	if tab == "locations" {
-		export_locations_csv(w)
+		export_locations_csv(w, txtname)
 		return
 	}
 	show_search(w, r)
@@ -309,22 +313,26 @@ func jsonexp(w http.ResponseWriter, r *http.Request) {
 		show_search(w, r)
 		return
 	}
+	txtname := r.FormValue(Param_Labels["textfile"])
+	if txtname == "" {
+		txtname = prefs.Table_Labels[tab] + ".json"
+	}
 	if tab == "boxes" {
-		export_boxes_json(w)
+		export_boxes_json(w, txtname)
 		return
 	}
 	if tab == "contents" {
-		export_contents_json(w)
+		export_contents_json(w, txtname)
 		return
 	}
 	if tab == "locations" {
-		export_locations_json(w)
+		export_locations_json(w, txtname)
 		return
 	}
 	show_search(w, r)
 }
 
-func export_boxes_csv(w http.ResponseWriter) {
+func export_boxes_csv(w http.ResponseWriter, txtname string) {
 
 	var box table_boxes
 	boxx := []string{"storeref", "boxid", "location", "overview", "numdocs", "min_review_date", "max_review_date"}
@@ -390,17 +398,17 @@ func export_boxes_csv(w http.ResponseWriter) {
 	writer.Flush()
 
 	w.Header().Set("Content-Type", "text/csv") // setting the content type header to text/csv
-	w.Header().Set("Content-Disposition", "attachment;filename=boxes.csv")
+	w.Header().Set("Content-Disposition", "attachment;filename="+txtname)
 	w.Write(buffer.Bytes())
 
 }
 
-func export_boxes_json(w http.ResponseWriter) {
+func export_boxes_json(w http.ResponseWriter, txtname string) {
 
 	var box table_boxes
 
 	w.Header().Set("Content-Type", "text/json") // setting the content type header to text/json
-	w.Header().Set("Content-Disposition", "attachment;filename=boxes.json")
+	w.Header().Set("Content-Disposition", "attachment;filename="+txtname)
 
 	fmt.Fprintln(w, "[")
 
@@ -431,7 +439,7 @@ func export_boxes_json(w http.ResponseWriter) {
 
 }
 
-func export_contents_csv(w http.ResponseWriter) {
+func export_contents_csv(w http.ResponseWriter, txtname string) {
 
 	var box table_contents
 	boxx := []string{"id", "boxid", "review_date", "contents", "owner", "name", "client"}
@@ -497,17 +505,17 @@ func export_contents_csv(w http.ResponseWriter) {
 	writer.Flush()
 
 	w.Header().Set("Content-Type", "text/csv") // setting the content type header to text/csv
-	w.Header().Set("Content-Disposition", "attachment;filename=contents.csv")
+	w.Header().Set("Content-Disposition", "attachment;filename="+txtname)
 	w.Write(buffer.Bytes())
 
 }
 
-func export_contents_json(w http.ResponseWriter) {
+func export_contents_json(w http.ResponseWriter, txtname string) {
 
 	var box table_contents
 
 	w.Header().Set("Content-Type", "text/json") // setting the content type header to text/json
-	w.Header().Set("Content-Disposition", "attachment;filename=contents.json")
+	w.Header().Set("Content-Disposition", "attachment;filename="+txtname)
 
 	fmt.Fprintln(w, "[")
 
@@ -538,7 +546,7 @@ func export_contents_json(w http.ResponseWriter) {
 
 }
 
-func export_locations_csv(w http.ResponseWriter) {
+func export_locations_csv(w http.ResponseWriter, txtname string) {
 
 	var box table_boxes
 	boxx := []string{"location"}
@@ -580,17 +588,17 @@ func export_locations_csv(w http.ResponseWriter) {
 	writer.Flush()
 
 	w.Header().Set("Content-Type", "text/csv") // setting the content type header to text/csv
-	w.Header().Set("Content-Disposition", "attachment;filename=locations.csv")
+	w.Header().Set("Content-Disposition", "attachment;filename="+txtname)
 	w.Write(buffer.Bytes())
 
 }
 
-func export_locations_json(w http.ResponseWriter) {
+func export_locations_json(w http.ResponseWriter, txtname string) {
 
 	var box table_locations
 
 	w.Header().Set("Content-Type", "text/json") // setting the content type header to text/json
-	w.Header().Set("Content-Disposition", "attachment;filename=locations.json")
+	w.Header().Set("Content-Disposition", "attachment;filename="+txtname)
 
 	fmt.Fprintln(w, "[")
 

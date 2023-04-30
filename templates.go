@@ -6,7 +6,12 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+
+	_ "embed"
 )
+
+//go:embed boxes.js
+var script string
 
 const ArrowPrevPage = `<span class="arrow">&#8666;</span>`
 const ArrowNextPage = `<span class="arrow">&#8667;</span>`
@@ -32,7 +37,7 @@ var Param_Labels = map[string]string{
 	"userid":          "quu",
 	"userpass":        "qup",
 	"accesslevel":     "qal",
-	"pagesize":        "qps",
+	"pagesize":        "qps", // Hardcoded in boxes.js!
 	"offset":          "qof",
 	"order":           "qor",
 	"find":            "qqq",
@@ -40,11 +45,17 @@ var Param_Labels = map[string]string{
 	"field":           "qfd",
 	"overview":        "qov",
 	"table":           "qtb",
+	"textfile":        "qtx",
+	"passchg":         "zpc",
+	"single":          "z11",
+	"oldpass":         "zop",
+	"newpass":         "znp",
 }
 
 type AppVars struct {
 	Apptitle string
 	Userid   string
+	Script   string
 }
 
 var searchVars struct {
@@ -75,10 +86,13 @@ type searchResultsVar struct {
 	StorerefUrl string
 	Overview    string
 	Field       string
+	Found0      bool
+	Found1      bool
+	Found2      bool
 }
 
 const searchResultsHdr1 = `
-<p>{{if .Find}}I was looking for <span class="searchedfor">{{if .Field}}{{.Field}} = {{end}}{{.Find}}</span> and{{end}} I found {{.Found}} matches.</p>
+<p>{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}{{if .Field}} in {{.Field}}{{end}}</span> and{{end}} I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
 `
 
 var searchResultsLine = `
@@ -97,144 +111,8 @@ const searchResultsTrailer = `
 </table>
 `
 
-const css = `
-:root	{
-	--regular-background	: #ffffe0;
-	--regular-foreground	: black;
-	--hilite-background		: yellow;
-	--hilite-foreground		: black;
-	--link-color			: blue;
-	--link-hilite-fore		: black;
-	--link-hilite-back		: orange;
-}
-body 				{
-	background-color		: var(--regular-background);
-	font-family				: Verdana, Arial, Helvetica, sans-serif; 
-	font-size				: 16px; /*calc(8pt + 1vmin); */
-	margin					: 1em;
-	margin-top				: 6px;
-	margin-bottom			: 6px;
-}
-a					{ 
-						text-decoration: none;  
-						color: var(--link-color); 
-						font-family: monospace; 
-						font-size: 1.2em;
-						padding: 0 .5em 0 .5em; 
-						/* &#8645; */
-					}
-a:visited			{ color: var(--link-color); }
-a:hover             { 
-						text-transform: uppercase; 
-						font-weight: bold;
-						color: var(--link-hilite-fore);
-						background-color: var(--link-hilite-back);
-					}
-p.center			{ text-align: center; }
-address 			{ font-size: 8pt; }
-td 					{ padding: 4px; text-align: left; }
-li					{ list-style-type: none; }
-
-.pagelinks			{ padding: 2px 0 6px; 0 }
-.numdocs,
-.numboxes			{ text-align: center; }
-.keydata			{ font-weight: bold; text-transform: uppercase; }
-
-.btn {
-	-webkit-border-radius: 5;
-	-moz-border-radius: 5;
-	border-radius: 5px;
-	color: black;
-	font-size: 20px;
-	background: #9ea4a8;
-	padding: 10px 20px 10px 20px;
-	text-decoration: none;
-  }
-  
-  .btn:hover {
-	background: var(--link-hilite-back);
-	color: var(--link-hilite-fore);
-	text-decoration: none;
-	text-transform: none;
-  }
-  
- 
-  td             		{ background: white; font-weight: bold; border-color: #bb0000; border-style: solid; border-width: 3px; }
-
-td.center			{ text-align: center; }
-td.left				{ text-align: left; }
-td.right			{ text-align: right; }
-td.category			{ background-color: #c8c8e8; font-weight: bold; }
-td.col-1			{ background-color: #d8d8d8; }
-td.col-2			{ background-color: #e8e8e8; }
-td.form-title		{ background-color: #ffffff; font-weight: bold; }
-td.nopad			{ padding: 0px; }
-td.spacer			{ background-color: #ffffff; font-size: 1pt; line-height: 0.1; }
-td.small-caption	{ font-size: 8pt; }
-td.print			{ font-size: 8pt; text-align: center; }
-
-tr.center			{ text-align: center; }
-tr.row-1			{ background-color: #d8d8d8; }
-tr.row-2			{ background-color: #e8e8e8; }
-tr.spacer			{ background-color: #ffffff; }
-tr.row-category		{ background-color: #c8c8e8; font-weight: bold; }
-
-/* Login Info */
-td.login-info-left	{ width: 33%; padding: 0px; text-align: left; }
-td.login-info-middle{ width: 33%; padding: 0px; text-align: center; }
-td.login-info-right	{ width: 33%; padding: 0px; text-align: right; }
-span.login-username	{ font-style: italic; }
-span.login-time		{ font-size: 8pt; font-style: italic; }
-
-/* Menu */
-td.menu				{ background-color: #e8e8e8; text-align: center; }
-
-/* Quick Summary */
-td.quick-summary-left	{ width: 50%; text-align: left; }
-td.quick-summary-right	{ width: 50%; text-align: right; }
-
-/* News */
-td.news-heading		{ background-color: #d8d8d8; text-align: left; border-bottom: 1px solid #000000; }
-td.news-body		{ background-color: #ffffff; padding: 16px; }
-span.news-headline	{ font-weight: bold; }
-span.news-date		{ font-style: italic; font-size: 8pt; }
-
-
-th                  { text-align: left; padding: 2px;}
-th.vertical         { text-align: right; font-weight: normal;}
-h1                  { 
-						text-align: center; 
-						text-transform:uppercase; 
-						/* color: blue; */
-						text-shadow: -3px 3px 3px rgba(26, 205, 214, 1);
-						}
-
-.copyrite	{ font-size: small; }
-.infohilite		{ background-color: yellow; color: black; font-weight: bold; padding-top: 4px; padding-bottom: 4px; }
-.errormsg           { background-color: red; color: yellow; padding: 4px;}
-.errordata          { background-color: red; color: white; font-weight: bold; font-size: larger; padding: 4px;}
-.searchedfor		{ 
-						background-color: var(--hilite-background); 
-						color: var(--hilite-foreground); 
-						font-weight: bold;
-						font-size: larger;
-						padding: 4px;
-					}
-.number             { text-align: right; }
-.ourbox             { font-weight: bold; color: #bb0000; }
-.upper				{ text-transform: uppercase; }
-.lower				{ text-transform: lowercase; }
-
-em	{font-style: italic; font-size: larger;}
-.arrow				{ font-size: large; }
-.topmenu 			{
-	display: block;
-	border-bottom: solid;
-	padding-bottom: 3px;
-	margin-bottom: 3px;
-	width: 100%;
-}
-`
+//go:embed boxes.css
+var css string
 
 var html1 = `
 <!DOCTYPE html>
@@ -243,139 +121,7 @@ var html1 = `
 <title>{{.Apptitle}}{{if .Userid}}&#9997;{{end}}</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>
-function isBadLength(sObj,iLen,sMsg) {
-
-    if (sObj.value.length < iLen) {
-      alert(sMsg)
-      sObj.focus()
-      return true
-    }
-  }
-
-function changepagesize(sel) {
-	let newpagesize = sel.value;
-	let url = window.location.href;
-	// Need to strip out any existing PAGESIZE
-	let ps = url.match(/(&|\?)` + Param_Labels["pagesize"] + `\=\d+/);
-	console.log('url="'+url+'"; ps="'+ps+'"; NP='+newpagesize);
-	let cleanurl = url;
-	if (ps) {
-		cleanurl = cleanurl.replace(ps[0],'') + ps[1];
-	} else {
-		if (cleanurl.indexOf('?') < 0) {
-			cleanurl += '?';
-		} else {
-			cleanurl += '&';
-		}
-	}
-	console.log("cleanurl='"+cleanurl+"'");
-	window.location.href = cleanurl + "` + Param_Labels["pagesize"] + `=" + newpagesize;
-}
-function trapkeys() {
-	document.getElementsByTagName('body')[0].onkeyup = function(e) { 
-		var ev = e || window.event;
-	 	if (ev.keyCode == 37 || ev.keyCode == 33) { // Left arrow or PageUp
-	   		let pp = document.getElementById('prevpage');
-			if (pp) {
-				window.location.href = pp.getAttribute('href');
-			}
-	   		return false;
-		} else if (ev.keyCode == 39 || ev.keyCode == 34) { // Right arrow or PageDn
-			let np = document.getElementById('nextpage');
-		 	if (np) {
-				window.location.href = np.getAttribute('href');
-		 	}
-			return false;
-	    } 
-	}
-
-	let el = document.querySelector('body');
-	swipedetect(el, function(swipedir){
-		/* swipedir contains either "none", "left", "right", "top", or "down" */
-		if (swipedir =='left') {
-			console.log("swiped left");
-			let pp = document.getElementById('prevpage');
-			if (pp) {
-				window.location.href = pp.getAttribute('href');
-			}
-		}
-		else if (swipedir =='right') {
-			alert("swiped right");
-			let pp = document.getElementById('nextpage');
-			if (pp) {
-				window.location.href = pp.getAttribute('href');
-			}
-		}
-
-	})
-	
-
-
-
-}
-
-
-function swipedetect(el, callback){
-  
-    var touchsurface = el,
-    swipedir,
-    startX,
-    startY,
-    distX,
-    distY,
-    threshold = 150, //required min distance traveled to be considered swipe
-    restraint = 100, // maximum distance allowed at the same time in perpendicular direction
-    allowedTime = 300, // maximum time allowed to travel that distance
-    elapsedTime,
-    startTime,
-    handleswipe = callback || function(swipedir){}
-  
-    touchsurface.addEventListener('touchstart', function(e){
-        var touchobj = e.changedTouches[0]
-        swipedir = 'none'
-        dist = 0
-        startX = touchobj.pageX
-        startY = touchobj.pageY
-        startTime = new Date().getTime() // record time when finger first makes contact with surface
-        e.preventDefault()
-    }, false)
-  
-    touchsurface.addEventListener('touchmove', function(e){
-        e.preventDefault() // prevent scrolling when inside DIV
-    }, false)
-  
-    touchsurface.addEventListener('touchend', function(e){
-        var touchobj = e.changedTouches[0]
-        distX = touchobj.pageX - startX // get horizontal dist traveled by finger while in contact with surface
-        distY = touchobj.pageY - startY // get vertical dist traveled by finger while in contact with surface
-        elapsedTime = new Date().getTime() - startTime // get time elapsed
-        if (elapsedTime <= allowedTime){ // first condition for awipe met
-            if (Math.abs(distX) >= threshold && Math.abs(distY) <= restraint){ // 2nd condition for horizontal swipe met
-                swipedir = (distX < 0)? 'left' : 'right' // if dist traveled is negative, it indicates left swipe
-            }
-            else if (Math.abs(distY) >= threshold && Math.abs(distX) <= restraint){ // 2nd condition for vertical swipe met
-                swipedir = (distY < 0)? 'up' : 'down' // if dist traveled is negative, it indicates up swipe
-            }
-        }
-        handleswipe(swipedir)
-        e.preventDefault()
-    }, false)
-}
-  
-//USAGE:
-/*
-var el = document.getElementById('someel')
-swipedetect(el, function(swipedir){
-    swipedir contains either "none", "left", "right", "top", or "down"
-    if (swipedir =='left')
-        alert('You just swiped left!')
-})
-*/
-
-
-
-</script>
+<script>` + script + `</script>
 
 <style>
 
@@ -386,7 +132,7 @@ const html2 = `
 </style>
 </head>
 <body onload="trapkeys();">
-<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Userid}} <span style="font-size: 1.2em;" title="Update mode"> &#9997; </span>{{end}}</h1>
+<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Userid}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu">
 `
 
@@ -549,6 +295,7 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	`
 
 	var ht string
+
 	updating, usr, _ := updateok(r)
 	//fmt.Printf("DEBUG: updating=%v usr=%v\n", updating, usr)
 	if !updating {
@@ -667,7 +414,9 @@ type userpreferences struct {
 	MaxBoxContents       int               `yaml:"MaxBoxContents"`
 	Field_Labels         map[string]string `yaml:"FieldLabels"`
 	Menu_Labels          map[string]string `yaml:"MenuLabels"`
+	Table_Labels         map[string]string `yaml:"TableLabels"`
 	AppTitle             string            `yaml:"AppTitle"`
+	CookieMaxAgeMins     int               `yaml:"LoginMinutes"`
 }
 
 const partial_config = `
@@ -698,10 +447,16 @@ AccesslevelNames:
 # to be 'very large'
 MaxBoxContents: 70
 
+# This determines how long before a logged-in user is automatically logged out
+# A value of 0 indicates logout whenever the browser session closes but this
+# might not work as expected because of the browser's own settings
+LoginMinutes: 60
+
+
 FieldLabels:
   boxid:           'BoxID'
   owner:           'Owner'
-  contents:        'Contents'
+  contents:        'Folders'
   review_date:     'Review date'
   name:            'Name'
   client:          'Client'
@@ -726,4 +481,11 @@ MenuLabels:
   users:     users
   logout:    logout
   about:     about
+
+TableLabels:
+  boxes:		boxes
+  contents:		folders
+  locations:	locations
+  users:		users
+  history:		history
 `

@@ -58,6 +58,7 @@ func loadConfiguration(cfgfile *string) {
 		}
 	}
 
+	runvars = AppVars{prefs.AppTitle, "", script}
 	//fmt.Printf("Field_Labels = %v\n", prefs.Field_Labels)
 	//fmt.Printf("Port is %v Accesslevels labels - %v\n", prefs.HttpPort, prefs.Accesslevels)
 }

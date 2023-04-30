@@ -28,7 +28,6 @@ func main() {
 		prefs.HttpPort = "8081"
 	}
 
-	runvars = AppVars{prefs.AppTitle, ""}
 	var err error
 	DBH, err = sql.Open("sqlite3", dbx)
 	if err != nil {
