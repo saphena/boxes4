@@ -56,9 +56,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	nrex := 0
 	for rows.Next() {
@@ -71,26 +69,20 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		sqllimit = emit_page_anchors(w, r, "owners", nrex)
 	}
 	rows, err = DBH.Query(sqlx + sqllimit)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	var plv ownerlistvars
 	plv.Single = owner != ""
 
 	html, err := template.New("").Parse(ownerlisthdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	plv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 	plv.NumOrder = r.FormValue(Param_Labels["order"]) == Param_Labels["numdocs"]
 	html.Execute(w, plv)
 
 	html, err = template.New("").Parse(ownerlistline)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&plv.Owner, &plv.NumFiles)
 		plv.OwnerUrl = template.URLQueryEscaper(plv.Owner)
@@ -120,27 +112,19 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	sqllimit = emit_page_anchors(w, r, "owners", NumRows)
 
 	rows, err = DBH.Query("SELECT boxid,client,name,contents,review_date " + sqlx + sqllimit)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	var ofv ownerfilesvar
 	ofv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 	ofv.Owner = owner
 	ofv.OwnerUrl = template.URLQueryEscaper(ofv.Owner)
 	html, err = template.New("").Parse(ownerfileshdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	err = html.Execute(w, ofv)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	html, err = template.New("").Parse(ownerfilesline)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&ofv.Boxid, &ofv.Client, &ofv.Name, &ofv.Contents, &ofv.Date)
 		ofv.BoxidUrl = template.URLQueryEscaper(ofv.Boxid)

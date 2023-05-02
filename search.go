@@ -87,9 +87,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Field = prefs.Field_Labels[r.FormValue(Param_Labels["field"])]
 
 	html, err := template.New("searchResultsHdr1").Parse(searchResultsHdr1)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	html.Execute(w, res)
 
 	flds := "contents.boxid,contents.owner,contents.client,contents.name,contents.contents,contents.review_date,boxes.storeref,boxes.overview"
@@ -104,15 +102,11 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	html, err = template.New("searchResultsHdr2").Parse(searchResultsHdr2)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	html.Execute(w, res)
 
 	html, err = template.New("searchResultsLine").Parse(searchResultsLine)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&res.Boxid, &res.Owner, &res.Client, &res.Name, &res.Contents, &res.Date, &res.Storeref, &res.Overview)
 		res.BoxidUrl = template.URLQueryEscaper(res.Boxid)
@@ -174,9 +168,7 @@ Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</main><
 	searchVars.NumLocnsX = commas(searchVars.NumLocns)
 
 	html, err := template.New("searchHTML").Parse(searchHTML)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	html.Execute(w, searchVars)
 

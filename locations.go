@@ -56,9 +56,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	}
 	//fmt.Printf("DEBUG: SELECT %v%v\n", flds, sqlx)
 	rows, err := DBH.Query("SELECT  " + flds + sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	var loc locationlistvars
@@ -66,13 +64,9 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
 	temp, err := template.New("locationlisthdr").Parse(locationlisthdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	err = temp.Execute(w, loc)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	if true {
 		temp, err = template.New("locationlistline2").Parse(locationlistline)
@@ -128,13 +122,9 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
 	temp, err := template.New("locboxtablehdr").Parse(locboxtablehdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	err = temp.Execute(w, loc)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	sqlx := "SELECT storeref,boxid,location,overview,numdocs,min_review_date,max_review_date FROM boxes WHERE location='" + sqllocation + "'"
 
 	if r.FormValue(Param_Labels["order"]) != "" {
@@ -150,18 +140,14 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	sqllimit := emit_page_anchors(w, r, "locations", loc.NumBoxes)
 	//fmt.Print("DEBUG: " + sqlx)
 	rows, err := DBH.Query(sqlx + sqllimit)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	var bv boxvars
 	bv.Single = r.FormValue(Param_Labels["location"]) != ""
 	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
 	temp, err = template.New("locboxtablerow").Parse(locboxtablerow)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	for rows.Next() {
 		var mindate, maxdate string
@@ -219,24 +205,18 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	defer rows.Close()
 
 	temp, err := template.New("boxfileshdr").Parse(boxfileshdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	var bfv boxfilevars
 	bfv.Boxid = boxid
 	bfv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 
 	err = temp.Execute(w, bfv)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	nrows := 0
 	temp, err = template.New("boxfilesline").Parse(boxfilesline)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	for rows.Next() {
 		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date)
@@ -251,8 +231,6 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	}
 	temp, err = template.New("boxfilestrailer").Parse(boxfilestrailer)
 	temp.Execute(w, "")
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 }

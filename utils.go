@@ -63,6 +63,12 @@ func loadConfiguration(cfgfile *string) {
 	//fmt.Printf("Port is %v Accesslevels labels - %v\n", prefs.HttpPort, prefs.Accesslevels)
 }
 
+func checkerr(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func contains(elems []string, v string) bool {
 	for _, s := range elems {
 		if v == s {

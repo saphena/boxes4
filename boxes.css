@@ -112,6 +112,7 @@ h1                  {
 .copyrite	{ font-size: small; }
 .infohilite		{ background-color: yellow; color: black; font-weight: bold; padding-top: 4px; padding-bottom: 4px; }
 .errormsg           { background-color: red; color: yellow; padding: 4px;}
+.warning			{ background-color: yellow; color: black; }
 .errordata          { background-color: red; color: white; font-weight: bold; font-size: larger; padding: 4px;}
 .searchedfor		{ 
 						background-color: var(--hilite-background); 

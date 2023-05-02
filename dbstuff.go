@@ -76,9 +76,7 @@ func check_boxes_with_contents(w http.ResponseWriter, r *http.Request) {
 	sqlx += " FROM contents LEFT JOIN boxes ON boxes.boxid = contents.boxid"
 	sqlx += " GROUP BY contents.boxid"
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	var boxid string
 	var box_numdocs, con_numdocs int
@@ -231,9 +229,7 @@ func list_orphaned_boxes() {
 	var boxid string
 	var numdocs int
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	for rows.Next() {
@@ -249,9 +245,7 @@ func list_empty_boxes() {
 
 	var boxid string
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	for rows.Next() {
@@ -264,9 +258,7 @@ func list_big_boxes() {
 
 	sqlx := "SELECT boxid FROM boxes WHERE numdocs>" + strconv.Itoa(prefs.MaxBoxContents)
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	var boxid string
 	for rows.Next() {
@@ -343,9 +335,7 @@ func export_boxes_csv(w http.ResponseWriter, txtname string) {
 	sqlx := "SELECT * FROM boxes ORDER BY boxid" // Must match cols in tablerow
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	buffer := &bytes.Buffer{}
 	writer := bufio.NewWriter(buffer)
@@ -415,9 +405,7 @@ func export_boxes_json(w http.ResponseWriter, txtname string) {
 	sqlx := "SELECT * FROM boxes ORDER BY boxid" // Must match cols in tablerow
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	commaNeeded := false
@@ -450,9 +438,7 @@ func export_contents_csv(w http.ResponseWriter, txtname string) {
 	sqlx := "SELECT * FROM contents ORDER BY boxid,client" // Must match cols in tablerow
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	buffer := &bytes.Buffer{}
 	writer := bufio.NewWriter(buffer)
@@ -522,9 +508,7 @@ func export_contents_json(w http.ResponseWriter, txtname string) {
 	sqlx := "SELECT * FROM contents ORDER BY boxid,client" // Must match cols in tablerow
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	commaNeeded := false
@@ -557,9 +541,7 @@ func export_locations_csv(w http.ResponseWriter, txtname string) {
 	sqlx := "SELECT location FROM locations ORDER BY location" // Must match cols in tablerow
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	buffer := &bytes.Buffer{}
 	writer := bufio.NewWriter(buffer)
@@ -605,9 +587,7 @@ func export_locations_json(w http.ResponseWriter, txtname string) {
 	sqlx := "SELECT location FROM locations ORDER BY location" // Must match cols in tablerow
 
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	commaNeeded := false

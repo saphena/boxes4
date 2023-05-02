@@ -1,3 +1,36 @@
+const Param_Labels = {
+	"boxid":           "qbx",
+	"owner":           "qow",
+	"contents":        "qcn",
+	"review_date":     "qdt",
+	"name":            "qnm",
+	"client":          "qcl",
+	"location":        "qlo",
+	"numdocs":         "qnd",
+	"min_review_date": "qd1",
+	"max_review_date": "qd2",
+	"userid":          "quu", // Hardcoded in boxes.js!
+	"userpass":        "qup",
+	"accesslevel":     "qal", // Hardcoded in boxes.js!
+	"pagesize":        "qps", // Hardcoded in boxes.js!
+	"offset":          "qof",
+	"order":           "qor",
+	"find":            "qqq",
+	"desc":            "qds",
+	"field":           "qfd",
+	"overview":        "qov",
+	"table":           "qtb",
+	"textfile":        "qtx",
+	"passchg":         "zpc", // Hardcoded in boxes.js!
+	"single":          "z11", // Hardcoded in boxes.js!
+	"multiple":        "z99",
+	"oldpass":         "zop",
+	"newpass":         "znp",
+	"deleteuser":      "zdu",
+	"rowcount":        "zrc",
+}
+
+
 function isBadLength(sObj,iLen,sMsg) {
 
     if (sObj.value.length < iLen) {
@@ -11,7 +44,7 @@ function changepagesize(sel) {
 	let newpagesize = sel.value;
 	let url = window.location.href;
 	// Need to strip out any existing PAGESIZE
-	let ps = url.match(/(&|\?)qps\=\d+/);
+	let ps = url.match(/(&|\?)qps\=\d+/);   // qps must match Param_Labels["pagesize"]
 	console.log('url="'+url+'"; ps="'+ps+'"; NP='+newpagesize);
 	let cleanurl = url;
 	if (ps) {
@@ -69,6 +102,33 @@ function trapkeys() {
 
 }
 
+function activatemsgpane(msg,cssclass) {
+
+	let pane = document.getElementById('errormsgdiv');
+	if (!pane) { return; }
+	pane.classList.add(cssclass);
+	pane.innerHTML = msg;
+}
+
+function hideerrorpane() {
+
+	let pane = document.getElementById('errormsgdiv');
+	if (!pane) { return; }
+	pane.class = ""
+	pane.innerHTML = "msg";
+
+}
+function showerrormsg(msg) {
+
+	activatemsgpane(msg,"errormsg");
+	
+}
+
+function showwarning(msg) {
+
+	activatemsgpane(msg,"warning");
+	
+}
 
 function swipedetect(el, callback){
   
@@ -129,3 +189,65 @@ swipedetect(el, function(swipedir){
 
 
 
+// Password maintenance stuff
+
+function pwd_validateSingleChange(frm) {
+
+	if (this.oldpass.value == '' || this.newpass.value == '') { 
+		showerrormsg("Password must not be left blank");
+		return false; 
+	}
+	if (this.newpass.value != this.newpass2.value) {
+		showerrormsg("New passwords don't match");
+		return false;
+	}
+	if (this.newpass.value.length < parseInt(this.minpwlen.value)) {
+		showerrormsg("Password not long enough");
+		return false;
+	}
+	return true;
+}
+
+function pwd_deleteUser(btn) {
+
+	let tr = btn.parentElement.parentElement;
+	let tab = tr.parentElement;
+	let uid = tr.firstElementChild.firstElementChild.value;
+
+	let url = "/userx?"+Param_Labels["passchg"]+"="+Param_Labels["single"];
+	url += "&"+Param_Labels["userid"]+"="+uid
+	url += "&"+Param_Labels["deleteuser"]+"="+Param_Labels["deleteuser"]
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(function (res) {
+		console.log(res.res);
+		if (res.res=="ok") {
+			hideerrorpane();
+			console.log("row is "+tr.rowIndex);
+			tab.removeChild(tr);
+		} else {
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+function pwd_updateAccesslevel(sel) {
+
+	let al = sel.value;
+	let tr = sel.parentElement.parentElement;
+	let uid = tr.firstElementChild.firstElementChild.value;
+
+	let url = "/userx?"+Param_Labels["passchg"]+"="+Param_Labels["single"];
+	url += "&"+Param_Labels["userid"]+"="+uid+"&"+Param_Labels["accesslevel"]+"="+al
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			hideerrorpane();
+		} else {
+			showerrormsg(res.res);
+		}
+	});
+
+}

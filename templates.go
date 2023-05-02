@@ -34,9 +34,9 @@ var Param_Labels = map[string]string{
 	"numdocs":         "qnd",
 	"min_review_date": "qd1",
 	"max_review_date": "qd2",
-	"userid":          "quu",
+	"userid":          "quu", // Hardcoded in boxes.js!
 	"userpass":        "qup",
-	"accesslevel":     "qal",
+	"accesslevel":     "qal", // Hardcoded in boxes.js!
 	"pagesize":        "qps", // Hardcoded in boxes.js!
 	"offset":          "qof",
 	"order":           "qor",
@@ -46,10 +46,13 @@ var Param_Labels = map[string]string{
 	"overview":        "qov",
 	"table":           "qtb",
 	"textfile":        "qtx",
-	"passchg":         "zpc",
-	"single":          "z11",
+	"passchg":         "zpc", // Hardcoded in boxes.js!
+	"single":          "z11", // Hardcoded in boxes.js!
+	"multiple":        "z99",
 	"oldpass":         "zop",
 	"newpass":         "znp",
+	"deleteuser":      "zdu",
+	"rowcount":        "zrc",
 }
 
 type AppVars struct {
@@ -135,6 +138,8 @@ const html2 = `
 <h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Userid}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu">
 `
+
+const errormsgdiv = `<div id="errormsgdiv"></div>`
 
 type locationlistvars struct {
 	Location    string
@@ -299,19 +304,17 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	updating, usr, _ := updateok(r)
 	//fmt.Printf("DEBUG: updating=%v usr=%v\n", updating, usr)
 	if !updating {
-		ht = html1 + css + html2 + basicMenu + "</div>"
+		ht = html1 + css + html2 + basicMenu + "</div>" + errormsgdiv
 	} else {
 		if usr != nil {
 			runvars.Userid = usr.(string)
 		} else {
 			runvars.Userid = ""
 		}
-		ht = html1 + css + html2 + updateMenu + "</div>"
+		ht = html1 + css + html2 + updateMenu + "</div>" + errormsgdiv
 	}
 	html, err := template.New("mainmenu").Parse(ht)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	html.Execute(w, runvars)
 
@@ -417,6 +420,7 @@ type userpreferences struct {
 	Table_Labels         map[string]string `yaml:"TableLabels"`
 	AppTitle             string            `yaml:"AppTitle"`
 	CookieMaxAgeMins     int               `yaml:"LoginMinutes"`
+	PasswordMinLength    int               `yaml:"PasswordMinLength"`
 }
 
 const partial_config = `
@@ -452,6 +456,7 @@ MaxBoxContents: 70
 # might not work as expected because of the browser's own settings
 LoginMinutes: 60
 
+PasswordMinLength: 4
 
 FieldLabels:
   boxid:           'BoxID'

@@ -43,9 +43,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	var passwd string
 	var alevel int
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	if !rows.Next() {
 		reject_login(w, r)
@@ -77,9 +75,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 func updateok(r *http.Request) (bool, any, any) {
 
 	session, err := store.Get(r, cookie_name)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	if session.Values["authenticated"] == nil || session.Values["authenticated"].(bool) != true {
 		return false, "", ACCESSLEVEL_READONLY
 	}

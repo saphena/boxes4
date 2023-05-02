@@ -16,9 +16,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `<p class='copyrite'>Copyright &copy; 2023 Bob Stammers <a href="mailto:stammers.bob@gmail.com">stammers.bob@gmail.com</a> </p>`)
 
 	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	updating, usr, alevel := updateok(r)
 	lastUpdated := getValueFromDB("SELECT recordedat FROM history ORDER BY recordedat DESC LIMIT 0,1", "recordedat", "")
 	if lastUpdated != "" {

@@ -51,9 +51,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	flds := " storeref,boxid,location,overview,numdocs,min_review_date,max_review_date "
 	sqlx += emit_page_anchors(w, r, "boxes", NumBoxes)
 	rows, err := DBH.Query("SELECT  " + flds + sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 
 	var box boxvars
@@ -61,18 +59,12 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	box.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
 	html, err := template.New("").Parse(boxtablehdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	err = html.Execute(w, box)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	html, err = template.New("").Parse(boxtablerow)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumFiles, &box.Min_review_date, &box.Max_review_date)
 		box.StorerefUrl = template.URLQueryEscaper(box.Storeref)
@@ -122,9 +114,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	sqlboxid = strings.ReplaceAll(sqlboxid, "'", "''")
 	sqlx := "SELECT storeref,boxid,location,overview,numdocs,min_review_date,max_review_date FROM boxes WHERE boxid='" + sqlboxid + "'"
 	rows, err := DBH.Query(sqlx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	defer rows.Close()
 	var bv boxvars
 	bv.Single = r.FormValue(Param_Labels["boxid"]) != ""
@@ -141,13 +131,9 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	bv.Date = mindate + " to " + maxdate
 	bv.NumFilesX = commas(bv.NumFiles)
 	html, err := template.New("main").Parse(boxhtml)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	err = html.Execute(w, bv)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	showBoxfiles(w, r, sqlboxid)
 
 }
@@ -186,24 +172,18 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	defer rows.Close()
 
 	html, err := template.New("").Parse(boxfileshdr)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	var bfv boxfilevars
 	bfv.Boxid = boxid
 	bfv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 
 	err = html.Execute(w, bfv)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	nrows := 0
 	html, err = template.New("").Parse(boxfilesline)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 	for rows.Next() {
 		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date)
@@ -218,8 +198,6 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	}
 	html, err = template.New("").Parse(boxfilestrailer)
 	html.Execute(w, "")
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 
 }

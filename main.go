@@ -30,9 +30,7 @@ func main() {
 
 	var err error
 	DBH, err = sql.Open("sqlite3", dbx)
-	if err != nil {
-		panic(err)
-	}
+	checkerr(err)
 	http.HandleFunc("/", show_search)
 
 	http.HandleFunc("/search", show_search)
@@ -48,6 +46,7 @@ func main() {
 	http.HandleFunc("/logout", logout)
 	http.HandleFunc("/update", update)
 	http.HandleFunc("/users", showusers)
+	http.HandleFunc("/userx", ajax_users)
 	http.HandleFunc("/secret", secret)
 
 	log.Fatal(http.ListenAndServe(":"+prefs.HttpPort, nil))
