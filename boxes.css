@@ -6,6 +6,10 @@
 	--link-color			: blue;
 	--link-hilite-fore		: black;
 	--link-hilite-back		: orange;
+	--button-background		: lightgray;
+	--button-foreground		: black;
+	--disabled-background	: lightgray;
+	--disabled-foreground	: darkgray;
 }
 body 				{
 	background-color		: var(--regular-background);
@@ -39,6 +43,17 @@ li					{ list-style-type: none; }
 .numdocs,
 .numboxes			{ text-align: center; }
 .keydata			{ font-weight: bold; text-transform: uppercase; }
+.hide				{ display: none; }
+
+input[type="button"]:disabled {
+		background-color: var(--disabled-background);
+		color: var(--disabled-foreground);
+}
+input[type="button"]				{ 
+						background-color: var(--button-background); 
+						color: var(--button-foreground);
+						font-size: 1.1em;
+					}
 
 .btn {
 	-webkit-border-radius: 5;

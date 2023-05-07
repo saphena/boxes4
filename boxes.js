@@ -26,6 +26,8 @@ const Param_Labels = {
 	"multiple":        "z99",
 	"oldpass":         "zop",
 	"newpass":         "znp",
+	"newpass2":		   "z22",
+	"adduser":         "zau",
 	"deleteuser":      "zdu",
 	"rowcount":        "zrc",
 }
@@ -114,12 +116,13 @@ function hideerrorpane() {
 
 	let pane = document.getElementById('errormsgdiv');
 	if (!pane) { return; }
-	pane.class = ""
-	pane.innerHTML = "msg";
+	pane.className = ""
+	pane.innerHTML = "";
 
 }
 function showerrormsg(msg) {
 
+	console.log('showerrormsg '+msg);
 	activatemsgpane(msg,"errormsg");
 	
 }
@@ -193,15 +196,15 @@ swipedetect(el, function(swipedir){
 
 function pwd_validateSingleChange(frm) {
 
-	if (this.oldpass.value == '' || this.newpass.value == '') { 
+	if (this.oldpass.value == '' || this.mynewpass.value == '') { 
 		showerrormsg("Password must not be left blank");
 		return false; 
 	}
-	if (this.newpass.value != this.newpass2.value) {
+	if (this.mynewpass.value != this.mynewpass2.value) {
 		showerrormsg("New passwords don't match");
 		return false;
 	}
-	if (this.newpass.value.length < parseInt(this.minpwlen.value)) {
+	if (this.mynewpass.value.length < parseInt(this.minpwlen.value)) {
 		showerrormsg("Password not long enough");
 		return false;
 	}
@@ -237,7 +240,9 @@ function pwd_updateAccesslevel(sel) {
 	let al = sel.value;
 	let tr = sel.parentElement.parentElement;
 	let uid = tr.firstElementChild.firstElementChild.value;
+	let save = tr.children[4].firstElementChild;
 
+	save.disabled = false;
 	let url = "/userx?"+Param_Labels["passchg"]+"="+Param_Labels["single"];
 	url += "&"+Param_Labels["userid"]+"="+uid+"&"+Param_Labels["accesslevel"]+"="+al
 	fetch(url,{method: "POST"})
@@ -245,6 +250,145 @@ function pwd_updateAccesslevel(sel) {
 	.then(res => {
 		if (res.res=="ok") {
 			hideerrorpane();
+			save.disabled = true;
+		} else {
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+
+function pwd_enableSave(inp) {
+
+	let tr = inp.parentElement.parentElement;
+	let save = tr.children[4].firstElementChild;
+
+	console.log("Save is "+save);
+	save.disabled = false;
+
+}
+
+
+function pwd_savePasswordChanges(btn) {
+
+	let tr = btn.parentElement.parentElement;
+	let uid = tr.firstElementChild.firstElementChild.value;
+	let save = tr.children[4].firstElementChild;
+	let np1 = tr.children[2].firstElementChild.value;
+	let np2 = tr.children[3].firstElementChild.value;
+
+	save.disabled = true;
+	let url = "/userx?"+Param_Labels["passchg"]+"="+Param_Labels["single"];
+	url += "&"+Param_Labels["userid"]+"="+uid
+	url += "&"+Param_Labels["newpass"]+"="+encodeURIComponent(np1);
+	url += "&"+Param_Labels["newpass2"]+"="+encodeURIComponent(np2);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			hideerrorpane();
+		} else {
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+function pwd_insertNewRow() {
+
+	console.log("Inserting new user");
+	let rc_obj = document.getElementById('rowcount');
+	let rc = parseInt(rc_obj.value) + 1;
+	let tab = document.getElementById('tabusers');
+	tab.insertRow(-1);
+	console.log("Row inserted, rc="+rc);
+	let nr = document.getElementById('newrow');
+	let nrow = tab.rows[rc];
+	nrow.innerHTML = nr.innerHTML;
+	
+	for (let i=0; i < nrow.children.length; i++) {
+		if (nrow.children[i].firstElementChild.getAttribute('name')) {
+			let nn = nrow.children[i].firstElementChild.getAttribute('name')+'_'+rc;
+			nrow.children[i].firstElementChild.setAttribute('name',nn);
+		}
+	}
+	tab.rows[rc].className = "";
+	rc_obj.value = rc;
+	console.log('New row inserted');
+	nrow.children[0].firstElementChild.focus();
+}
+
+function pwd_checkSaveNewUser() {
+
+	let uid = document.getElementById('newuserid');
+	let np1 = document.getElementById('newpass1');
+	let np2 = document.getElementById('newpass2');
+	let btn = document.getElementById('savenewuser');
+	let ok = uid.getAttribute('data-ok') == '1'
+	ok = ok && np1.getAttribute('data-ok') == '1';
+	ok = ok && np1.value == np2.value;
+	btn.disabled = !ok;
+	
+}
+
+function pwd_useridChanged(obj) {
+
+	let uid = obj.value;
+	let row = obj.getAttribute('name').match(/_(\d+)/);
+	let tab = obj.parentElement.parentElement.parentElement;
+	if (obj.value.length > 0) {
+		obj.setAttribute('data-ok','1');
+	}
+	for (let r = 0; r < tab.rows.length; r++) {
+		let ruid = tab.rows[r].firstElementChild;
+		//console.log(ruid.innerHTML+" == "+uid);
+		ruid = ruid.firstElementChild;
+		obj.classList.remove('warning');
+		if (r + 1 == row[1]) continue;
+		if (ruid.value == uid) {
+			console.log("Error - duplicate! "+row+"/"+uid+" == "+r+"/"+ruid.value);
+			obj.classList.add('warning');
+			obj.setAttribute('data-ok','0');
+			break;
+		}
+	}
+	pwd_checkSaveNewUser();
+
+}
+
+function pwd_checkpass(inp) {
+
+	let pwl = document.getElementById('minpwlen');
+	if (inp.value.length >= pwl.value) {
+		inp.setAttribute('data-ok','1');
+	} else {
+		inp.setAttribute('data-ok','0');
+	}
+	pwd_checkSaveNewUser();
+
+}
+
+function pwd_insertNewUser(btn) {
+
+	btn.disabled = true;
+
+	let uid = document.getElementById('newuserid').value;
+	let al = document.getElementById('newal').value;
+	let np1 = document.getElementById('newpass1').value;
+	let np2 = document.getElementById('newpass2').value;
+
+	let url = "/userx?"+Param_Labels["adduser"]+"="+uid;
+	url += "&"+Param_Labels["accesslevel"]+"="+al
+	url += "&"+Param_Labels["newpass"]+"="+encodeURIComponent(np1);
+	url += "&"+Param_Labels["newpass2"]+"="+encodeURIComponent(np2);
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			console.log("Fetching users");
+			window.location.replace("/users");
 		} else {
 			showerrormsg(res.res);
 		}

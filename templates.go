@@ -51,6 +51,8 @@ var Param_Labels = map[string]string{
 	"multiple":        "z99",
 	"oldpass":         "zop",
 	"newpass":         "znp",
+	"newpass2":        "z22",
+	"adduser":         "zau",
 	"deleteuser":      "zdu",
 	"rowcount":        "zrc",
 }

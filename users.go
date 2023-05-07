@@ -61,6 +61,46 @@ func changeSinglePassword(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// ajax handler
+func insertNewUser(w http.ResponseWriter, r *http.Request) {
+
+	err := r.ParseForm()
+	checkerr(err)
+
+	al := r.FormValue(Param_Labels["accesslevel"])
+	uid := r.FormValue(Param_Labels["adduser"])
+	np1 := r.FormValue(Param_Labels["newpass"])
+	np2 := r.FormValue(Param_Labels["newpass2"])
+
+	sqlx := "SELECT userid FROM users WHERE userid LIKE '" + strings.ReplaceAll(uid, "'", "''") + "'"
+	fmt.Println("DEBUG: " + sqlx)
+	if getValueFromDB(sqlx, "userid", "") != "" {
+		fmt.Fprintf(w, `{"res":"User %v already exists!"}`, uid)
+		return
+	}
+	if len(np1) < prefs.PasswordMinLength {
+		fmt.Fprintf(w, `{"res":"Can't create user %v, password %v is too short %v."}`, uid, len(np1), prefs.PasswordMinLength)
+		return
+	}
+	if np1 != np2 {
+		fmt.Fprintf(w, `{"res":"Can't create user %v, the two passwords don't match."}`, uid)
+		return
+	}
+	sqlx = "INSERT INTO users (userid,userpass,accesslevel) VALUES("
+	sqlx += "'" + strings.ReplaceAll(uid, "'", "''") + "'"
+	sqlx += ",'" + strings.ReplaceAll(np1, "'", "''") + "'"
+	sqlx += "," + al + ")"
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Insert failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+}
+
 func showusers(w http.ResponseWriter, r *http.Request) {
 
 	var userpasschg = `
@@ -69,22 +109,23 @@ func showusers(w http.ResponseWriter, r *http.Request) {
 	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["single"] + `"|>
 	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
 	<label for="oldpass">Current password </label> <input autofocus type="password" id="oldpass" name="` + Param_Labels["oldpass"] + `">
-	<label for="newpass">New password </label> <input type="password" id="newpass" name="` + Param_Labels["newpass"] + `">
-	<label for="newpass2">and again </label> <input type="password" id="newpass2">
+	<label for="newpass">New password </label> <input type="password" id="mynewpass" name="` + Param_Labels["newpass"] + `">
+	<label for="newpass2">and again </label> <input type="password" id="mynewpass2">
 	<input type="submit" value="Change my password!">
 	</form>
 	`
 	var multipasschghead = `
-	<form action="/users" method="post">
+	<form>
 	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["multiple"] + `"|>
 	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
-	<table>
+	<table id="tabusers">
 	<thead><tr>
 	<th>Userid</th>
 	<th>Accesslevel</th>
 	<th>New password</th>
 	<th>and again</th>
-	<th>Delete user</th>
+	<th></th>
+	<th></th>
 	</tr></thead>
 	<tbody>
 	`
@@ -98,23 +139,48 @@ func showusers(w http.ResponseWriter, r *http.Request) {
 	<tr>
 	<td><input type="text" readonly name="m` + Param_Labels["userid"] + `_{{.Row}}" value="{{.Userid}}"></td>
 	<td>
-		<select name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_deleteUser(this);">
+		<select name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_updateAccesslevel(this);">
 		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_READONLY) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `"{{if eq .Accesslevel  ` + strconv.Itoa(ACCESSLEVEL_SUPER) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
 		</select>
 	</td>
-	<td><input type="password" name="m` + Param_Labels["newpass"] + `_{{.Row}}"></td>
-	<td><input type="password" id="newpass2:{{.Row}}"></td>
-	<td class="center"><input type="checkbox" name="m` + Param_Labels["deleteuser"] + `_{{.Row}}" value="` + Param_Labels["deleteuser"] + `"></td>
+	<td><input type="password" name="m` + Param_Labels["newpass"] + `_{{.Row}}" oninput="pwd_enableSave(this);"></td>
+	<td><input type="password" id="newpass2:{{.Row}}" oninput="pwd_enableSave(this);"></td>
+	<td><input type="button" disabled value="Set password" onclick="pwd_savePasswordChanges(this);"></td>
+	<td class="center">
+		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `_{{.Row}}" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
+		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
+	</td>
 	</tr>
 	`
 	var multipasschgfoot = `
+
 	</tbody>
 	</table>
-	<input type="hidden" name="` + Param_Labels["rowcount"] + `" value="{{.Row}}">
-	<input type="submit" value="Update changes">
+	<input type="hidden" id="rowcount" name="` + Param_Labels["rowcount"] + `" value="{{.Row}}">
+	<input type="button" value="+" onclick="pwd_insertNewRow(); return false;">
 	</form>
+	<table class="hide">
+	<tr id="newrow">
+	<td><input type="text" id="newuserid" name="m` + Param_Labels["userid"] + `" data-ok="0" oninput="pwd_useridChanged(this);"></td>
+	<td>
+		<select id="newal" name="m` + Param_Labels["accesslevel"] + `">
+		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `" selected>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
+		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `">` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
+		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `">` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
+		</select>
+	</td>
+	<td><input type="password" data-ok="0" id="newpass1" name="m` + Param_Labels["newpass"] + `" oninput="pwd_checkpass(this);"></td>
+	<td><input type="password" data-ok="0" id="newpass2" oninput="pwd_checkpass(this);"></td>
+	<td><input type="button" id="savenewuser" disabled value="Save user" onclick="pwd_insertNewUser(this);"></td>
+	<td class="hide">
+		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
+		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
+	</td>
+
+	</tr>
+	</table>
 	`
 	err := r.ParseForm()
 	checkerr(err)
@@ -176,6 +242,10 @@ func ajax_users(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
+	if r.FormValue(Param_Labels["adduser"]) != "" {
+		insertNewUser(w, r)
+		return
+	}
 	if r.FormValue(Param_Labels["passchg"]) != Param_Labels["single"] {
 		fmt.Printf("DEBUG: '%v' / '%v'\n", r.FormValue(Param_Labels["passchg"]), Param_Labels["single"])
 		fmt.Fprint(w, `{"res":"NOT IMPLEMENTED"}`)
@@ -191,9 +261,18 @@ func ajax_users(w http.ResponseWriter, r *http.Request) {
 			sqlx = "UPDATE users SET accesslevel=" + al
 		} else {
 			pwd := r.FormValue(Param_Labels["newpass"])
+			pwd2 := r.FormValue(Param_Labels["newpass2"])
 
+			if len(pwd) < prefs.PasswordMinLength {
+				fmt.Fprintf(w, `{"res":"Password is too short, min length is %v chars."}`, prefs.PasswordMinLength)
+				return
+			}
+			if pwd != pwd2 {
+				fmt.Fprint(w, `{"res":"Passwords don't match"}`)
+				return
+			}
 			if len(pwd) > 1 {
-				sqlx = "UPDATE users SET userpass=`" + strings.ReplaceAll(pwd, "'", "''") + "' "
+				sqlx = "UPDATE users SET userpass='" + strings.ReplaceAll(pwd, "'", "''") + "' "
 			}
 		}
 	}
