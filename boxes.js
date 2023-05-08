@@ -33,6 +33,7 @@ const Param_Labels = {
 	"all":			   "xal",
 	"selected":        "xse",
 	"range":           "xrg",
+	"savesettings":    "sss",
 }
 
 
@@ -399,18 +400,68 @@ function pwd_insertNewUser(btn) {
 
 }
 
+function param_select_keys(selectall,key) {
+
+	let divs = document.querySelectorAll("#"+key+"filter>.filteritems");
+	for (let i = 0; i < divs.length; i++) {
+		if (selectall) {
+			divs[i].classList.add('hide');
+		} else {
+			divs[i].classList.remove('hide');
+		}
+	}
+	let cbs = document.getElementsByName(Param_Labels[key]);
+	for (let i = 0; i < cbs.length; i++) {
+		cbs[i].checked = false;
+	}
+	enableSaveSettings();
+}
+
 function param_select_locations(selectall) {
 
-	let cbs = document.getElementsByName(Param_Labels["location"]);
-	for (let i = 0; i < cbs.length; i++) {
-		cbs[i].checked = selectall;
-	}
+	param_select_keys(selectall,'location');
+
 }
 
 function param_select_owners(selectall) {
 
-	let cbs = document.getElementsByName(Param_Labels["owner"]);
-	for (let i = 0; i < cbs.length; i++) {
-		cbs[i].checked = selectall;
+	param_select_keys(selectall,'owner');
+
+}
+
+function enableSaveSettings() {
+
+	let cmd = document.getElementById('savesettings');
+	if (!cmd) return;
+	cmd.disabled = false;
+
+}
+function trapDirtyPage() {
+
+	// This method does not allow for clearing lock flags when definitely leaving a dirty page
+	
+	
+	window.addEventListener('beforeunload', function(e) {
+	
+	var cmd = document.getElementById('savesettings');
+	if (cmd == null)
+		cmd = document.getElementById('savedata'); 
+	if (cmd == null)
+		return;
+	var myPageIsDirty = !cmd.disabled && cmd.getAttribute('data-triggered')=='0';  //you implement this logic...
+	if (myPageIsDirty) {
+		//following two lines will cause the browser to ask the user if they
+		//want to leave. The text of this dialog is controlled by the browser.
+		e.preventDefault(); //per the standard
+		e.returnValue = ''; //required for Chrome
 	}
+		//else: user is allowed to leave without a warning dialog
+	});
+}
+
+function bodyLoaded() {
+
+	trapkeys();
+	trapDirtyPage();
+
 }

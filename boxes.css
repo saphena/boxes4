@@ -65,7 +65,16 @@ input[type="button"]				{
 						color: var(--button-foreground);
 						font-size: 1.1em;
 					}
-
+input[type="submit"]:disabled {
+	background-color: var(--disabled-background);
+	color: var(--disabled-foreground);
+}
+input[type="submit"]				{ 
+	background-color: var(--button-background); 
+	color: var(--button-foreground);
+	font-size: 1.1em;
+}
+				
 .btn {
 	-webkit-border-radius: 5;
 	-moz-border-radius: 5;

@@ -58,6 +58,7 @@ var Param_Labels = map[string]string{
 	"all":             "xal",
 	"selected":        "xse",
 	"range":           "xrg",
+	"savesettings":    "sss",
 }
 
 type AppVars struct {
@@ -139,7 +140,7 @@ const html2 = `
 -->
 </style>
 </head>
-<body onload="trapkeys();">
+<body onload="bodyLoaded();">
 <h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Userid}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu">
 `
@@ -394,7 +395,8 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	}
 
 	fmt.Fprint(w, `<select onchange="changepagesize(this);">`)
-	pagesizes := []int{0, 20, 40, 60, 100}
+	//pagesizes := []int{0, 20, 40, 60, 100}
+	pagesizes := prefs.Pagesizes
 	for _, ps := range pagesizes {
 		fmt.Fprintf(w, `<option value="%v" `, ps)
 		if ps == pagesize {
@@ -426,6 +428,10 @@ type userpreferences struct {
 	AppTitle             string            `yaml:"AppTitle"`
 	CookieMaxAgeMins     int               `yaml:"LoginMinutes"`
 	PasswordMinLength    int               `yaml:"PasswordMinLength"`
+	DefaultPagesize      int               `yaml:"DefaultPagesize"`
+	Pagesizes            []int             `yaml:"PagesizeOptions"`
+	//pagesizes := []int{0, 20, 40, 60, 100}
+
 }
 
 const partial_config = `
@@ -462,6 +468,13 @@ MaxBoxContents: 70
 LoginMinutes: 60
 
 PasswordMinLength: 4
+
+
+# With no other info available, split things into chunks this big
+DefaultPagesize: 20
+
+
+PagesizeOptions: [0,20,40,60,100]
 
 FieldLabels:
   boxid:           'BoxID'

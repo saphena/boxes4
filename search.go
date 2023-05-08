@@ -91,7 +91,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println("DEBUG: " + sqlx)
+	//fmt.Println("DEBUG: " + sqlx)
 	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "Rexx", "0"))
 
 	var res searchResultsVar
@@ -128,7 +128,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 	sqllimit := emit_page_anchors(w, r, "find", FoundRecCount)
 
-	fmt.Printf("DEBUG: sql = SELECT %v%v%v\n", flds, sqlx, sqllimit)
+	//fmt.Printf("DEBUG: sql = SELECT %v%v%v\n", flds, sqlx, sqllimit)
 
 	rows, err := DBH.Query("SELECT " + flds + sqlx + sqllimit)
 	if err != nil {
@@ -164,74 +164,91 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	<form action="/params">
 	<main>
 	<p>The settings you choose here will be used to restrict searches until you reset them or until your session ends.</p>
-	<p><input type="submit" value="Save settings"></p>`
+	<p><input data-triggered="0" id="savesettings" class="btn" name="` + Param_Labels["savesettings"] + `" disabled onclick="this.setAttribute('data-triggered','1');return true;" type="submit" value="Save settings"></p>`
 
-	var lpars struct {
+	var params struct {
 		Lrange    string
 		Locations string
-	}
-	var opars struct {
+
 		Orange string
 		Owners string
 	}
-	lpars.Lrange = Param_Labels["all"]
-	opars.Orange = Param_Labels["all"]
 
 	var locnsRadios = `
 	<p>
 	<input type="radio" id="range_all" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(this.checked);">
 	<label for="range_all"> All </label> &nbsp;&nbsp;&nbsp; 
 	<input type="radio" id="range_sel" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(!this.checked);">
-	<label for="range_sel"> Selected only </label>
+	<label for="range_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
 	</p>
 `
 
 	var ownerRadios = `
-<p>
-<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(this.checked);">
-<label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
-<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(!this.checked);">
-<label for="orange_sel"> Selected only </label>
-</p>
+	<p>
+	<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(this.checked);">
+	<label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
+	<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(!this.checked);">
+	<label for="orange_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
+	</p>
 `
 
 	r.ParseForm()
 	session, err := store.Get(r, cookie_name)
 	checkerr(err)
 
+	if session.Values["locations"] == nil {
+		params.Lrange = Param_Labels["all"]
+		params.Locations = ""
+	} else {
+		params.Lrange = Param_Labels["selected"]
+		params.Locations = session.Values["locations"].(string)
+	}
+	if session.Values["owners"] == nil {
+		params.Orange = Param_Labels["all"]
+		params.Owners = ""
+	} else {
+		params.Orange = Param_Labels["selected"]
+		params.Owners = session.Values["owners"].(string)
+	}
+
 	// Update settings
 
 	if r.FormValue("l"+Param_Labels["range"]) != "" {
-		lpars.Lrange = r.FormValue("l" + Param_Labels["range"])
-		fmt.Printf("DEBUG: params lrange is %v\n", lpars.Lrange)
+		params.Lrange = r.FormValue("l" + Param_Labels["range"])
+		//fmt.Printf("DEBUG: params lrange is %v\n", params.Lrange)
 		var locs []string
 		for _, x := range r.Form[Param_Labels["location"]] {
 			locs = append(locs, "'"+strings.ReplaceAll(x, "'", "''")+"'")
 		}
-		lpars.Locations = strings.Join(locs, ",")
-		if lpars.Lrange == Param_Labels["all"] {
+		params.Locations = strings.Join(locs, ",")
+		if params.Lrange == Param_Labels["all"] {
 			session.Values["locations"] = nil
 		} else {
-			session.Values["locations"] = lpars.Locations
+			session.Values["locations"] = params.Locations
 		}
 		err = store.Save(r, w, session)
 		checkerr(err)
 	}
 	if r.FormValue("o"+Param_Labels["range"]) != "" {
-		opars.Orange = r.FormValue("o" + Param_Labels["range"])
-		fmt.Printf("DEBUG: params orange is %v\n", opars.Orange)
+		params.Orange = r.FormValue("o" + Param_Labels["range"])
+		//fmt.Printf("DEBUG: params orange is %v\n", params.Orange)
 		var owners []string
 		for _, x := range r.Form[Param_Labels["owner"]] {
 			owners = append(owners, "'"+strings.ReplaceAll(x, "'", "''")+"'")
 		}
-		opars.Owners = strings.Join(owners, ",")
-		if opars.Orange == Param_Labels["all"] {
+		params.Owners = strings.Join(owners, ",")
+		if params.Orange == Param_Labels["all"] {
 			session.Values["owners"] = nil
 		} else {
-			session.Values["owners"] = opars.Owners
+			session.Values["owners"] = params.Owners
 		}
 		err = store.Save(r, w, session)
 		checkerr(err)
+	}
+
+	if r.FormValue(Param_Labels["savesettings"]) != "" {
+		show_search(w, r)
+		return
 	}
 	start_html(w, r)
 
@@ -246,20 +263,31 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 
 	temp, err := template.New("locnsRadios").Parse(locnsRadios)
 	checkerr(err)
-	temp.Execute(w, lpars)
+	temp.Execute(w, params)
 
+	hideshow := ""
+	if params.Lrange == Param_Labels["all"] {
+		hideshow = " hide "
+	}
 	sqlx := "SELECT location FROM locations ORDER BY location"
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
-	fmt.Fprintln(w, `<div class="filteritems">`)
+	fmt.Fprintf(w, `<div class="filteritems%v">`, hideshow)
+	n := 0
+	nmax := prefs.DefaultPagesize
 	for rows.Next() {
+		n++
+		if n > nmax {
+			fmt.Fprintf(w, `</div><div class="filteritems%v">`, hideshow)
+			n = 1
+		}
 		var locn string
 		rows.Scan(&locn)
 		checked := ""
-		if lpars.Lrange == Param_Labels["all"] || strings.Contains(lpars.Locations, strings.ReplaceAll(locn, "'", "''")) {
+		if strings.Contains(params.Locations, "'"+strings.ReplaceAll(locn, "'", "''")+"'") {
 			checked = " checked "
 		}
-		fmt.Fprintf(w, `<input id="cb_%v" type="checkbox" name="`+Param_Labels["location"]+`" value="%v" %v> `, locn, locn, checked)
+		fmt.Fprintf(w, `<input id="cb_%v" type="checkbox" onclick="enableSaveSettings();" name="`+Param_Labels["location"]+`" value="%v" %v> `, locn, locn, checked)
 		fmt.Fprintf(w, ` <label for="cb_%v">%v</label><br>`, locn, locn)
 	}
 	fmt.Fprintln(w, "</div></div>")
@@ -268,25 +296,31 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, `<h2>`+prefs.Field_Labels["owner"]+`s</h2>`)
 	temp, err = template.New("ownerRadios").Parse(ownerRadios)
 	checkerr(err)
-	temp.Execute(w, opars)
+	temp.Execute(w, params)
 	sqlx = "SELECT DISTINCT Trim(owner) As ownerx FROM contents ORDER BY ownerx"
 	rows, err = DBH.Query(sqlx)
 	checkerr(err)
-	fmt.Fprintln(w, `<div class="filteritems">`)
-	n := 0
-	nmax := 20
+	hideshow = ""
+	if params.Orange == Param_Labels["all"] {
+		hideshow = " hide "
+	}
+	//fmt.Printf("Orange is %v; hideshow is %v\n", params.Orange, hideshow)
+	fmt.Fprintf(w, `<div class="filteritems%v">`, hideshow)
+	n = 0
+	nmax = prefs.DefaultPagesize
 	for rows.Next() {
 		n++
 		if n > nmax {
-			fmt.Fprintln(w, `</div><div class="filteritems">`)
+			fmt.Fprintf(w, `</div><div class="filteritems%v">`, hideshow)
+			n = 1
 		}
 		var locn string
 		rows.Scan(&locn)
 		checked := ""
-		if opars.Orange == Param_Labels["all"] || strings.Contains(opars.Owners, strings.ReplaceAll(locn, "'", "''")) {
+		if strings.Contains(params.Owners, "'"+strings.ReplaceAll(locn, "'", "''")+"'") {
 			checked = " checked "
 		}
-		fmt.Fprintf(w, `<input id="cb_%v" type="checkbox" name="`+Param_Labels["owner"]+`" value="%v" %v> `, locn, locn, checked)
+		fmt.Fprintf(w, `<input id="cb_%v" type="checkbox" name="`+Param_Labels["owner"]+`" onclick="enableSaveSettings();" value="%v" %v> `, locn, locn, checked)
 		fmt.Fprintf(w, ` <label for="cb_%v">%v</label><br>`, locn, locn)
 	}
 
