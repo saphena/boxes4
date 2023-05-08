@@ -32,7 +32,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !updating {
-		fmt.Fprint(w, `<p>Click [`+prefs.Field_Labels["update"]+`] above and login as a user with CONTROLLER accesslevel to get more info. `)
+		fmt.Fprint(w, `<p>Click [`+prefs.Menu_Labels["update"]+`] above and login as a user with CONTROLLER accesslevel to get more info. `)
 		var uids []string
 		rows, err := DBH.Query("SELECT userid FROM users WHERE accesslevel >= " + strconv.Itoa(ACCESSLEVEL_UPDATE))
 		if err != nil {

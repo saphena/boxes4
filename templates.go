@@ -55,6 +55,9 @@ var Param_Labels = map[string]string{
 	"adduser":         "zau",
 	"deleteuser":      "zdu",
 	"rowcount":        "zrc",
+	"all":             "xal",
+	"selected":        "xse",
+	"range":           "xrg",
 }
 
 type AppVars struct {
@@ -63,7 +66,7 @@ type AppVars struct {
 	Script   string
 }
 
-var searchVars struct {
+type searchVars struct {
 	Apptitle  string
 	NumBoxes  int
 	NumBoxesX string
@@ -71,6 +74,8 @@ var searchVars struct {
 	NumDocsX  string
 	NumLocns  int
 	NumLocnsX string
+	Locations string
+	Owners    string
 }
 
 type searchResultsVar struct {
@@ -94,11 +99,9 @@ type searchResultsVar struct {
 	Found0      bool
 	Found1      bool
 	Found2      bool
+	Locations   string
+	Owners      string
 }
-
-const searchResultsHdr1 = `
-<p>{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}{{if .Field}} in {{.Field}}{{end}}</span> and{{end}} I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
-`
 
 var searchResultsLine = `
 <tr>

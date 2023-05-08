@@ -12,6 +12,11 @@ import (
 func exec_search(w http.ResponseWriter, r *http.Request) {
 
 	// This needs to be here in order to collect runtime values from prefs
+
+	var searchResultsHdr1 = `
+<p>{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}{{if .Field}} in {{.Field}}{{end}}{{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}{{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}</span> and{{end}} I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
+`
+
 	var searchResultsHdr2 = `
 	<table class="searchresults">
 	<thead>
@@ -30,33 +35,55 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	start_html(w, r)
 
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
+	var wherex = ``
 	if r.FormValue(Param_Labels["find"]) != "" {
 		if r.FormValue(Param_Labels["field"]) != "" {
-			sqlx += `WHERE `
-			if r.FormValue((Param_Labels["field"])) == "review_date" {
-				sqlx += `review_date LIKE '?%'`
-			} else if r.FormValue((Param_Labels["field"])) == "contents" {
-				sqlx += `contents LIKE '%?%'`
-			} else if r.FormValue((Param_Labels["field"])) == "name" {
-				sqlx += `name LIKE '%?%'`
+
+			if r.FormValue(Param_Labels["field"]) == "review_date" {
+				wherex += `review_date LIKE '?%'`
+			} else if r.FormValue(Param_Labels["field"]) == "contents" {
+				wherex += `contents LIKE '%?%'`
+			} else if r.FormValue(Param_Labels["field"]) == "name" {
+				wherex += `name LIKE '%?%'`
 			} else {
-				sqlx += r.FormValue((Param_Labels["field"])) + `= '?'`
+				wherex += r.FormValue(Param_Labels["field"]) + `= '?'`
 			}
 		} else {
-			sqlx += `WHERE ((contents.boxid = '?')
-			OR (boxes.storeref = '?') 
-			OR (boxes.overview LIKE '%?%')
-        	OR (contents.owner = '?') 
-        	OR (contents.client = '?') 
-        	OR (contents.contents LIKE '%?%') 
-        	OR (contents.name LIKE '%?%')) 
-			OR (contents.review_date = '?')
-			OR (contents.review_date LIKE '?%')
+			wherex += `(
+				(contents.boxid = '?')
+			OR 	(boxes.storeref = '?') 
+			OR 	(boxes.overview LIKE '%?%')
+        	OR 	(contents.owner = '?') 
+        	OR 	(contents.client = '?') 
+        	OR 	(contents.contents LIKE '%?%') 
+        	OR 	(contents.name LIKE '%?%')
+			OR 	(contents.review_date = '?')
+			OR 	(contents.review_date LIKE '?%')
+			)
 		`
 		}
 	}
+
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+
+	if session.Values["locations"] != nil {
+		if wherex != "" {
+			wherex += " AND "
+		}
+		wherex += " location In (" + session.Values["locations"].(string) + ")"
+	}
+	if session.Values["owners"] != nil {
+		if wherex != "" {
+			wherex += " AND "
+		}
+		wherex += " owner In (" + session.Values["owners"].(string) + ")"
+	}
 	x, _ := url.QueryUnescape(r.FormValue(Param_Labels["find"]))
-	sqlx = strings.ReplaceAll(sqlx, "?", strings.ReplaceAll(x, "'", "''"))
+	wherex = strings.ReplaceAll(wherex, "?", strings.ReplaceAll(x, "'", "''"))
+	if wherex != "" {
+		sqlx += " WHERE " + wherex
+	}
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY Upper(Trim(contents." + r.FormValue(Param_Labels["order"]) + "))"
 		if r.FormValue(Param_Labels["desc"]) != "" {
@@ -64,10 +91,17 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	fmt.Println("DEBUG: " + sqlx)
 	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "Rexx", "0"))
 
 	var res searchResultsVar
 
+	if session.Values["locations"] != nil {
+		res.Locations = session.Values["locations"].(string)
+	}
+	if session.Values["owners"] != nil {
+		res.Owners = session.Values["owners"].(string)
+	}
 	res.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 
 	res.Boxid = order_dir(r, "boxid")
@@ -94,7 +128,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 	sqllimit := emit_page_anchors(w, r, "find", FoundRecCount)
 
-	//fmt.Printf("DEBUG: sql = SELECT %v%v%v\n", flds, sqlx, sqllimit)
+	fmt.Printf("DEBUG: sql = SELECT %v%v%v\n", flds, sqlx, sqllimit)
 
 	rows, err := DBH.Query("SELECT " + flds + sqlx + sqllimit)
 	if err != nil {
@@ -123,7 +157,146 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func show_search_params(w http.ResponseWriter, r *http.Request) {
+
+	var paramsHTML = `
+
+	<form action="/params">
+	<main>
+	<p>The settings you choose here will be used to restrict searches until you reset them or until your session ends.</p>
+	<p><input type="submit" value="Save settings"></p>`
+
+	var lpars struct {
+		Lrange    string
+		Locations string
+	}
+	var opars struct {
+		Orange string
+		Owners string
+	}
+	lpars.Lrange = Param_Labels["all"]
+	opars.Orange = Param_Labels["all"]
+
+	var locnsRadios = `
+	<p>
+	<input type="radio" id="range_all" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(this.checked);">
+	<label for="range_all"> All </label> &nbsp;&nbsp;&nbsp; 
+	<input type="radio" id="range_sel" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(!this.checked);">
+	<label for="range_sel"> Selected only </label>
+	</p>
+`
+
+	var ownerRadios = `
+<p>
+<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(this.checked);">
+<label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
+<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(!this.checked);">
+<label for="orange_sel"> Selected only </label>
+</p>
+`
+
+	r.ParseForm()
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+
+	// Update settings
+
+	if r.FormValue("l"+Param_Labels["range"]) != "" {
+		lpars.Lrange = r.FormValue("l" + Param_Labels["range"])
+		fmt.Printf("DEBUG: params lrange is %v\n", lpars.Lrange)
+		var locs []string
+		for _, x := range r.Form[Param_Labels["location"]] {
+			locs = append(locs, "'"+strings.ReplaceAll(x, "'", "''")+"'")
+		}
+		lpars.Locations = strings.Join(locs, ",")
+		if lpars.Lrange == Param_Labels["all"] {
+			session.Values["locations"] = nil
+		} else {
+			session.Values["locations"] = lpars.Locations
+		}
+		err = store.Save(r, w, session)
+		checkerr(err)
+	}
+	if r.FormValue("o"+Param_Labels["range"]) != "" {
+		opars.Orange = r.FormValue("o" + Param_Labels["range"])
+		fmt.Printf("DEBUG: params orange is %v\n", opars.Orange)
+		var owners []string
+		for _, x := range r.Form[Param_Labels["owner"]] {
+			owners = append(owners, "'"+strings.ReplaceAll(x, "'", "''")+"'")
+		}
+		opars.Owners = strings.Join(owners, ",")
+		if opars.Orange == Param_Labels["all"] {
+			session.Values["owners"] = nil
+		} else {
+			session.Values["owners"] = opars.Owners
+		}
+		err = store.Save(r, w, session)
+		checkerr(err)
+	}
+	start_html(w, r)
+
+	//fmt.Fprintf(w, `DEBUG: %v<hr>`, r)
+	//fmt.Fprintf(w, `DEBUG: %v<hr>`, r.Form["qlo"])
+	//fmt.Fprintf(w, `DEBUG: %v<hr>`, strings.Join(r.Form["qlo"], ","))
+
+	fmt.Fprintln(w, paramsHTML)
+
+	fmt.Fprintln(w, `<div id="locationfilter">`)
+	fmt.Fprintln(w, `<h2>`+prefs.Field_Labels["location"]+`s</h2>`)
+
+	temp, err := template.New("locnsRadios").Parse(locnsRadios)
+	checkerr(err)
+	temp.Execute(w, lpars)
+
+	sqlx := "SELECT location FROM locations ORDER BY location"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	fmt.Fprintln(w, `<div class="filteritems">`)
+	for rows.Next() {
+		var locn string
+		rows.Scan(&locn)
+		checked := ""
+		if lpars.Lrange == Param_Labels["all"] || strings.Contains(lpars.Locations, strings.ReplaceAll(locn, "'", "''")) {
+			checked = " checked "
+		}
+		fmt.Fprintf(w, `<input id="cb_%v" type="checkbox" name="`+Param_Labels["location"]+`" value="%v" %v> `, locn, locn, checked)
+		fmt.Fprintf(w, ` <label for="cb_%v">%v</label><br>`, locn, locn)
+	}
+	fmt.Fprintln(w, "</div></div>")
+
+	fmt.Fprintln(w, `<div id="ownerfilter">`)
+	fmt.Fprintln(w, `<h2>`+prefs.Field_Labels["owner"]+`s</h2>`)
+	temp, err = template.New("ownerRadios").Parse(ownerRadios)
+	checkerr(err)
+	temp.Execute(w, opars)
+	sqlx = "SELECT DISTINCT Trim(owner) As ownerx FROM contents ORDER BY ownerx"
+	rows, err = DBH.Query(sqlx)
+	checkerr(err)
+	fmt.Fprintln(w, `<div class="filteritems">`)
+	n := 0
+	nmax := 20
+	for rows.Next() {
+		n++
+		if n > nmax {
+			fmt.Fprintln(w, `</div><div class="filteritems">`)
+		}
+		var locn string
+		rows.Scan(&locn)
+		checked := ""
+		if opars.Orange == Param_Labels["all"] || strings.Contains(opars.Owners, strings.ReplaceAll(locn, "'", "''")) {
+			checked = " checked "
+		}
+		fmt.Fprintf(w, `<input id="cb_%v" type="checkbox" name="`+Param_Labels["owner"]+`" value="%v" %v> `, locn, locn, checked)
+		fmt.Fprintf(w, ` <label for="cb_%v">%v</label><br>`, locn, locn)
+	}
+
+	fmt.Fprintln(w, "</div></div>")
+
+}
+
 func show_search(w http.ResponseWriter, r *http.Request) {
+
+	var sv searchVars
 
 	var searchHTML = `
 <p>I'm currently minding <strong>{{.NumDocsX}}</strong> individual files packed into
@@ -148,29 +321,34 @@ here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
 </details>
 <input type="submit" value="Find it!"/><br />
 You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a review date or year.<br>
-Just enter the words you're looking for, no quote marks, ANDs, ORs, etc.</main></form>
-<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="index.php?CMD=PARAMS">specify search options here</a>.</p>
-<form action="/boxes"
-    onsubmit="return !isBadLength(this.` + Param_Labels["boxid"] + `,1,
-    'I\'m sorry, computers don\'t do guessing; you have to tell me which box to show you.\n\nPerhaps you want to see a list of boxes available in which case you should click on [boxes] above.');">
-<p>If you want to look at a particular box, enter its ID here
-<input type="text" name="` + Param_Labels["boxid"] + `" size="10"/><input type="submit" value="Show box"/></p></form>
+Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.</main></form>
+<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
+<p>{{if or .Locations .Owners}}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{end}}</p>
 `
 
 	start_html(w, r)
 
-	searchVars.Apptitle = "DOCUMENT ARCHIVES"
-	searchVars.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM boxes", "Rex", "-1"))
-	searchVars.NumBoxesX = commas(searchVars.NumBoxes)
-	searchVars.NumDocs, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM contents", "Rex", "-1"))
-	searchVars.NumDocsX = commas(searchVars.NumDocs)
-	searchVars.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "Rex", "-1"))
-	searchVars.NumLocnsX = commas(searchVars.NumLocns)
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+
+	if session.Values["locations"] != nil {
+		sv.Locations = session.Values["locations"].(string)
+	}
+	if session.Values["owners"] != nil {
+		sv.Owners = session.Values["owners"].(string)
+	}
+	sv.Apptitle = prefs.AppTitle
+	sv.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM boxes", "Rex", "-1"))
+	sv.NumBoxesX = commas(sv.NumBoxes)
+	sv.NumDocs, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM contents", "Rex", "-1"))
+	sv.NumDocsX = commas(sv.NumDocs)
+	sv.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "Rex", "-1"))
+	sv.NumLocnsX = commas(sv.NumLocns)
 
 	html, err := template.New("searchHTML").Parse(searchHTML)
 	checkerr(err)
 
-	html.Execute(w, searchVars)
+	html.Execute(w, sv)
 
 	fmt.Fprintln(w, "</body></html>")
 }

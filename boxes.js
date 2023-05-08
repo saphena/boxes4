@@ -30,6 +30,9 @@ const Param_Labels = {
 	"adduser":         "zau",
 	"deleteuser":      "zdu",
 	"rowcount":        "zrc",
+	"all":			   "xal",
+	"selected":        "xse",
+	"range":           "xrg",
 }
 
 
@@ -394,4 +397,20 @@ function pwd_insertNewUser(btn) {
 		}
 	});
 
+}
+
+function param_select_locations(selectall) {
+
+	let cbs = document.getElementsByName(Param_Labels["location"]);
+	for (let i = 0; i < cbs.length; i++) {
+		cbs[i].checked = selectall;
+	}
+}
+
+function param_select_owners(selectall) {
+
+	let cbs = document.getElementsByName(Param_Labels["owner"]);
+	for (let i = 0; i < cbs.length; i++) {
+		cbs[i].checked = selectall;
+	}
 }

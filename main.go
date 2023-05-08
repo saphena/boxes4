@@ -41,6 +41,7 @@ func main() {
 	http.HandleFunc("/csvexp", csvexp)
 	http.HandleFunc("/jsonexp", jsonexp)
 	http.HandleFunc("/owners", showowners)
+	http.HandleFunc("/params", show_search_params)
 	http.HandleFunc("/locations", showlocations)
 	http.HandleFunc("/login", login)
 	http.HandleFunc("/logout", logout)

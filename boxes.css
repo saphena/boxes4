@@ -45,6 +45,17 @@ li					{ list-style-type: none; }
 .keydata			{ font-weight: bold; text-transform: uppercase; }
 .hide				{ display: none; }
 
+.filteritems		{ 
+						height: 100%; 
+						min-width: 10em;
+						overflow-y: scroll; 
+						float:left; 
+						font-family: 'Courier New', Courier, monospace;
+						margin-right: 1.5em;
+					}
+#locationfilter		{ max-width: 50em; float: left; }
+#ownerfilter		{ max-width: 50em; float: left; }
+
 input[type="button"]:disabled {
 		background-color: var(--disabled-background);
 		color: var(--disabled-foreground);
