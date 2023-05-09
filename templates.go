@@ -61,6 +61,7 @@ var Param_Labels = map[string]string{
 	"savesettings":    "sss",
 	"newloc":          "nlc",
 	"delloc":          "ndc",
+	"newcontent":      "nct",
 }
 
 type AppVars struct {
@@ -281,6 +282,65 @@ var boxfilesline = `
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
 <td class="date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
+</tr>
+`
+
+func emit_owner_list(w http.ResponseWriter) {
+
+	sqlx := "SELECT DISTINCT Trim(owner) FROM contents ORDER BY Trim(owner)"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	fmt.Fprint(w, `<div class="hide"><datalist id="ownerlist">`)
+	for rows.Next() {
+		var owner string
+		rows.Scan(&owner)
+		fmt.Fprintf(w, `<option value="%v">`, owner)
+	}
+	fmt.Fprint(w, `</datalist></div>`)
+
+}
+
+func emit_client_list(w http.ResponseWriter) {
+
+	sqlx := "SELECT DISTINCT Trim(client) FROM contents ORDER BY Trim(client)"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	fmt.Fprint(w, `<div class="hide"><datalist id="clientlist">`)
+	for rows.Next() {
+		var client string
+		rows.Scan(&client)
+		fmt.Fprintf(w, `<option value="%v">`, client)
+	}
+	fmt.Fprint(w, `</datalist></div>`)
+
+}
+
+func emit_name_list(w http.ResponseWriter) {
+
+	sqlx := "SELECT DISTINCT Trim(name) FROM contents ORDER BY Trim(name)"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	fmt.Fprint(w, `<div class="hide"><datalist id="namelist">`)
+	for rows.Next() {
+		var name string
+		rows.Scan(&name)
+		fmt.Fprintf(w, `<option value="%v">`, name)
+	}
+	fmt.Fprint(w, `</datalist></div>`)
+
+}
+
+var newboxcontentline = `
+<tr>
+<td><input type="text" style="width:95%" list="ownerlist" class="keyinput"></td>
+<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);"></td>
+<td><input type="text" style="width:95%" list="namelist"></td>
+<td><input type="text" style="width:95%"></td>
+<td><input type="text" style="width:95%"></td>
+<td><input type="button" class="btn" value="Add!" onclick="add_new_box_content(this);">
 </tr>
 `
 

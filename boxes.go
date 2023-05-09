@@ -11,6 +11,11 @@ import (
 
 func showboxes(w http.ResponseWriter, r *http.Request) {
 
+	r.ParseForm()
+	if r.FormValue(Param_Labels["client"]) != "" {
+		ajax_fetch_name_list(w, r)
+		return
+	}
 	var boxtablehdr = `
 <table class="boxlist">
 <thead>
@@ -170,7 +175,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 			sqlx += " DESC"
 		}
 	} else {
-		sqlx += " ORDER BY owner,client"
+		sqlx += " ORDER BY id"
 	}
 	rows, _ := DBH.Query(sqlx + sqllimit)
 	defer rows.Close()
@@ -185,6 +190,12 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	err = html.Execute(w, bfv)
 	checkerr(err)
 
+	if runvars.Updating {
+		fmt.Fprint(w, newboxcontentline)
+		//temp, err := template.New("newboxcontentline").Parse(newboxcontentline)
+		//checkerr(err)
+		//err = temp.Execute(w, "")
+	}
 	nrows := 0
 	html, err = template.New("").Parse(boxfilesline)
 	checkerr(err)
@@ -203,5 +214,36 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	html, err = template.New("").Parse(boxfilestrailer)
 	html.Execute(w, "")
 	checkerr(err)
+
+	emit_owner_list(w)
+	emit_client_list(w)
+	emit_name_list(w)
+
+}
+
+func ajax_fetch_name_list(w http.ResponseWriter, r *http.Request) {
+
+	client := r.FormValue(Param_Labels["client"])
+	sqlx := "SELECT DISTINCT Trim(name) FROM contents"
+	if client != "" {
+		sqlx += " WHERE client='" + strings.ReplaceAll(client, "'", "''") + "'"
+	}
+	sqlx += " ORDER BY Trim(name)"
+	fmt.Println("DEBUG: " + sqlx)
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	fmt.Fprint(w, `{"res":"ok","names":[`)
+	emitComma := false
+	for rows.Next() {
+		var name string
+		rows.Scan(&name)
+		if emitComma {
+			fmt.Fprint(w, ",")
+		}
+		fmt.Fprintf(w, `"%v"`, name)
+		emitComma = true
+	}
+	fmt.Fprint(w, `]}`)
 
 }

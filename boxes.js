@@ -36,6 +36,7 @@ const Param_Labels = {
 	"savesettings":    "sss",
 	"newloc":          "nlc",
 	"delloc":          "ndc",
+	"newcontent":      "nct",
 }
 
 
@@ -512,3 +513,59 @@ function delete_location(obj) {
 	});
 
 }
+
+function add_new_box_content(obj) {
+
+	obj.disabled = true;
+
+	let tr = obj.parentElement.parentElement;
+	let box = obj.getAttribute('data-boxid');
+	let owner = tr.children[0].firstElementChild.value.toLocaleUpperCase();
+	let client = tr.children[1].firstElementChild.value.toLocaleUpperCase();
+	let name = tr.children[2].firstElementChild.value;
+	let contents = tr.children[3].firstElementChild.value;
+	let review = tr.children[4].firstElementChild.value;
+
+
+	let url = "/boxes?"+Param_Labels["newcontent"]+"="+encodeURIComponent(box);
+	url += "&"+Param_Labels["owner"]+"="+encodeURIComponent(owner);
+	url += "&"+Param_Labels["client"]+"="+encodeURIComponent(client);
+	url += "&"+Param_Labels["name"]+"="+encodeURIComponent(name);
+	url += "&"+Param_Labels["contents"]+"="+encodeURIComponent(contents);
+	url += "&"+Param_Labels["review_date"]+"="+encodeURIComponent(review);
+	
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(box));
+		} else {
+			obj.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+function fetch_client_name_list(obj) {
+
+	let client = obj.value;
+	let url = "/boxes?"+Param_Labels["client"]+"="+encodeURIComponent(client);
+
+	console.log(url);
+	fetch(url)
+	.then(res => res.json())
+	.then(res => {
+		if (res.res != "ok") return;
+		console.log(res.names);
+		let dl = document.getElementById("namelist");
+		dl.textContent = "";
+		res.names.forEach(element => {
+			let opt = document.createElement("option");
+			opt.value = element;
+			dl.appendChild(opt);
+		});
+	})
+}
+
