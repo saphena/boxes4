@@ -44,6 +44,8 @@ li					{ list-style-type: none; }
 .numboxes			{ text-align: center; }
 .keydata			{ font-weight: bold; text-transform: uppercase; }
 .hide				{ display: none; }
+.vdata				{ text-align: center; }
+.vlabel				{ text-align: right; padding-right: 0.5em; }
 
 .filteritems		{ 
 						height: 100%; 

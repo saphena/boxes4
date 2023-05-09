@@ -191,7 +191,8 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
-	sqlx := "SELECT owner,client,name,contents,review_date FROM contents WHERE boxid='" + boxid + "'"
+	sqlx := "SELECT owner,client,name,contents,review_date FROM contents "
+	sqlx += " WHERE boxid='" + boxid + "'"
 
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY TRIM(contents." + r.FormValue(Param_Labels["order"]) + ")"

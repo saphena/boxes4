@@ -98,7 +98,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 <tr><td class="vlabel">` + prefs.Field_Labels["storeref"] + ` : </td><td class="vdata"><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td></tr>
 <tr><td class="vlabel">` + prefs.Field_Labels["contents"] + ` : </td><td class="vdata">{{.Contents}}</td></tr>
 <tr><td class="vlabel">` + prefs.Field_Labels["numdocs"] + ` : </td><td class="vdata numdocs">{{.NumFilesX}}</td></tr>
-<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td class="vdata">{{.Date}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td class="vdata center">{{.Date}}</td></tr>
 
 </table>
 `
@@ -124,11 +124,15 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, "<p>Bugger! %v</p>", r.FormValue(Param_Labels["boxid"]))
 		return
 	}
-	xx := prefs.Field_Labels["boxid"]
-	fmt.Printf("xx=%v\n", xx)
+	//xx := prefs.Field_Labels["boxid"]
+	//fmt.Printf("xx=%v\n", xx)
 	var mindate, maxdate string
 	rows.Scan(&bv.Storeref, &bv.Boxid, &bv.Location, &bv.Contents, &bv.NumFiles, &mindate, &maxdate)
-	bv.Date = mindate + " to " + maxdate
+	if mindate == maxdate {
+		bv.Date = mindate
+	} else {
+		bv.Date = mindate + " to " + maxdate
+	}
 	bv.NumFilesX = commas(bv.NumFiles)
 	html, err := template.New("main").Parse(boxhtml)
 	checkerr(err)

@@ -100,7 +100,8 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	rows.Close()
 
-	sqlx = " FROM contents WHERE owner='" + strings.ReplaceAll(owner, "'", "''") + "'"
+	sqlx = " FROM contents  LEFT JOIN boxes ON contents.boxid=boxes.boxid "
+	sqlx += " WHERE owner='" + strings.ReplaceAll(owner, "'", "''") + "'"
 	NumRows, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex"+sqlx, "rex", "0"))
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY Upper(Trim(contents." + r.FormValue(Param_Labels["order"]) + "))"
@@ -111,7 +112,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	sqllimit = emit_page_anchors(w, r, "owners", NumRows)
 
-	rows, err = DBH.Query("SELECT boxid,client,name,contents,review_date " + sqlx + sqllimit)
+	rows, err = DBH.Query("SELECT contents.boxid,client,name,contents,review_date,overview " + sqlx + sqllimit)
 	checkerr(err)
 	defer rows.Close()
 	var ofv ownerfilesvar
@@ -126,7 +127,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	html, err = template.New("").Parse(ownerfilesline)
 	checkerr(err)
 	for rows.Next() {
-		rows.Scan(&ofv.Boxid, &ofv.Client, &ofv.Name, &ofv.Contents, &ofv.Date)
+		rows.Scan(&ofv.Boxid, &ofv.Client, &ofv.Name, &ofv.Contents, &ofv.Date, &ofv.Overview)
 		ofv.BoxidUrl = template.URLQueryEscaper(ofv.Boxid)
 		ofv.ClientUrl = template.URLQueryEscaper(ofv.Client)
 		err = html.Execute(w, ofv)

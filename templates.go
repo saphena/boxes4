@@ -65,6 +65,7 @@ type AppVars struct {
 	Apptitle string
 	Userid   string
 	Script   string
+	Updating bool
 }
 
 type searchVars struct {
@@ -106,7 +107,7 @@ type searchResultsVar struct {
 
 var searchResultsLine = `
 <tr>
-<td class="ourbox">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
+<td class="ourbox" title="{{.Overview}}">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
 <td class="owner">{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}</td>
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
@@ -141,7 +142,7 @@ const html2 = `
 </style>
 </head>
 <body onload="bodyLoaded();">
-<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Userid}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
+<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu">
 `
 
@@ -197,12 +198,13 @@ type ownerfilesvar struct {
 	Name      string
 	Contents  string
 	Date      string
+	Overview  string
 	Desc      bool
 }
 
 var ownerfilesline = `
 <tr>
-<td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
+<td class="boxid" title="{{.Overview}}">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
@@ -308,8 +310,9 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	var ht string
 
 	updating, usr, _ := updateok(r)
-	//fmt.Printf("DEBUG: updating=%v usr=%v\n", updating, usr)
-	if !updating {
+	runvars.Updating = updating
+	fmt.Printf("DEBUG: updating=%v usr=%v\n", runvars.Updating, usr)
+	if !runvars.Updating {
 		ht = html1 + css + html2 + basicMenu + "</div>" + errormsgdiv
 	} else {
 		if usr != nil {
@@ -479,7 +482,7 @@ PagesizeOptions: [0,20,40,60,100]
 FieldLabels:
   boxid:           'BoxID'
   owner:           'Owner'
-  contents:        'Folders'
+  contents:        'Files'
   review_date:     'Review date'
   name:            'Name'
   client:          'Client'
@@ -507,7 +510,7 @@ MenuLabels:
 
 TableLabels:
   boxes:		boxes
-  contents:		folders
+  contents:		files
   locations:	locations
   users:		users
   history:		history

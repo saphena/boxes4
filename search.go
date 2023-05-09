@@ -45,20 +45,27 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 				wherex += `contents LIKE '%?%'`
 			} else if r.FormValue(Param_Labels["field"]) == "name" {
 				wherex += `name LIKE '%?%'`
+			} else if r.FormValue(Param_Labels["field"]) == "owner" {
+				wherex += `(owner = '?' OR owner LIKE '?/%' OR owner LIKE '%/?')`
+			} else if r.FormValue(Param_Labels["field"]) == "client" {
+				wherex += `(client = '?' OR client LIKE '?/%' OR client LIKE '%/?')`
 			} else {
 				wherex += r.FormValue(Param_Labels["field"]) + `= '?'`
 			}
 		} else {
 			wherex += `(
-				(contents.boxid = '?')
-			OR 	(boxes.storeref = '?') 
-			OR 	(boxes.overview LIKE '%?%')
-        	OR 	(contents.owner = '?') 
-        	OR 	(contents.client = '?') 
-        	OR 	(contents.contents LIKE '%?%') 
-        	OR 	(contents.name LIKE '%?%')
-			OR 	(contents.review_date = '?')
-			OR 	(contents.review_date LIKE '?%')
+				(contents.boxid LIKE '?%')
+			OR	(boxes.storeref LIKE '?%') 
+			OR	(boxes.overview LIKE '%?%')
+			OR	(contents.client = '?') 
+			OR	(contents.client LIKE '?/%')
+			OR	(contents.client LIKE '%/?')
+			OR	(contents.owner = '?') 
+			OR	(contents.owner LIKE '?/%')
+			OR	(contents.owner LIKE '%/?')
+			OR	(contents.contents LIKE '%?%') 
+			OR	(contents.name LIKE '%?%')
+			OR	(contents.review_date LIKE '?%')
 			)
 		`
 		}
@@ -91,7 +98,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//fmt.Println("DEBUG: " + sqlx)
+	fmt.Println("DEBUG: " + sqlx)
 	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "Rexx", "0"))
 
 	var res searchResultsVar
@@ -338,7 +345,7 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 </strong> locations.</p>
 
 <form action="/find" onsubmit="if (this.fld.value=='') { this.fld.name=''; }">
-<main>You can search the archives using a simple textsearch by entering the text you're looking for
+<main>You can search the archives by entering the text you're looking for
 here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
 <details title="Fields to search" style="display:inline;">
 <summary><strong>&#8799;</strong></summary>
@@ -354,7 +361,7 @@ here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
 </select>
 </details>
 <input type="submit" value="Find it!"/><br />
-You can enter a partner's initials, a client number or name, a common term such as <em>tax</em> or a review date or year.<br>
+You can enter a partner's initials, a client number or name, a box number or storage reference, a common term such as <em>tax</em> or a review date or year.<br>
 Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.</main></form>
 <p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
 <p>{{if or .Locations .Owners}}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{end}}</p>
