@@ -59,6 +59,8 @@ var Param_Labels = map[string]string{
 	"selected":        "xse",
 	"range":           "xrg",
 	"savesettings":    "sss",
+	"newloc":          "nlc",
+	"delloc":          "ndc",
 }
 
 type AppVars struct {
@@ -157,12 +159,13 @@ type locationlistvars struct {
 	Desc        bool
 	NumOrder    bool
 	Single      bool
+	DeleteOK    bool
 }
 
 var locationlistline = `
 <tr>
 <td class="location">{{if .Single}}{{else}}{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{end}}{{.Location}}{{if .Single}}{{else}}{{if .Location}}</a>{{end}}{{end}}</td>
-<td class="numboxes">{{.NumBoxesX}}</td>
+<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="delete_location(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
 </tr>
 `
 
@@ -179,7 +182,7 @@ type ownerlistvars struct {
 var ownerlistline = `
 <tr>
 <td class="owner">{{if .Single}}{{else}}{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{end}}{{.Owner}}{{if .Single}}{{else}}{{if .Owner}}</a>{{end}}{{end}}</td>
-<td class="number">{{.NumFilesX}}</td>
+<td class="vdata">{{.NumFilesX}}</td>
 </tr>
 `
 
@@ -311,7 +314,7 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 
 	updating, usr, _ := updateok(r)
 	runvars.Updating = updating
-	fmt.Printf("DEBUG: updating=%v usr=%v\n", runvars.Updating, usr)
+	//fmt.Printf("DEBUG: updating=%v usr=%v\n", runvars.Updating, usr)
 	if !runvars.Updating {
 		ht = html1 + css + html2 + basicMenu + "</div>" + errormsgdiv
 	} else {

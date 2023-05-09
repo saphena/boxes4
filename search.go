@@ -360,7 +360,7 @@ here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
 <option value="boxid">` + prefs.Field_Labels["boxid"] + `</option>
 </select>
 </details>
-<input type="submit" value="Find it!"/><br />
+<input type="submit" class="btn" value="Find it!"/><br />
 You can enter a partner's initials, a client number or name, a box number or storage reference, a common term such as <em>tax</em> or a review date or year.<br>
 Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.</main></form>
 <p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>

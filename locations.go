@@ -9,7 +9,68 @@ import (
 	"strings"
 )
 
+func ajax_add_location(w http.ResponseWriter, r *http.Request) {
+	// form already parsed so just get on with it
+
+	newloc := r.FormValue(Param_Labels["newloc"])
+	newlocsql := strings.ReplaceAll(newloc, "'", "''")
+	sqlx := "SELECT Count(location) As rex FROM locations WHERE location LIKE '" + newlocsql + "'"
+	dupe := getValueFromDB(sqlx, "rex", "0") != "0"
+	if dupe {
+		fmt.Fprint(w, `{"res":"That `+prefs.Field_Labels["location"]+` already exists!"}`)
+		return
+	}
+	sqlx = "INSERT INTO locations (location) VALUES('" + newlocsql + "')"
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Insert failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
+
+func ajax_del_location(w http.ResponseWriter, r *http.Request) {
+	// form already parsed so just get on with it
+
+	//fmt.Printf("DEBUG: %v\n", r)
+	oldloc := r.FormValue(Param_Labels["delloc"])
+	oldlocsql := strings.ReplaceAll(oldloc, "'", "''")
+	sqlx := "SELECT Count(boxid) As rex FROM boxes WHERE location LIKE '" + oldlocsql + "'"
+	dupe := getValueFromDB(sqlx, "rex", "0")
+	if dupe != "0" {
+		fmt.Fprint(w, `{"res":"That `+prefs.Field_Labels["location"]+` contains at least one box!"}`)
+		return
+	}
+	sqlx = "DELETE FROM locations WHERE location='" + oldlocsql + "'"
+	//fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Deletion failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
+
 func showlocations(w http.ResponseWriter, r *http.Request) {
+
+	r.ParseForm()
+	if r.FormValue(Param_Labels["newloc"]) != "" {
+		ajax_add_location(w, r)
+		return
+	}
+
+	if r.FormValue(Param_Labels["delloc"]) != "" {
+		ajax_del_location(w, r)
+		return
+	}
 
 	var locationlisthdr = `
 <table class="locationlist">
@@ -23,6 +84,11 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 </thead>
 <tbody>
 `
+	var newlocation = `
+<tr><td class="location"><input type="text" style="width:95%;" autofocus></td>
+<td><input type="button" class="btn" value="Add new ` + prefs.Field_Labels["location"] + `"
+onclick="add_new_location(this);"></td></tr>
+`
 
 	start_html(w, r)
 
@@ -30,7 +96,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 
 	NumLocations, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "rex", "0"))
 
-	sqlx = " FROM locations RIGHT JOIN boxes ON locations.location=boxes.location"
+	sqlx = " FROM locations LEFT JOIN boxes ON locations.location=boxes.location"
 
 	sqllocation := ""
 	if r.FormValue(Param_Labels["location"]) != "" {
@@ -68,22 +134,25 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	err = temp.Execute(w, loc)
 	checkerr(err)
 
-	if true {
-		temp, err = template.New("locationlistline2").Parse(locationlistline)
+	temp, err = template.New("locationlistline2").Parse(locationlistline)
+	if err != nil {
+		panic(err)
+	}
+	for rows.Next() {
+		rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
+		loc.LocationUrl = url.QueryEscape(loc.Location)
+		loc.NumBoxesX = commas(loc.NumBoxes)
+		loc.DeleteOK = runvars.Updating && loc.NumBoxes == 0
+		err := temp.Execute(w, loc)
 		if err != nil {
 			panic(err)
 		}
-		for rows.Next() {
-			rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
-			loc.LocationUrl = url.QueryEscape(loc.Location)
-			loc.NumBoxesX = commas(loc.NumBoxes)
-			err := temp.Execute(w, loc)
-			if err != nil {
-				panic(err)
-			}
-		}
-		fmt.Fprint(w, ownerlisttrailer)
 	}
+	if runvars.Updating {
+		fmt.Fprint(w, newlocation)
+	}
+	fmt.Fprint(w, ownerlisttrailer)
+
 	if sqllocation != "" {
 		showlocation(w, r, sqllocation, loc.NumBoxes)
 	}

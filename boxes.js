@@ -34,6 +34,8 @@ const Param_Labels = {
 	"selected":        "xse",
 	"range":           "xrg",
 	"savesettings":    "sss",
+	"newloc":          "nlc",
+	"delloc":          "ndc",
 }
 
 
@@ -463,5 +465,50 @@ function bodyLoaded() {
 
 	trapkeys();
 	trapDirtyPage();
+
+}
+
+function add_new_location(obj) {
+
+	obj.disabled = true;
+
+	let tr = obj.parentElement.parentElement;
+	let newloc = tr.firstElementChild.firstElementChild.value;
+	let url = "/locations?"+Param_Labels["newloc"]+"="+encodeURIComponent(newloc)
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			console.log("Fetching locations");
+			window.location.replace("/locations");
+		} else {
+			obj.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+
+function delete_location(obj) {
+
+	obj.disabled = true;
+
+	let tr = obj.parentElement.parentElement;
+	let loc = tr.firstElementChild.firstElementChild.innerText
+	let url = "/locations?"+Param_Labels["delloc"]+"="+encodeURIComponent(loc)
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			console.log("Fetching locations");
+			window.location.replace("/locations");
+		} else {
+			obj.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
 
 }
