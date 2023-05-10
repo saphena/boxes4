@@ -62,6 +62,8 @@ var Param_Labels = map[string]string{
 	"newloc":          "nlc",
 	"delloc":          "ndc",
 	"newcontent":      "nct",
+	"delcontent":      "dct",
+	"savecontent":     "dsc",
 }
 
 type AppVars struct {
@@ -273,15 +275,21 @@ type boxfilevars struct {
 	Contents  string
 	Date      string
 	Desc      bool
+	DeleteOK  bool
+	Id        int
 }
 
 var boxfilesline = `
-<tr>
+<tr data-id="{{.Id}}">
 <td class="owner">{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}</td>
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
-<td class="name">{{.Name}}</td>
+<td class="name" {{if .DeleteOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
 <td class="date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
+{{if .DeleteOK}}<td>
+<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="update_box_content_line(this);">
+<input type="button" class="btn" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
+</td>{{end}}
 </tr>
 `
 
@@ -340,7 +348,7 @@ var newboxcontentline = `
 <td><input type="text" style="width:95%" list="namelist"></td>
 <td><input type="text" style="width:95%"></td>
 <td><input type="text" style="width:95%"></td>
-<td><input type="button" class="btn" value="Add!" onclick="add_new_box_content(this);">
+<td><input type="button" class="btn" data-boxid="{{.Boxid}}" value="Add!" onclick="add_new_box_content(this);">
 </tr>
 `
 
@@ -496,6 +504,7 @@ type userpreferences struct {
 	PasswordMinLength    int               `yaml:"PasswordMinLength"`
 	DefaultPagesize      int               `yaml:"DefaultPagesize"`
 	Pagesizes            []int             `yaml:"PagesizeOptions"`
+	FixLazyTyping        []string          `yaml:"FixAllLowercaseFields"`
 	//pagesizes := []int{0, 20, 40, 60, 100}
 
 }
@@ -541,6 +550,11 @@ DefaultPagesize: 20
 
 
 PagesizeOptions: [0,20,40,60,100]
+
+# If these fields are originally entered as all lowercase, reformat to
+# titlecase before record insertion. Only applies during initial data 
+# capture, subsequents edits left untouched.
+FixAllLowercaseFields: [name,contents,overview,location]
 
 FieldLabels:
   boxid:           'BoxID'

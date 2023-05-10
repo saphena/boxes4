@@ -48,7 +48,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 			} else if r.FormValue(Param_Labels["field"]) == "owner" {
 				wherex += `(owner = '?' OR owner LIKE '?/%' OR owner LIKE '%/?')`
 			} else if r.FormValue(Param_Labels["field"]) == "client" {
-				wherex += `(client = '?' OR client LIKE '?/%' OR client LIKE '%/?')`
+				wherex += `(client LIKE '?%' OR client LIKE '?/%' OR client LIKE '%/?')`
 			} else {
 				wherex += r.FormValue(Param_Labels["field"]) + `= '?'`
 			}
@@ -57,7 +57,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 				(contents.boxid LIKE '?%')
 			OR	(boxes.storeref LIKE '?%') 
 			OR	(boxes.overview LIKE '%?%')
-			OR	(contents.client = '?') 
+			OR	(contents.client LIKE '?%') 
 			OR	(contents.client LIKE '?/%')
 			OR	(contents.client LIKE '%/?')
 			OR	(contents.owner = '?') 

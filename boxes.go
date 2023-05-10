@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -12,6 +13,22 @@ import (
 func showboxes(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
+
+	if r.FormValue(Param_Labels["savecontent"]) != "" {
+		ajax_update_content_line(w, r)
+		return
+	}
+
+	if r.FormValue(Param_Labels["delcontent"]) != "" {
+		ajax_delete_content_line(w, r)
+		return
+	}
+
+	if r.FormValue(Param_Labels["newcontent"]) != "" {
+		ajax_add_new_content(w, r)
+		return
+	}
+
 	if r.FormValue(Param_Labels["client"]) != "" {
 		ajax_fetch_name_list(w, r)
 		return
@@ -167,7 +184,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
-	sqlx := "SELECT owner,client,name,contents,review_date FROM contents WHERE boxid='" + boxid + "'"
+	sqlx := "SELECT owner,client,name,contents,review_date,id FROM contents WHERE boxid='" + boxid + "'"
 
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY TRIM(contents." + r.FormValue(Param_Labels["order"]) + ")"
@@ -186,22 +203,23 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	var bfv boxfilevars
 	bfv.Boxid = boxid
 	bfv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+	bfv.DeleteOK = runvars.Updating
 
 	err = html.Execute(w, bfv)
 	checkerr(err)
 
 	if runvars.Updating {
-		fmt.Fprint(w, newboxcontentline)
-		//temp, err := template.New("newboxcontentline").Parse(newboxcontentline)
-		//checkerr(err)
-		//err = temp.Execute(w, "")
+		//fmt.Fprint(w, newboxcontentline)
+		temp, err := template.New("newboxcontentline").Parse(newboxcontentline)
+		checkerr(err)
+		err = temp.Execute(w, bfv)
 	}
 	nrows := 0
 	html, err = template.New("").Parse(boxfilesline)
 	checkerr(err)
 
 	for rows.Next() {
-		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date)
+		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date, &bfv.Id)
 		bfv.OwnerUrl = template.URLQueryEscaper(bfv.Owner)
 		bfv.ClientUrl = template.URLQueryEscaper(bfv.Client)
 		err = html.Execute(w, bfv)
@@ -245,5 +263,99 @@ func ajax_fetch_name_list(w http.ResponseWriter, r *http.Request) {
 		emitComma = true
 	}
 	fmt.Fprint(w, `]}`)
+
+}
+
+func ajax_add_new_content(w http.ResponseWriter, r *http.Request) {
+
+	boxid := r.FormValue(Param_Labels["newcontent"])
+	owner := r.FormValue(Param_Labels["owner"])
+	client := r.FormValue(Param_Labels["client"])
+	name := r.FormValue(Param_Labels["name"])
+	contents := r.FormValue(Param_Labels["contents"])
+	review := "2030-01-01"
+
+	// Let's apply some lazy help
+
+	re := regexp.MustCompile(`.*[A-Z]`) // Check for at least one uppercase letter
+	if contains(prefs.FixLazyTyping, "name") && !re.MatchString(name) {
+		name = fixAllLowercase(name)
+	}
+	if contains(prefs.FixLazyTyping, "contents") && !re.MatchString(contents) {
+		contents = fixAllLowercase(contents)
+	}
+
+	sqlx := "INSERT INTO contents (boxid,review_date,contents,owner,name,client) VALUES("
+	sqlx += "'" + safesql(boxid) + "'"
+	sqlx += ",'" + review + "'"
+	sqlx += ",'" + safesql(contents) + "'"
+	sqlx += ",'" + safesql(owner) + "'"
+	sqlx += ",'" + safesql(name) + "'"
+	sqlx += ",'" + safesql(client) + "'"
+	sqlx += ")"
+
+	fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Insertion failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
+
+func ajax_delete_content_line(w http.ResponseWriter, r *http.Request) {
+
+	id := r.FormValue(Param_Labels["delcontent"])
+	owner := r.FormValue(Param_Labels["owner"])
+	client := r.FormValue(Param_Labels["client"])
+
+	sqlx := "DELETE FROM contents WHERE id=" + id
+	sqlx += " AND owner='" + safesql(owner) + "'"
+	sqlx += " AND client='" + safesql(client) + "'"
+	fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Deletion failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
+
+func ajax_update_content_line(w http.ResponseWriter, r *http.Request) {
+
+	id := r.FormValue(Param_Labels["savecontent"])
+	owner := r.FormValue(Param_Labels["owner"])
+	client := r.FormValue(Param_Labels["client"])
+	name := r.FormValue(Param_Labels["name"])
+	contents := r.FormValue(Param_Labels["contents"])
+	review := r.FormValue(Param_Labels["review_date"])
+
+	sqlx := "UPDATE contents SET "
+	sqlx += " owner='" + safesql(owner) + "'"
+	sqlx += ",client='" + safesql(client) + "'"
+	sqlx += ",name='" + safesql(name) + "'"
+	sqlx += ",contents='" + safesql(contents) + "'"
+	sqlx += ",review_date='" + safesql(review) + "'"
+
+	sqlx += " WHERE id=" + id
+
+	fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
 
 }

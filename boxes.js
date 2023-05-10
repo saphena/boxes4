@@ -37,6 +37,8 @@ const Param_Labels = {
 	"newloc":          "nlc",
 	"delloc":          "ndc",
 	"newcontent":      "nct",
+	"delcontent":      "dct",
+	"savecontent":     "dsc",
 }
 
 
@@ -561,11 +563,99 @@ function fetch_client_name_list(obj) {
 		console.log(res.names);
 		let dl = document.getElementById("namelist");
 		dl.textContent = "";
+		let n = 0;
+		let v = "";
 		res.names.forEach(element => {
+			n++;
 			let opt = document.createElement("option");
+			v = element;
 			opt.value = element;
 			dl.appendChild(opt);
 		});
+		if (n == 1) {
+			let tr = obj.parentElement.parentElement;
+			let name = tr.children[2].firstElementChild;
+			name.value = v; 
+		}
 	})
 }
 
+function delete_box_content_line(obj) {
+
+	obj.disabled = true;
+
+	let id = obj.getAttribute('data-id');
+	let boxid = obj.getAttribute('data-boxid');
+	let url = "/boxes?"+Param_Labels["delcontent"]+"="+id;
+
+	// Delete is dangerous so let's do some belt and braces
+	let tr = obj.parentElement.parentElement;
+	let owner = tr.children[0].innerText
+	let client = tr.children[1].innerText
+
+	url += "&"+Param_Labels["owner"]+"="+encodeURIComponent(owner)
+	url += "&"+Param_Labels["client"]+"="+encodeURIComponent(client)
+
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid));
+		} else {
+			obj.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+function update_box_content_line(obj) {
+
+	obj.disabled = true;
+
+	let id = obj.getAttribute('data-id');
+	let boxid = obj.getAttribute('data-boxid');
+	let url = "/boxes?"+Param_Labels["savecontent"]+"="+id;
+
+	let tr = obj.parentElement.parentElement;
+	let owner = tr.children[0].innerText
+	let client = tr.children[1].innerText
+	let name = tr.children[2].innerText
+	let contents = tr.children[3].innerText
+	let review = tr.children[4].innerText
+
+	url += "&"+Param_Labels["owner"]+"="+encodeURIComponent(owner)
+	url += "&"+Param_Labels["client"]+"="+encodeURIComponent(client)
+	url += "&"+Param_Labels["name"]+"="+encodeURIComponent(name)
+	url += "&"+Param_Labels["contents"]+"="+encodeURIComponent(contents)
+	url += "&"+Param_Labels["review_date"]+"="+encodeURIComponent(review)
+
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid));
+		} else {
+			obj.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
+
+// Called when a box content record is edited
+function contentSaveNeeded(obj) {
+
+	obj.classList.add('warning');
+	let tr = obj.parentElement;
+	console.log('Found TR');
+	let save = tr.children[5].firstElementChild;
+	let del = tr.children[5].lastElementChild;
+	console.log("Blip");
+	del.classList.add('hide');
+	save.classList.remove('hide');
+	console.log("Blop");
+}

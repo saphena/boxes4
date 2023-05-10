@@ -6,8 +6,23 @@ import (
 	"strconv"
 	"strings"
 
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	yaml "gopkg.in/yaml.v2"
 )
+
+func fixAllLowercase(s string) string {
+
+	caser := cases.Title(language.English)
+	return caser.String(s)
+
+}
+
+func safesql(s string) string {
+
+	return strings.ReplaceAll(s, "'", "''")
+
+}
 
 // I insert commas in string representation of integer
 func commas(n int) string {
