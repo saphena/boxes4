@@ -623,7 +623,7 @@ function update_box_content_line(obj) {
 	let client = tr.children[1].innerText
 	let name = tr.children[2].innerText
 	let contents = tr.children[3].innerText
-	let review = tr.children[4].innerText
+	let review = tr.children[4].firstElementChild.value;
 
 	url += "&"+Param_Labels["owner"]+"="+encodeURIComponent(owner)
 	url += "&"+Param_Labels["client"]+"="+encodeURIComponent(client)
@@ -636,7 +636,7 @@ function update_box_content_line(obj) {
 	.then(res => res.json())
 	.then(res => {
 		if (res.res=="ok") {
-			window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid));
+			contentNowSaved(tr);
 		} else {
 			obj.disabled = false;
 			showerrormsg(res.res);
@@ -645,7 +645,19 @@ function update_box_content_line(obj) {
 
 }
 
+// called from a SELECT holding month/year assuming container
+// has input, select, select holding iso8601, mm, yyyy respectively
+function date_from_selects(obj) {
 
+	let con = obj.parentElement;
+	let dt = con.children[0];
+	let mm = con.children[1];
+	let yy = con.children[2];
+
+	dt.value = yy.value+"-"+mm.value+"-01"
+	dt.onchange();
+
+}
 // Called when a box content record is edited
 function contentSaveNeeded(obj) {
 
@@ -653,9 +665,27 @@ function contentSaveNeeded(obj) {
 	let tr = obj.parentElement;
 	console.log('Found TR');
 	let save = tr.children[5].firstElementChild;
+
+	// There might not be a second button so preserve the order below
 	let del = tr.children[5].lastElementChild;
-	console.log("Blip");
-	del.classList.add('hide');
+
 	save.classList.remove('hide');
-	console.log("Blop");
+	del.classList.add('hide');
+
+}
+
+
+// Save is now complete so clean the whole line
+function contentNowSaved(tr) {
+
+	let save = tr.children[5].firstElementChild;
+
+	// There might not be a second button so preserve the order below
+	let del = tr.children[5].lastElementChild;
+	for (let i = 0; i < 5; i++) {
+		tr.children[i].classList.remove('warning');
+	}
+	save.classList.add('hide');
+	del.classList.remove('hide');
+
 }

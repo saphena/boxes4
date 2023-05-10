@@ -204,6 +204,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	bfv.Boxid = boxid
 	bfv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 	bfv.DeleteOK = runvars.Updating
+	bfv.UpdateOK = runvars.Updating
 
 	err = html.Execute(w, bfv)
 	checkerr(err)
@@ -215,13 +216,16 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 		err = temp.Execute(w, bfv)
 	}
 	nrows := 0
-	html, err = template.New("").Parse(boxfilesline)
-	checkerr(err)
 
 	for rows.Next() {
 		rows.Scan(&bfv.Owner, &bfv.Client, &bfv.Name, &bfv.Contents, &bfv.Date, &bfv.Id)
 		bfv.OwnerUrl = template.URLQueryEscaper(bfv.Owner)
 		bfv.ClientUrl = template.URLQueryEscaper(bfv.Client)
+
+		t := strings.ReplaceAll(boxfilesline, "#DATESELECTORS#", generateDatePicklist(bfv.Date, Param_Labels["review_date"], "contentSaveNeeded(this.parentElement);"))
+		html, err = template.New("").Parse(t)
+		checkerr(err)
+
 		err = html.Execute(w, bfv)
 		if err != nil {
 			panic(err)

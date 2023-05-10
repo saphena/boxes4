@@ -1,16 +1,59 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
 	yaml "gopkg.in/yaml.v2"
 )
 
+func generateDatePicklist(iso8601dt string, datefieldname string, onchange string) string {
+
+	currentYear := time.Now().Year()
+	dataDate := strings.Split(iso8601dt, "-")
+	dataYear, _ := strconv.Atoi(dataDate[0])
+	dataMonthx := dataDate[1]
+	dataMonth, _ := strconv.Atoi(dataMonthx)
+	minYear := currentYear
+	if dataYear < minYear {
+		minYear = dataYear
+	}
+	maxYear := currentYear + prefs.FuturePicklistYears
+	if dataYear > maxYear {
+		maxYear = dataYear
+	}
+	fld := `<input type="hidden" name="` + datefieldname + `" value="` + iso8601dt + `" onchange="` + onchange + `">`
+	mths := `<select onchange="date_from_selects(this);">`
+	for i := 1; i <= 12; i++ {
+		mths += `<option value="` + fmt.Sprintf("%02d", i) + `"`
+		if i == dataMonth {
+			mths += " selected "
+		}
+		mths += ">" + time.Month(i).String()
+		mths += "</option>"
+	}
+	mths += "</select>"
+
+	years := `<select onchange="date_from_selects(this);">`
+	for i := minYear; i <= maxYear; i++ {
+		years += `<option value="` + fmt.Sprintf("%d", i) + `"`
+		if i == dataYear {
+			years += " selected "
+		}
+		years += ">" + fmt.Sprintf("%d", i)
+		years += "</option>"
+	}
+	years += "</select>"
+
+	return fld + mths + years
+
+}
 func fixAllLowercase(s string) string {
 
 	caser := cases.Title(language.English)

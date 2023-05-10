@@ -276,19 +276,30 @@ type boxfilevars struct {
 	Date      string
 	Desc      bool
 	DeleteOK  bool
+	UpdateOK  bool
 	Id        int
+	Select    string
 }
 
 var boxfilesline = `
 <tr data-id="{{.Id}}">
-<td class="owner">{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}</td>
-<td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
-<td class="name" {{if .DeleteOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
-<td class="contents">{{.Contents}}</td>
-<td class="date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
-{{if .DeleteOK}}<td>
+<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
+<td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
+<td class="name" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
+<td class="contents" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Contents}}</td>
+{{if .UpdateOK}}
+<td class="date">
+#DATESELECTORS#
+</td>
+{{else}}
+<td class="date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.Date}}{{if .Date}}</a>
+{{end}}
+{{end}}</td>
+{{if .UpdateOK}}<td>
 <input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="update_box_content_line(this);">
+{{if .DeleteOK}}
 <input type="button" class="btn" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
+{{end}}
 </td>{{end}}
 </tr>
 `
@@ -505,6 +516,7 @@ type userpreferences struct {
 	DefaultPagesize      int               `yaml:"DefaultPagesize"`
 	Pagesizes            []int             `yaml:"PagesizeOptions"`
 	FixLazyTyping        []string          `yaml:"FixAllLowercaseFields"`
+	FuturePicklistYears  int               `yaml:"FuturePicklistYears"`
 	//pagesizes := []int{0, 20, 40, 60, 100}
 
 }
@@ -550,6 +562,20 @@ DefaultPagesize: 20
 
 
 PagesizeOptions: [0,20,40,60,100]
+
+
+DefaultReviewMonths: 84		# 7 years
+
+
+# Date picklists show several possible years. In any particular
+# list the oldest year shown will be the oldest year found in the
+# data or the current year. The latest year shown will be the later
+# of the latest year found in the data or the current year plus
+# this value.
+FuturePicklistYears: 10
+
+
+
 
 # If these fields are originally entered as all lowercase, reformat to
 # titlecase before record insertion. Only applies during initial data 
