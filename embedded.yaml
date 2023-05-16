@@ -1,0 +1,96 @@
+# YAML configuration for document archives application Boxes.
+
+# The application title displayed in various locations, lettercase
+# varied by CSS
+AppTitle: 'document archives'
+
+
+# The HTTP port served by default unless overridden on commandline
+httpPort: 8081
+
+# This is the maximum number of pagelinks to show
+# either side of the current page for paged lists
+MaxAdjacentPagelinks: 10
+
+
+AccesslevelNames: 
+  0: 'View only'
+  2: 'Can update'
+  9: 'Controller'
+
+
+# Boxes containing more than this number of files are considered
+# to be 'very large'
+MaxBoxContents: 70
+
+# This determines how long before a logged-in user is automatically logged out
+# A value of 0 indicates logout whenever the browser session closes but this
+# might not work as expected because of the browser's own settings
+LoginMinutes: 60
+
+PasswordMinLength: 4
+
+
+# With no other info available, split things into chunks this big
+DefaultPagesize: 20
+
+
+PagesizeOptions: [0,20,40,60,100]
+
+
+DefaultReviewMonths: 84		# 7 years
+
+
+# Date picklists show several possible years. In any particular
+# list the oldest year shown will be the oldest year found in the
+# data or the current year. The latest year shown will be the later
+# of the latest year found in the data or the current year plus
+# this value.
+FuturePicklistYears: 10
+
+
+# When editing fields interactively and autosave is available this
+# is the number of seconds of inactivity before triggering a save.
+# 0 = no autosave.
+AutosaveSeconds: 3
+
+# If these fields are originally entered as all lowercase, reformat to
+# titlecase before record insertion. Only applies during initial data 
+# capture, subsequents edits left untouched.
+FixAllLowercaseFields: [name,contents,overview,location]
+
+FieldLabels:
+  boxid:           'BoxID'
+  owner:           'Owner'
+  contents:        'Files'
+  review_date:     'Review date'
+  name:            'Name'
+  client:          'Client'
+  location:        'Location'
+  numdocs:         '&#8470; of files'
+  numboxes:        '&#8470; of boxes'
+  min_review_date: 'Min review date'
+  max_review_date: 'Max review date'
+  userid:          'UserID'
+  userpass:        'Password'
+  accesslevel:     'Accesslevel'
+  storeref:        'Storage ref'
+  overview:        'Contents'
+  id:              'Id'
+
+MenuLabels:
+  search:    search
+  locations: locations
+  owners:    owners
+  boxes:     boxes
+  update:    update
+  users:     users
+  logout:    logout
+  about:     about
+
+TableLabels:
+  boxes:		boxes
+  contents:		files
+  locations:	locations
+  users:		users
+  history:		history

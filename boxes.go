@@ -14,6 +14,11 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
+	if r.FormValue(Param_Labels["chgboxlocn"]) != "" {
+		ajax_change_box_location(w, r)
+		return
+	}
+
 	if r.FormValue(Param_Labels["savecontent"]) != "" {
 		ajax_update_content_line(w, r)
 		return
@@ -112,15 +117,19 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 func showbox(w http.ResponseWriter, r *http.Request) {
 
 	var boxhtml = `
+	<input type="hidden" id="AutosaveSeconds" value="` + strconv.Itoa(prefs.AutosaveSeconds) + `">
 <table class="boxheader">
 
 
-<tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + prefs.Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td class="vdata">{{.Boxid}}</td></tr>
-<tr><td class="vlabel">` + prefs.Field_Labels["location"] + ` : </td><td class="vdata"><a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{.Location}}</a></td></tr>
+<tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + prefs.Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td id="boxboxid" class="vdata">{{.Boxid}}</td></tr>
+<tr>
+<td class="vlabel">` + prefs.Field_Labels["location"] + ` : </td>
+<td class="vdata">{{if .UpdateOK}}#LOCSELECTOR#{{else}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{.Location}}</a>{{end}}</td>
+</tr>
 <tr><td class="vlabel">` + prefs.Field_Labels["storeref"] + ` : </td><td class="vdata"><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a></td></tr>
 <tr><td class="vlabel">` + prefs.Field_Labels["contents"] + ` : </td><td class="vdata">{{.Contents}}</td></tr>
-<tr><td class="vlabel">` + prefs.Field_Labels["numdocs"] + ` : </td><td class="vdata numdocs">{{.NumFilesX}}</td></tr>
-<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td class="vdata center">{{.Date}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["numdocs"] + ` : </td><td id="boxnumfiles" class="vdata numdocs">{{.NumFilesX}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td id="boxdates" class="vdata center">{{.Date}}</td></tr>
 
 </table>
 `
@@ -141,6 +150,8 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	var bv boxvars
 	bv.Single = r.FormValue(Param_Labels["boxid"]) != ""
 	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+	bv.UpdateOK = runvars.Updating
+	bv.DeleteOK = runvars.Updating
 
 	if !rows.Next() {
 		fmt.Fprintf(w, "<p>Bugger! %v</p>", r.FormValue(Param_Labels["boxid"]))
@@ -156,7 +167,8 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 		bv.Date = mindate + " to " + maxdate
 	}
 	bv.NumFilesX = commas(bv.NumFiles)
-	html, err := template.New("main").Parse(boxhtml)
+	t := strings.ReplaceAll(boxhtml, "#LOCSELECTOR#", generateLocationPicklist(bv.Location, "change_box_location(this);"))
+	html, err := template.New("main").Parse(t)
 	checkerr(err)
 	err = html.Execute(w, bv)
 	checkerr(err)
@@ -306,8 +318,8 @@ func ajax_add_new_content(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"res":"Insertion failed!"}`)
 		return
 	}
-
-	fmt.Fprint(w, `{"res":"ok"}`)
+	nf, ld, hd := update_ajax_box_contents(boxid)
+	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v"}`, nf, ld, hd)
 
 }
 
@@ -316,6 +328,7 @@ func ajax_delete_content_line(w http.ResponseWriter, r *http.Request) {
 	id := r.FormValue(Param_Labels["delcontent"])
 	owner := r.FormValue(Param_Labels["owner"])
 	client := r.FormValue(Param_Labels["client"])
+	boxid := r.FormValue(Param_Labels["boxid"])
 
 	sqlx := "DELETE FROM contents WHERE id=" + id
 	sqlx += " AND owner='" + safesql(owner) + "'"
@@ -329,7 +342,8 @@ func ajax_delete_content_line(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, `{"res":"ok"}`)
+	nf, ld, hd := update_ajax_box_contents(boxid)
+	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v"}`, nf, ld, hd)
 
 }
 
@@ -341,6 +355,7 @@ func ajax_update_content_line(w http.ResponseWriter, r *http.Request) {
 	name := r.FormValue(Param_Labels["name"])
 	contents := r.FormValue(Param_Labels["contents"])
 	review := r.FormValue(Param_Labels["review_date"])
+	boxid := r.FormValue(Param_Labels["boxid"])
 
 	sqlx := "UPDATE contents SET "
 	sqlx += " owner='" + safesql(owner) + "'"
@@ -360,6 +375,61 @@ func ajax_update_content_line(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprint(w, `{"res":"ok"}`)
+	nf, ld, hd := update_ajax_box_contents(boxid)
+	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v"}`, nf, ld, hd)
+}
 
+func update_ajax_box_contents(boxid string) (int, string, string) {
+
+	sqlx := "SELECT review_date FROM contents WHERE boxid='" + safesql(boxid) + "'"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	nfiles := 0
+	lodate := "9999-12-31"
+	hidate := "0000-01-01"
+	for rows.Next() {
+		var dt string
+		rows.Scan(&dt)
+		nfiles++
+		if dt < lodate {
+			lodate = dt
+		}
+		if dt > hidate {
+			hidate = dt
+		}
+	}
+	rows.Close()
+	sqlx = "UPDATE boxes SET numdocs=" + strconv.Itoa(nfiles)
+	sqlx += ",min_review_date='" + lodate + "'"
+	sqlx += ",max_review_date='" + hidate + "'"
+	sqlx += "WHERE boxid='" + safesql(boxid) + "'"
+	fmt.Println("DEBUG: " + sqlx)
+	DBExec(sqlx)
+
+	return nfiles, lodate, hidate
+
+}
+
+func ajax_change_box_location(w http.ResponseWriter, r *http.Request) {
+
+	boxid := r.FormValue(Param_Labels["boxid"])
+	locn := r.FormValue(Param_Labels["chgboxlocn"])
+
+	sqlx := "SELECT location FROM locations WHERE location='" + safesql(locn) + "'"
+	if getValueFromDB(sqlx, "location", "") == "" {
+		fmt.Fprint(w, `{"res":"`+prefs.Field_Labels["location"]+` doesn't exist"}`)
+		return
+	}
+	sqlx = "UPDATE boxes SET location='" + safesql(locn) + "' WHERE boxid='" + safesql(boxid) + "'"
+	fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
 }

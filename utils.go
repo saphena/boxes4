@@ -13,6 +13,26 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
+func generateLocationPicklist(loc string, onchange string) string {
+
+	sqlx := "SELECT location FROM locations ORDER BY location"
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+	res := `<select onchange="` + onchange + `">`
+	for rows.Next() {
+		var locn string
+		rows.Scan(&locn)
+		res += `<option value="` + locn + `"`
+		if loc == locn {
+			res += " selected "
+		}
+		res += ">" + locn + "</option>"
+	}
+	res += "</select>"
+	return res
+}
+
 func generateDatePicklist(iso8601dt string, datefieldname string, onchange string) string {
 
 	currentYear := time.Now().Year()

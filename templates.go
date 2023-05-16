@@ -64,6 +64,7 @@ var Param_Labels = map[string]string{
 	"newcontent":      "nct",
 	"delcontent":      "dct",
 	"savecontent":     "dsc",
+	"chgboxlocn":      "dxl",
 }
 
 type AppVars struct {
@@ -240,6 +241,8 @@ type boxvars struct {
 	Date            string
 	Desc            bool
 	Single          bool
+	UpdateOK        bool
+	DeleteOK        bool
 }
 
 var boxtablerow = `
@@ -283,7 +286,7 @@ type boxfilevars struct {
 
 var boxfilesline = `
 <tr data-id="{{.Id}}">
-<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
+<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);autosave_UBC(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
 <td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
 <td class="name" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
 <td class="contents" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Contents}}</td>
@@ -517,104 +520,12 @@ type userpreferences struct {
 	Pagesizes            []int             `yaml:"PagesizeOptions"`
 	FixLazyTyping        []string          `yaml:"FixAllLowercaseFields"`
 	FuturePicklistYears  int               `yaml:"FuturePicklistYears"`
+	AutosaveSeconds      int               `yaml:"AutosaveSeconds"`
 	//pagesizes := []int{0, 20, 40, 60, 100}
 
 }
 
-const partial_config = `
-
-httpPort: 4042
-
-`
-
 // YAML format configuration
-const internal_config = `
-
-
-AppTitle: 'document archives'
-
-httpPort: 8081
-
-# This is the maximum number of pagelinks to show
-# either side of the current page for paged lists
-MaxAdjacentPagelinks: 10
-
-AccesslevelNames: 
-  0: 'View only'
-  2: 'Can update'
-  9: 'Controller'
-
-
-# Boxes containing more than this number of files are considered
-# to be 'very large'
-MaxBoxContents: 70
-
-# This determines how long before a logged-in user is automatically logged out
-# A value of 0 indicates logout whenever the browser session closes but this
-# might not work as expected because of the browser's own settings
-LoginMinutes: 60
-
-PasswordMinLength: 4
-
-
-# With no other info available, split things into chunks this big
-DefaultPagesize: 20
-
-
-PagesizeOptions: [0,20,40,60,100]
-
-
-DefaultReviewMonths: 84		# 7 years
-
-
-# Date picklists show several possible years. In any particular
-# list the oldest year shown will be the oldest year found in the
-# data or the current year. The latest year shown will be the later
-# of the latest year found in the data or the current year plus
-# this value.
-FuturePicklistYears: 10
-
-
-
-
-# If these fields are originally entered as all lowercase, reformat to
-# titlecase before record insertion. Only applies during initial data 
-# capture, subsequents edits left untouched.
-FixAllLowercaseFields: [name,contents,overview,location]
-
-FieldLabels:
-  boxid:           'BoxID'
-  owner:           'Owner'
-  contents:        'Files'
-  review_date:     'Review date'
-  name:            'Name'
-  client:          'Client'
-  location:        'Location'
-  numdocs:         '&#8470; of files'
-  numboxes:        '&#8470; of boxes'
-  min_review_date: 'Min review date'
-  max_review_date: 'Max review date'
-  userid:          'UserID'
-  userpass:        'Password'
-  accesslevel:     'Accesslevel'
-  storeref:        'Storage ref'
-  overview:        'Contents'
-  id:              'Id'
-
-MenuLabels:
-  search:    search
-  locations: locations
-  owners:    owners
-  boxes:     boxes
-  update:    update
-  users:     users
-  logout:    logout
-  about:     about
-
-TableLabels:
-  boxes:		boxes
-  contents:		files
-  locations:	locations
-  users:		users
-  history:		history
-`
+//
+//go:embed embedded.yaml
+var internal_config string

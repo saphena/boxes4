@@ -39,6 +39,7 @@ const Param_Labels = {
 	"newcontent":      "nct",
 	"delcontent":      "dct",
 	"savecontent":     "dsc",
+	"chgboxlocn":      "dxl",
 }
 
 
@@ -595,6 +596,7 @@ function delete_box_content_line(obj) {
 
 	url += "&"+Param_Labels["owner"]+"="+encodeURIComponent(owner)
 	url += "&"+Param_Labels["client"]+"="+encodeURIComponent(client)
+	url += "&"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid)
 
 	console.log(url);
 	fetch(url,{method: "POST"})
@@ -607,6 +609,31 @@ function delete_box_content_line(obj) {
 			showerrormsg(res.res);
 		}
 	});
+
+}
+
+// returns the save button object on the current line
+// this points to a contenteditble TD
+function my_UBC_button(obj) {
+
+	console.log('obj: '+JSON.stringify(obj));
+	let tr = obj.parentElement;
+	let btn = tr.children[5].firstElementChild;
+	return btn;
+
+}
+
+function autosave_UBC(obj) {
+
+	let btn = my_UBC_button(obj);
+	let ass = 0;
+	let assobj = document.getElementById('AutosaveSeconds');
+	if (assobj) ass = assobj.value;
+	console.log('ass: '+ass);
+	if (btn.timer) {
+		clearTimeout(btn.timer);
+	}
+	btn.timer = setTimeout(update_box_content_line,ass * 1000,btn);
 
 }
 
@@ -630,6 +657,7 @@ function update_box_content_line(obj) {
 	url += "&"+Param_Labels["name"]+"="+encodeURIComponent(name)
 	url += "&"+Param_Labels["contents"]+"="+encodeURIComponent(contents)
 	url += "&"+Param_Labels["review_date"]+"="+encodeURIComponent(review)
+	url += "&"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid)
 
 	console.log(url);
 	fetch(url,{method: "POST"})
@@ -637,6 +665,18 @@ function update_box_content_line(obj) {
 	.then(res => {
 		if (res.res=="ok") {
 			contentNowSaved(tr);
+			let nf = document.getElementById('boxnumfiles');
+			let dt = document.getElementById('boxdates');
+			if (nf) {
+				nf.innerText = res.nfiles;
+			}
+			if (dt) {
+				if (res.lodate==res.hidate) {
+					dt.innerText = res.lodate;
+				} else {
+					dt.innerText = res.lodate+' to '+res.hidate;
+				}
+			}
 		} else {
 			obj.disabled = false;
 			showerrormsg(res.res);
@@ -671,7 +711,7 @@ function contentSaveNeeded(obj) {
 
 	save.classList.remove('hide');
 	del.classList.add('hide');
-
+	
 }
 
 
@@ -686,6 +726,30 @@ function contentNowSaved(tr) {
 		tr.children[i].classList.remove('warning');
 	}
 	save.classList.add('hide');
+	save.disabled = false;
 	del.classList.remove('hide');
 
 }
+
+function change_box_location(sel) {
+
+	sel.classList.add('warning');
+	let loc = sel.value;
+	let boxid = document.getElementById('boxboxid').innerText;
+	let url = "/boxes?"+Param_Labels["chgboxlocn"]+"="+encodeURIComponent(loc)
+	url += "&"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid)
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			sel.classList.remove('warning');
+		} else {
+			sel.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
+
+}
+
