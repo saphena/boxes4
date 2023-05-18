@@ -130,6 +130,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		rows.Scan(&ofv.Boxid, &ofv.Client, &ofv.Name, &ofv.Contents, &ofv.Date, &ofv.Overview)
 		ofv.BoxidUrl = template.URLQueryEscaper(ofv.Boxid)
 		ofv.ClientUrl = template.URLQueryEscaper(ofv.Client)
+		ofv.ShowDate = formatShowDate((ofv.Date))
 		err = html.Execute(w, ofv)
 	}
 	fmt.Fprint(w, ownerfilestrailer)

@@ -110,9 +110,10 @@ td {
 	background: inherit;
 }
 
-td.center			{ text-align: center; }
-td.left				{ text-align: left; }
-td.right			{ text-align: right; }
+.center				{ text-align: center; }
+.left				{ text-align: left; }
+.right				{ text-align: right; }
+
 td.category			{ background-color: #c8c8e8; font-weight: bold; }
 td.col-1			{ background-color: #d8d8d8; }
 td.col-2			{ background-color: #e8e8e8; }
@@ -122,7 +123,6 @@ td.spacer			{ background-color: #ffffff; font-size: 1pt; line-height: 0.1; }
 td.small-caption	{ font-size: 8pt; }
 td.print			{ font-size: 8pt; text-align: center; }
 
-tr.center			{ text-align: center; }
 tr.row-1			{ background-color: #d8d8d8; }
 tr.row-2			{ background-color: #e8e8e8; }
 tr.spacer			{ background-color: #ffffff; }
@@ -175,7 +175,7 @@ h1                  {
 .upper				{ text-transform: uppercase; }
 .lower				{ text-transform: lowercase; }
 
-em	{font-style: italic; font-size: larger;}
+em					{ font-style: italic; font-size: larger; }
 .arrow				{ font-size: large; }
 .topmenu 			{
 	display: block;

@@ -154,6 +154,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		res.OwnerUrl = template.URLQueryEscaper(res.Owner)
 		res.ClientUrl = template.URLQueryEscaper(res.Client)
 		res.StorerefUrl = template.URLQueryEscaper(res.Storeref)
+		res.ShowDate = formatShowDate(res.Date)
 		err = html.Execute(w, res)
 		if err != nil {
 			panic(err)
@@ -361,8 +362,10 @@ here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
 </select>
 </details>
 <input type="submit" class="btn" value="Find it!"/><br />
-You can enter a partner's initials, a client number or name, a box number or storage reference, a common term such as <em>tax</em> or a review date or year.<br>
-Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.</main></form>
+You can enter a partner's initials, a client number or name, a box number or storage reference, a common term such as <em>tax</em> or a review date* or year.<br>
+Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.<br>
+* Enter review dates as <em>yyyy</em> or <em>yyyy-mm</em> eg: '2026-03'.
+</main></form>
 <p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
 <p>{{if or .Locations .Owners}}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{end}}</p>
 `

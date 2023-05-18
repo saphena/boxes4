@@ -101,6 +101,7 @@ type searchResultsVar struct {
 	Name        string
 	Contents    string
 	Date        string
+	ShowDate    string
 	Find        string
 	FindUrl     string
 	Found       string
@@ -123,7 +124,7 @@ var searchResultsLine = `
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
-<td class="date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
+<td class="date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
 </tr>
 `
 
@@ -210,6 +211,7 @@ type ownerfilesvar struct {
 	Name      string
 	Contents  string
 	Date      string
+	ShowDate  string
 	Overview  string
 	Desc      bool
 }
@@ -220,7 +222,7 @@ var ownerfilesline = `
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
-<td class="review_date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.Date}}{{if .Date}}</a>{{end}}</td>
+<td class="review_date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
 
 </tr>
 `
@@ -269,7 +271,7 @@ var locboxtablerow = `
 <td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 <td class="overview">{{.Contents}}</td>
 <td class="numdocs">{{.NumFiles}}</td>
-<td class="review_date">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.Date}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 </tr>
 `
 

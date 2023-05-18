@@ -223,9 +223,11 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 		rows.Scan(&bv.Storeref, &bv.Boxid, &bv.Location, &bv.Contents, &bv.NumFiles, &mindate, &maxdate)
 		if mindate == maxdate {
 			bv.Date = mindate
+			bv.ShowDate = formatShowDate(mindate)
 			bv.Single = true
 		} else {
-			bv.Date = mindate + " to " + maxdate
+			bv.Date = formatShowDate(mindate) + " to " + formatShowDate(maxdate)
+			bv.ShowDate = bv.Date
 			bv.Single = false
 		}
 		bv.LocationUrl = template.URLQueryEscaper(loc.Location)
