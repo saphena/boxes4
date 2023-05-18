@@ -54,6 +54,9 @@ FuturePicklistYears: 10
 # 0 = no autosave.
 AutosaveSeconds: 3
 
+# Go language specification for date format - 2006-01-02 15:04:05
+ShowDateFormat: "Jan 2006"
+
 # If these fields are originally entered as all lowercase, reformat to
 # titlecase before record insertion. Only applies during initial data 
 # capture, subsequents edits left untouched.

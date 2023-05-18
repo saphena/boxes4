@@ -6,13 +6,14 @@ const Param_Labels = {
 	"name":            "qnm",
 	"client":          "qcl",
 	"location":        "qlo",
+	"storeref":        "qlr",
 	"numdocs":         "qnd",
 	"min_review_date": "qd1",
 	"max_review_date": "qd2",
-	"userid":          "quu", // Hardcoded in boxes.js!
+	"userid":          "quu", 
 	"userpass":        "qup",
-	"accesslevel":     "qal", // Hardcoded in boxes.js!
-	"pagesize":        "qps", // Hardcoded in boxes.js!
+	"accesslevel":     "qal", 
+	"pagesize":        "qps", 
 	"offset":          "qof",
 	"order":           "qor",
 	"find":            "qqq",
@@ -21,8 +22,8 @@ const Param_Labels = {
 	"overview":        "qov",
 	"table":           "qtb",
 	"textfile":        "qtx",
-	"passchg":         "zpc", // Hardcoded in boxes.js!
-	"single":          "z11", // Hardcoded in boxes.js!
+	"passchg":         "zpc", 
+	"single":          "z11", 
 	"multiple":        "z99",
 	"oldpass":         "zop",
 	"newpass":         "znp",
@@ -40,6 +41,7 @@ const Param_Labels = {
 	"delcontent":      "dct",
 	"savecontent":     "dsc",
 	"chgboxlocn":      "dxl",
+	"savebox":         "dbx",
 }
 
 
@@ -613,7 +615,7 @@ function delete_box_content_line(obj) {
 }
 
 // returns the save button object on the current line
-// this points to a contenteditble TD
+// this points to a contenteditable TD
 function my_UBC_button(obj) {
 
 	console.log('obj: '+JSON.stringify(obj));
@@ -634,6 +636,54 @@ function autosave_UBC(obj) {
 		clearTimeout(btn.timer);
 	}
 	btn.timer = setTimeout(update_box_content_line,ass * 1000,btn);
+
+}
+
+function autosave_Box() {
+
+	let btn = document.getElementById('updateboxbutton');
+	let ass = 0;
+	let assobj = document.getElementById('AutosaveSeconds');
+	if (assobj) ass = assobj.value;
+	console.log('ass: '+ass);
+	if (btn.timer) {
+		clearTimeout(btn.timer);
+	}
+	btn.timer = setTimeout(update_box_details,ass * 1000,btn);
+
+}
+function boxDetailsSaved() {
+
+	alert('boxDetailsSaved');
+
+}
+
+
+function update_box_details(obj) {
+
+	obj.disabled = true;
+	let boxid = obj.getAttribute('data-boxid');
+	let storeref = document.getElementById('boxstoreref');
+	let overview = document.getElementById('boxoverview');
+
+	let url = "/boxes?"+Param_Labels["savebox"]+"="+boxid;
+	url += "&"+Param_Labels["storeref"]+"="+encodeURIComponent(storeref.innerText);
+	url += "&"+Param_Labels["overview"]+"="+encodeURIComponent(overview.innerText);
+
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			storeref.classList.remove('warning');
+			overview.classList.remove('warning');
+			obj.classList.add('hide');
+		} else {
+			obj.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
 
 }
 
@@ -698,9 +748,33 @@ function date_from_selects(obj) {
 	dt.onchange();
 
 }
+
+function newContentSaveNeeded(obj) {
+
+	obj.classList.add('warning');
+	let tr = obj.parentElement.parentElement;
+	let save = tr.children[5].firstElementChild;
+	let ok = true;
+	for (let i = 0; i < 5; i++) {
+		ok = ok && tr.children[i].firstElementChild.value != "";
+	}
+	save.disabled = !ok;
+
+}
+
+function boxDetailsSaveNeeded(obj) {
+
+	obj.classList.add('warning');
+	save = document.getElementById('updateboxbutton');
+	save.classList.remove('hide');
+	autosave_Box();
+
+}
+
 // Called when a box content record is edited
 function contentSaveNeeded(obj) {
 
+	autosave_UBC(obj);
 	obj.classList.add('warning');
 	let tr = obj.parentElement;
 	console.log('Found TR');

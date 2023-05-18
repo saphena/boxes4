@@ -97,7 +97,18 @@ input[type="submit"]				{
   }
   
  
-  td             		{ background: white; font-weight: bold; border-color: #bb0000; border-style: solid; border-width: 3px; }
+td { 
+	background: white; 
+	font-weight: bold; 
+	border-color: #bb0000; 
+	border-style: solid; 
+	border-width: 3px; 
+}
+
+.nude {
+	border: none;
+	background: inherit;
+}
 
 td.center			{ text-align: center; }
 td.left				{ text-align: left; }

@@ -16,6 +16,9 @@ var script string
 const ArrowPrevPage = `<span class="arrow">&#8666;</span>`
 const ArrowNextPage = `<span class="arrow">&#8667;</span>`
 
+// If a date is invalid, replace it with this value
+const InvalidDateValue = "2000-01-01"
+
 // Accesslevels are both discrete and hierarchical by numeric value
 const ACCESSLEVEL_READONLY = 0
 const ACCESSLEVEL_UPDATE = 2
@@ -31,13 +34,14 @@ var Param_Labels = map[string]string{
 	"name":            "qnm",
 	"client":          "qcl",
 	"location":        "qlo",
+	"storeref":        "qlr",
 	"numdocs":         "qnd",
 	"min_review_date": "qd1",
 	"max_review_date": "qd2",
-	"userid":          "quu", // Hardcoded in boxes.js!
+	"userid":          "quu",
 	"userpass":        "qup",
-	"accesslevel":     "qal", // Hardcoded in boxes.js!
-	"pagesize":        "qps", // Hardcoded in boxes.js!
+	"accesslevel":     "qal",
+	"pagesize":        "qps",
 	"offset":          "qof",
 	"order":           "qor",
 	"find":            "qqq",
@@ -46,8 +50,8 @@ var Param_Labels = map[string]string{
 	"overview":        "qov",
 	"table":           "qtb",
 	"textfile":        "qtx",
-	"passchg":         "zpc", // Hardcoded in boxes.js!
-	"single":          "z11", // Hardcoded in boxes.js!
+	"passchg":         "zpc",
+	"single":          "z11",
 	"multiple":        "z99",
 	"oldpass":         "zop",
 	"newpass":         "znp",
@@ -65,6 +69,7 @@ var Param_Labels = map[string]string{
 	"delcontent":      "dct",
 	"savecontent":     "dsc",
 	"chgboxlocn":      "dxl",
+	"savebox":         "dbx",
 }
 
 type AppVars struct {
@@ -239,6 +244,7 @@ type boxvars struct {
 	Min_review_date string
 	Max_review_date string
 	Date            string
+	ShowDate        string
 	Desc            bool
 	Single          bool
 	UpdateOK        bool
@@ -252,7 +258,7 @@ var boxtablerow = `
 <td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 <td class="overview">{{.Overview}}</td>
 <td class="numdocs">{{.NumFilesX}}</td>
-<td class="review_date">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.Date}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 </tr>
 `
 
@@ -277,6 +283,7 @@ type boxfilevars struct {
 	Name      string
 	Contents  string
 	Date      string
+	ShowDate  string
 	Desc      bool
 	DeleteOK  bool
 	UpdateOK  bool
@@ -286,22 +293,23 @@ type boxfilevars struct {
 
 var boxfilesline = `
 <tr data-id="{{.Id}}">
-<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);autosave_UBC(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
+<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
 <td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
 <td class="name" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
 <td class="contents" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Contents}}</td>
 {{if .UpdateOK}}
-<td class="date">
+<td class="date center">
 #DATESELECTORS#
 </td>
 {{else}}
-<td class="date">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.Date}}{{if .Date}}</a>
+<td class="date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
 {{end}}
 {{end}}</td>
-{{if .UpdateOK}}<td>
+{{if .UpdateOK}}<td class="center">
 <input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="update_box_content_line(this);">
 {{if .DeleteOK}}
-<input type="button" class="btn" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
+<input type="checkbox" title="Enable delete button" onchange="this.nextElementSibling.classList.remove('hide');this.classList.add('hide');">
+<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
 {{end}}
 </td>{{end}}
 </tr>
@@ -357,12 +365,14 @@ func emit_name_list(w http.ResponseWriter) {
 
 var newboxcontentline = `
 <tr>
-<td><input type="text" style="width:95%" list="ownerlist" class="keyinput"></td>
-<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);"></td>
-<td><input type="text" style="width:95%" list="namelist"></td>
-<td><input type="text" style="width:95%"></td>
-<td><input type="text" style="width:95%"></td>
-<td><input type="button" class="btn" data-boxid="{{.Boxid}}" value="Add!" onclick="add_new_box_content(this);">
+<td><input type="text" style="width:95%" list="ownerlist" class="keyinput" oninput="newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" list="namelist" oninput="newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" oninput="newContentSaveNeeded(this);"></td>
+<td class="date">
+#DATESELECTORS#
+</td>
+<td class="center"><input type="button" class="btn" data-boxid="{{.Boxid}}" disabled value="Add!" onclick="add_new_box_content(this);">
 </tr>
 `
 
@@ -521,6 +531,8 @@ type userpreferences struct {
 	FixLazyTyping        []string          `yaml:"FixAllLowercaseFields"`
 	FuturePicklistYears  int               `yaml:"FuturePicklistYears"`
 	AutosaveSeconds      int               `yaml:"AutosaveSeconds"`
+	DefaultReviewMonths  int               `yaml:"DefaultReviewMonths"`
+	ShowDateFormat       string            `yaml:"ShowDateFormat"`
 	//pagesizes := []int{0, 20, 40, 60, 100}
 
 }

@@ -33,10 +33,24 @@ func generateLocationPicklist(loc string, onchange string) string {
 	return res
 }
 
+func defaultReviewDate() string {
+
+	dt := time.Now().AddDate(0, prefs.DefaultReviewMonths, 0)
+	res := fmt.Sprintf("%04d-%02d-01", dt.Year(), dt.Month())
+	return res
+
+}
+
 func generateDatePicklist(iso8601dt string, datefieldname string, onchange string) string {
 
+	thedate := iso8601dt
+	_, err := time.Parse("2006-01-02", iso8601dt)
+	if err != nil {
+		thedate = InvalidDateValue
+	}
+
 	currentYear := time.Now().Year()
-	dataDate := strings.Split(iso8601dt, "-")
+	dataDate := strings.Split(thedate, "-")
 	dataYear, _ := strconv.Atoi(dataDate[0])
 	dataMonthx := dataDate[1]
 	dataMonth, _ := strconv.Atoi(dataMonthx)
@@ -78,6 +92,18 @@ func fixAllLowercase(s string) string {
 
 	caser := cases.Title(language.English)
 	return caser.String(s)
+
+}
+
+func formatShowDate(iso8601dt string) string {
+
+	dt, err := time.Parse("2006-01-02", iso8601dt)
+	if err != nil {
+		dt, _ = time.Parse("2006-01-02", InvalidDateValue)
+	}
+	//checkerr(err)
+	res := dt.Format(prefs.ShowDateFormat)
+	return res
 
 }
 
