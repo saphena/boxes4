@@ -544,7 +544,46 @@ function add_new_box_content(obj) {
 	.then(res => res.json())
 	.then(res => {
 		if (res.res=="ok") {
-			window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(box));
+
+			let tab = tr.parentElement;
+			if (tab.rows.length < 2) { // This is the first line in the box, nothing available to clone so reload
+				window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(box));
+			}
+			// Add this line at the top of the list
+			let newRow = tab.insertRow(1);
+			newRow.setAttribute('data-id',res.recid)
+			let newOwner = newRow.insertCell();
+			let newClient = newRow.insertCell();
+			let newName = newRow.insertCell();
+			let newContents = newRow.insertCell();
+			let newReview = newRow.insertCell();
+			let newButtons = newRow.insertCell();
+
+			newOwner.innerText = owner;
+			newOwner.setAttribute('contenteditable','true');
+			newOwner.setAttribute('oninput','contentSaveNeeded(this);');
+			newClient.innerText = client;
+			newClient.setAttribute('contenteditable','true');
+			newClient.setAttribute('oninput','contentSaveNeeded(this);');
+			newName.innerText = name;
+			newName.setAttribute('contenteditable','true');
+			newName.setAttribute('oninput','contentSaveNeeded(this);');
+			newContents.innerText = contents;
+			newContents.setAttribute('contenteditable','true');
+			newContents.setAttribute('oninput','contentSaveNeeded(this);');
+			newReview.innerHTML = tr.children[4].innerHTML;
+			newReview.firstElementChild.setAttribute('onchange','contentSaveNeeded(this.parentElement);');
+			newButtons.innerHTML = tab.rows[2].children[5].innerHTML;
+
+			// Now reset the input line
+
+			tr.children[0].firstElementChild.value = "";
+			tr.children[1].firstElementChild.value = "";
+			tr.children[2].firstElementChild.value = "";
+			tr.children[3].firstElementChild.value = "";
+
+			tr.children[0].firstElementChild.focus();
+
 		} else {
 			obj.disabled = false;
 			showerrormsg(res.res);

@@ -339,8 +339,10 @@ func ajax_add_new_content(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"res":"Insertion failed!"}`)
 		return
 	}
+	n, err = res.LastInsertId()
+	checkerr(err)
 	nf, ld, hd := update_ajax_box_contents(boxid)
-	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v"}`, nf, ld, hd)
+	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v","recid":"%v"}`, nf, ld, hd, n)
 
 }
 

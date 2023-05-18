@@ -367,7 +367,7 @@ func emit_name_list(w http.ResponseWriter) {
 
 var newboxcontentline = `
 <tr>
-<td><input type="text" style="width:95%" list="ownerlist" class="keyinput" oninput="newContentSaveNeeded(this);"></td>
+<td><input type="text" autofocus style="width:95%" list="ownerlist" class="keyinput" oninput="newContentSaveNeeded(this);"></td>
 <td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);newContentSaveNeeded(this);"></td>
 <td><input type="text" style="width:95%" list="namelist" oninput="newContentSaveNeeded(this);"></td>
 <td><input type="text" style="width:95%" oninput="newContentSaveNeeded(this);"></td>
