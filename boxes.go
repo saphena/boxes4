@@ -43,22 +43,6 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 		ajax_fetch_name_list(w, r)
 		return
 	}
-	var boxtablehdr = `
-<table class="boxlist">
-<thead>
-<tr>
-
-
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-<th class="location"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + prefs.Field_Labels["location"] + `</a></th>
-<th class="storeref"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
-<th class="contents"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
-<th class="date center"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-</tr>
-</thead>
-<tbody>
-`
 
 	if r.FormValue(Param_Labels["boxid"]) != "" {
 		showbox(w, r)
@@ -90,12 +74,12 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	box.Single = r.FormValue(Param_Labels["boxid"]) != ""
 	box.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
-	html, err := template.New("").Parse(boxtablehdr)
+	html, err := template.New("boxTableHead").Parse(templateBoxTableHead)
 	checkerr(err)
 	err = html.Execute(w, box)
 	checkerr(err)
 
-	html, err = template.New("").Parse(boxtablerow)
+	html, err = template.New("boxTableRow").Parse(templateBoxTableRow)
 	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumFiles, &box.Min_review_date, &box.Max_review_date)
@@ -114,43 +98,13 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 			box.Single = false
 		}
 		err := html.Execute(w, box)
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 	}
 	fmt.Fprint(w, ownerlisttrailer)
 
 }
 
 func showbox(w http.ResponseWriter, r *http.Request) {
-
-	var boxhtml = `
-	<input type="hidden" id="AutosaveSeconds" value="` + strconv.Itoa(prefs.AutosaveSeconds) + `">
-<table class="boxheader">
-
-
-<tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + prefs.Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td id="boxboxid" class="vdata">{{.Boxid}}</td>
-{{if .UpdateOK}}
-<td class="nude"><input type="button" class="btn hide" id="updateboxbutton" value="Save changes" data-boxid="{{.Boxid}}" onclick="update_box_details(this);">
-{{end}}
-</tr>
-
-<tr>
-<td class="vlabel">` + prefs.Field_Labels["location"] + ` : </td>
-<td class="vdata">{{if .UpdateOK}}#LOCSELECTOR#{{else}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{.Location}}</a>{{end}}</td>
-</tr>
-
-<tr><td class="vlabel">` + prefs.Field_Labels["storeref"] + ` : </td>
-<td class="vdata" id="boxstoreref"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);">{{.Storeref}}{{else}}><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a>{{end}}</td></tr>
-
-<tr><td class="vlabel">` + prefs.Field_Labels["overview"] + ` : </td>
-<td class="vdata" id="boxoverview"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);"{{end}}>{{.Contents}}</td></tr>
-
-<tr><td class="vlabel">` + prefs.Field_Labels["numdocs"] + ` : </td><td id="boxnumfiles" class="vdata numdocs">{{.NumFilesX}}</td></tr>
-<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td id="boxdates" class="vdata center">{{.Date}}</td></tr>
-
-</table>
-`
 
 	if r.FormValue(Param_Labels["boxid"]) == "" {
 		show_search(w, r)
@@ -185,8 +139,8 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 		bv.Date = formatShowDate(mindate) + " to " + formatShowDate(maxdate)
 	}
 	bv.NumFilesX = commas(bv.NumFiles)
-	t := strings.ReplaceAll(boxhtml, "#LOCSELECTOR#", generateLocationPicklist(bv.Location, "change_box_location(this);"))
-	html, err := template.New("main").Parse(t)
+	t := strings.ReplaceAll(templateBoxDetails, "#LOCSELECTOR#", generateLocationPicklist(bv.Location, "change_box_location(this);"))
+	html, err := template.New("boxDetails").Parse(t)
 	checkerr(err)
 	err = html.Execute(w, bv)
 	checkerr(err)
@@ -195,22 +149,6 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 }
 
 func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
-
-	var boxfileshdr = `
-<table class="boxfiles">
-<thead>
-<tr>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-
-
-</tr>
-</thead>
-<tbody>
-`
 
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
@@ -227,7 +165,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	rows, _ := DBH.Query(sqlx + sqllimit)
 	defer rows.Close()
 
-	html, err := template.New("").Parse(boxfileshdr)
+	html, err := template.New("boxFilesHead").Parse(templateBoxFilesHead)
 	checkerr(err)
 
 	var bfv boxfilevars
@@ -240,10 +178,9 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	checkerr(err)
 
 	if runvars.Updating {
-		//fmt.Fprint(w, newboxcontentline)
-		t := strings.ReplaceAll(newboxcontentline, "#DATESELECTORS#", generateDatePicklist(defaultReviewDate(), Param_Labels["review_date"], "newContentSaveNeeded(this.parentElement.parentElement);"))
+		t := strings.ReplaceAll(templateNewBoxContentLine, "#DATESELECTORS#", generateDatePicklist(defaultReviewDate(), Param_Labels["review_date"], "newContentSaveNeeded(this.parentElement.parentElement);"))
 
-		temp, err := template.New("newboxcontentline").Parse(t)
+		temp, err := template.New("newBoxContentLine").Parse(t)
 		checkerr(err)
 		err = temp.Execute(w, bfv)
 	}
@@ -254,15 +191,13 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 		bfv.OwnerUrl = template.URLQueryEscaper(bfv.Owner)
 		bfv.ClientUrl = template.URLQueryEscaper(bfv.Client)
 
-		t := strings.ReplaceAll(boxfilesline, "#DATESELECTORS#", generateDatePicklist(bfv.Date, Param_Labels["review_date"], "contentSaveNeeded(this.parentElement);"))
+		t := strings.ReplaceAll(templateBoxFilesLine, "#DATESELECTORS#", generateDatePicklist(bfv.Date, Param_Labels["review_date"], "contentSaveNeeded(this.parentElement);"))
 		bfv.ShowDate = formatShowDate(bfv.Date)
-		html, err = template.New("").Parse(t)
+		html, err = template.New("boxFilesLine").Parse(t)
 		checkerr(err)
 
 		err = html.Execute(w, bfv)
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 
 		nrows++
 	}

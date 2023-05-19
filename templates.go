@@ -117,7 +117,333 @@ type searchResultsVar struct {
 	Owners      string
 }
 
-var searchResultsLine = `
+var templateSearchHome string
+var templateSearchResultsHdr1 string
+var templateSearchResultsHdr2 string
+var templateSearchResultsLine string
+var templateSearchParamsHead string
+var templateSearchParamsLocationRadios string
+var templateSearchParamsOwnerRadios string
+var templateLocationBoxTableHead string
+var templateLocationListHead string
+var templateLocationListLine string
+var templateNewLocation string
+var templateLocationBoxFilesHead string
+var templateOwnerListHead string
+var templateOwnerListLine string
+var templateOwnerFilesHead string
+var templateOwnerFilesLine string
+var templateBoxTableHead string
+var templateBoxTableRow string
+var templateLocationBoxTableRow string
+var templateBoxDetails string
+var templateBoxFilesHead string
+var templateBoxFilesLine string
+var templateNewBoxContentLine string
+var templateUserLoginHome string
+var templateUserPasswordChange string
+var templateMultiUserPasswordChangeHead string
+var templateMultiUserPasswordChangeLine string
+var templateMultiUserPasswordChangeFoot string
+
+func initTemplates() {
+
+	initSearchTemplates()
+	initLocationTemplates()
+	initOwnerTemplates()
+	initBoxTemplates()
+	initUserTemplates()
+
+} // initTemplates
+
+func initBoxTemplates() {
+
+	templateBoxTableHead = `
+<table class="boxlist">
+<thead>
+<tr>
+
+
+<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="location"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + prefs.Field_Labels["location"] + `</a></th>
+<th class="storeref"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
+<th class="contents"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
+<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
+<th class="date center"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
+	templateBoxDetails = `
+<input type="hidden" id="AutosaveSeconds" value="` + strconv.Itoa(prefs.AutosaveSeconds) + `">
+<table class="boxheader">
+
+
+<tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + prefs.Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td id="boxboxid" class="vdata">{{.Boxid}}</td>
+{{if .UpdateOK}}
+<td class="nude"><input type="button" class="btn hide" id="updateboxbutton" value="Save changes" data-boxid="{{.Boxid}}" onclick="update_box_details(this);">
+{{end}}
+</tr>
+
+<tr>
+<td class="vlabel">` + prefs.Field_Labels["location"] + ` : </td>
+<td class="vdata">{{if .UpdateOK}}#LOCSELECTOR#{{else}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{.Location}}</a>{{end}}</td>
+</tr>
+
+<tr><td class="vlabel">` + prefs.Field_Labels["storeref"] + ` : </td>
+<td class="vdata" id="boxstoreref"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);">{{.Storeref}}{{else}}><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a>{{end}}</td></tr>
+
+<tr><td class="vlabel">` + prefs.Field_Labels["overview"] + ` : </td>
+<td class="vdata" id="boxoverview"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);"{{end}}>{{.Contents}}</td></tr>
+
+<tr><td class="vlabel">` + prefs.Field_Labels["numdocs"] + ` : </td><td id="boxnumfiles" class="vdata numdocs">{{.NumFilesX}}</td></tr>
+<tr><td class="vlabel">` + prefs.Field_Labels["review_date"] + ` : </td><td id="boxdates" class="vdata center">{{.Date}}</td></tr>
+
+</table>
+`
+
+	templateBoxFilesHead = `
+<table class="boxfiles">
+<thead>
+<tr>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+
+
+</tr>
+</thead>
+<tbody>
+`
+
+	templateBoxFilesLine = `
+<tr data-id="{{.Id}}">
+<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
+<td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
+<td class="name" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
+<td class="contents" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Contents}}</td>
+{{if .UpdateOK}}
+<td class="date center">
+#DATESELECTORS#
+</td>
+{{else}}
+<td class="date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
+{{end}}
+{{end}}</td>
+{{if .UpdateOK}}<td class="center">
+<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="update_box_content_line(this);">
+{{if .DeleteOK}}
+<input type="checkbox" title="Enable delete button" onchange="this.nextElementSibling.classList.remove('hide');this.classList.add('hide');">
+<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
+{{end}}
+</td>{{end}}
+</tr>
+`
+
+	templateBoxTableRow = `
+<tr>
+<td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
+<td class="location">{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{.Location}}{{if .Location}}</a>{{end}}</td>
+<td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
+<td class="overview">{{.Overview}}</td>
+<td class="numdocs">{{.NumFilesX}}</td>
+<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+</tr>
+`
+
+	templateNewBoxContentLine = `
+<tr>
+<td><input type="text" autofocus style="width:95%" list="ownerlist" class="keyinput" oninput="newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" list="namelist" oninput="newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" oninput="newContentSaveNeeded(this);"></td>
+<td class="date">
+#DATESELECTORS#
+</td>
+<td class="center"><input type="button" class="btn" data-boxid="{{.Boxid}}" disabled value="Add!" onclick="add_new_box_content(this);">
+</tr>
+`
+
+}
+
+func initOwnerTemplates() {
+
+	templateOwnerListHead = `
+	<table class="ownerlist">
+	<thead>
+	<tr>
+	
+	
+	<th class="owner">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + prefs.Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+	<th class="number">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + prefs.Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+	</tr>
+	</thead>
+	<tbody>
+	`
+
+	templateOwnerFilesHead = `
+	<table class="ownerfiles">
+	<thead>
+	<tr>
+	
+	<th class="owner"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+	<th class="client"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+	<th class="name"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+	<th class="contents"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+	<th class="review_date"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+	</tr>
+	</thead>
+	<tbody>
+	`
+
+	templateOwnerListLine = `
+	<tr>
+	<td class="owner">{{if .Single}}{{else}}{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{end}}{{.Owner}}{{if .Single}}{{else}}{{if .Owner}}</a>{{end}}{{end}}</td>
+	<td class="vdata">{{.NumFilesX}}</td>
+	</tr>
+	`
+
+	templateOwnerFilesLine = `
+	<tr>
+	<td class="boxid" title="{{.Overview}}">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
+	<td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
+	<td class="name">{{.Name}}</td>
+	<td class="contents">{{.Contents}}</td>
+	<td class="review_date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
+	
+	</tr>
+	`
+
+}
+
+func initLocationTemplates() {
+
+	// Header for box listing by location
+	templateLocationBoxTableHead = `
+		<table class="boxlist">
+		<thead>
+		<tr>
+		<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+		<th class="storeref"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
+		<th class="contents"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
+		<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
+		<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+		</tr>
+		</thead>
+		<tbody>
+		`
+
+	templateLocationListHead = `
+		<table class="locationlist">
+		<thead>
+		<tr>
+		
+		
+		<th class="location">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + prefs.Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+		<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + prefs.Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+		</tr>
+		</thead>
+		<tbody>
+		`
+	templateNewLocation = `
+		<tr><td class="location"><input type="text" style="width:95%;" autofocus></td>
+		<td><input type="button" class="btn" value="Add new ` + prefs.Field_Labels["location"] + `"
+		onclick="add_new_location(this);"></td></tr>
+		`
+
+	templateLocationListLine = `
+		<tr>
+		<td class="location">{{if .Single}}{{else}}{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{end}}{{.Location}}{{if .Single}}{{else}}{{if .Location}}</a>{{end}}{{end}}</td>
+		<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="delete_location(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
+		</tr>
+		`
+
+	templateLocationBoxFilesHead = `
+		<table class="boxfiles">
+		<thead>
+		<tr>
+		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+		<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+		
+		
+		</tr>
+		</thead>
+		<tbody>
+		`
+
+	// Header for box listing by location
+	templateLocationBoxTableRow = `
+	<tr>
+	<td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
+	<td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
+	<td class="overview">{{.Contents}}</td>
+	<td class="numdocs">{{.NumFiles}}</td>
+	<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+	</tr>
+	`
+
+}
+
+func initSearchTemplates() {
+
+	templateSearchHome = `
+	<p>I'm currently minding <strong>{{.NumDocsX}}</strong> individual files packed into
+	<strong>{{.NumBoxesX}}</strong> boxes stored in <strong>{{.NumLocnsX}}
+	</strong> locations.</p>
+	
+	<form action="/find" onsubmit="if (this.fld.value=='') { this.fld.name=''; }">
+	<main>You can search the archives by entering the text you're looking for
+	here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
+	<details title="Fields to search" style="display:inline;">
+	<summary><strong>&#8799;</strong></summary>
+	<select id="fld" name="` + Param_Labels["field"] + `">
+	<option value="">any field</option>
+	<option value="client">` + prefs.Field_Labels["client"] + `</option>
+	<option value="name">` + prefs.Field_Labels["name"] + `</option>
+	<option value="owner">` + prefs.Field_Labels["owner"] + `</option>
+	<option value="contents">` + prefs.Field_Labels["contents"] + `</option>
+	<option value="review_date">` + prefs.Field_Labels["review_date"] + `</option>
+	<option value="storeref">` + prefs.Field_Labels["storeref"] + `</option>
+	<option value="boxid">` + prefs.Field_Labels["boxid"] + `</option>
+	</select>
+	</details>
+	<input type="submit" class="btn" value="Find it!"/><br />
+	You can enter a partner's initials, a client number or name, a box number or storage reference, a common term such as <em>tax</em> or a review date* or year.<br>
+	Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.<br>
+	* Enter review dates as <em>yyyy</em> or <em>yyyy-mm</em> eg: '2026-03'.
+	</main></form>
+	<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
+	<p>{{if or .Locations .Owners}}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{end}}</p>
+	`
+
+	// Search response header before page links
+	templateSearchResultsHdr1 = `
+<p>{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}{{if .Field}} in {{.Field}}{{end}}{{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}{{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}</span> and{{end}} I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
+`
+
+	// Search response header after page links
+	templateSearchResultsHdr2 = `
+<table class="searchresults">
+<thead>
+<tr>
+<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+</tr>
+</thead>
+<tbody>
+`
+
+	templateSearchResultsLine = `
 <tr>
 <td class="ourbox" title="{{.Overview}}">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
 <td class="owner">{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}</td>
@@ -128,6 +454,127 @@ var searchResultsLine = `
 </tr>
 `
 
+	templateSearchParamsHead = `
+
+<form action="/params">
+<main>
+<p>The settings you choose here will be used to restrict searches until you reset them or until your session ends.</p>
+<p><input data-triggered="0" id="savesettings" class="btn" name="` + Param_Labels["savesettings"] + `" disabled onclick="this.setAttribute('data-triggered','1');return true;" type="submit" value="Save settings"></p>`
+
+	templateSearchParamsLocationRadios = `
+	<div id="locationfilter"><h2>` + prefs.Field_Labels["location"] + `s</h2>
+<p>
+<input type="radio" id="range_all" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(this.checked);">
+<label for="range_all"> All </label> &nbsp;&nbsp;&nbsp; 
+<input type="radio" id="range_sel" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(!this.checked);">
+<label for="range_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
+</p>
+`
+
+	templateSearchParamsOwnerRadios = `
+	<div id="ownerfilter"><h2>` + prefs.Field_Labels["owner"] + `s</h2>
+<p>
+<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(this.checked);">
+<label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
+<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(!this.checked);">
+<label for="orange_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
+</p>
+`
+
+}
+
+func initUserTemplates() {
+
+	templateUserLoginHome = `
+	<main>
+	<h2>Authentication required</h2>
+	<form action="/login" method="post">
+	<label for="userid">` + prefs.Field_Labels["userid"] + ` </label>
+	<input type="text" autofocus id="userid" name="` + Param_Labels["userid"] + `">
+	<label for="userpass">` + prefs.Field_Labels["userpass"] + ` </label>
+	<input type="password" id="userpass" name="` + Param_Labels["userpass"] + `">
+	<input type="submit" value="Authenticate!">
+	</form>
+	</main>
+	`
+	templateUserPasswordChange = `
+	<p>You may alter your own password by entering the existing password and a new one twice. If you don't know your existing password you'll have to get someone with an accesslevel of ` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + ` to change it for you.</p>
+	<form action="/users" method="post" onsubmit="return pwd_validateSingleChange(this);">
+	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["single"] + `"|>
+	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
+	<label for="oldpass">Current password </label> <input autofocus type="password" id="oldpass" name="` + Param_Labels["oldpass"] + `">
+	<label for="newpass">New password </label> <input type="password" id="mynewpass" name="` + Param_Labels["newpass"] + `">
+	<label for="newpass2">and again </label> <input type="password" id="mynewpass2">
+	<input type="submit" value="Change my password!">
+	</form>
+	`
+
+	templateMultiUserPasswordChangeHead = `
+	<form>
+	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["multiple"] + `"|>
+	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
+	<table id="tabusers">
+	<thead><tr>
+	<th>Userid</th>
+	<th>Accesslevel</th>
+	<th>New password</th>
+	<th>and again</th>
+	<th></th>
+	<th></th>
+	</tr></thead>
+	<tbody>
+	`
+
+	templateMultiUserPasswordChangeLine = `
+	<tr>
+	<td><input type="text" readonly name="m` + Param_Labels["userid"] + `_{{.Row}}" value="{{.Userid}}"></td>
+	<td>
+		<select name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_updateAccesslevel(this);">
+		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_READONLY) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
+		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
+		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `"{{if eq .Accesslevel  ` + strconv.Itoa(ACCESSLEVEL_SUPER) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
+		</select>
+	</td>
+	<td><input type="password" name="m` + Param_Labels["newpass"] + `_{{.Row}}" oninput="pwd_enableSave(this);"></td>
+	<td><input type="password" id="newpass2:{{.Row}}" oninput="pwd_enableSave(this);"></td>
+	<td><input type="button" disabled value="Set password" onclick="pwd_savePasswordChanges(this);"></td>
+	<td class="center">
+		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `_{{.Row}}" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
+		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
+	</td>
+	</tr>
+	`
+	templateMultiUserPasswordChangeFoot = `
+
+	</tbody>
+	</table>
+	<input type="hidden" id="rowcount" name="` + Param_Labels["rowcount"] + `" value="{{.Row}}">
+	<input type="button" value="+" onclick="pwd_insertNewRow(); return false;">
+	</form>
+	<table class="hide">
+	<tr id="newrow">
+	<td><input type="text" id="newuserid" name="m` + Param_Labels["userid"] + `" data-ok="0" oninput="pwd_useridChanged(this);"></td>
+	<td>
+		<select id="newal" name="m` + Param_Labels["accesslevel"] + `">
+		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `" selected>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
+		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `">` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
+		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `">` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
+		</select>
+	</td>
+	<td><input type="password" data-ok="0" id="newpass1" name="m` + Param_Labels["newpass"] + `" oninput="pwd_checkpass(this);"></td>
+	<td><input type="password" data-ok="0" id="newpass2" oninput="pwd_checkpass(this);"></td>
+	<td><input type="button" id="savenewuser" disabled value="Save user" onclick="pwd_insertNewUser(this);"></td>
+	<td class="hide">
+		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
+		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
+	</td>
+
+	</tr>
+	</table>
+	`
+
+} // initUserTemplates
+
 const searchResultsTrailer = `
 </tbody>
 </table>
@@ -135,30 +582,6 @@ const searchResultsTrailer = `
 
 //go:embed boxes.css
 var css string
-
-var html1 = `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<title>{{.Apptitle}}{{if .Userid}}&#9997;{{end}}</title>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>` + script + `</script>
-
-<style>
-
-`
-
-const html2 = `
--->
-</style>
-</head>
-<body onload="bodyLoaded();">
-<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
-<div class="topmenu">
-`
-
-const errormsgdiv = `<div id="errormsgdiv"></div>`
 
 type locationlistvars struct {
 	Location    string
@@ -172,13 +595,6 @@ type locationlistvars struct {
 	DeleteOK    bool
 }
 
-var locationlistline = `
-<tr>
-<td class="location">{{if .Single}}{{else}}{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{end}}{{.Location}}{{if .Single}}{{else}}{{if .Location}}</a>{{end}}{{end}}</td>
-<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="delete_location(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
-</tr>
-`
-
 type ownerlistvars struct {
 	Owner     string
 	OwnerUrl  string
@@ -188,13 +604,6 @@ type ownerlistvars struct {
 	NumOrder  bool
 	Single    bool
 }
-
-var ownerlistline = `
-<tr>
-<td class="owner">{{if .Single}}{{else}}{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{end}}{{.Owner}}{{if .Single}}{{else}}{{if .Owner}}</a>{{end}}{{end}}</td>
-<td class="vdata">{{.NumFilesX}}</td>
-</tr>
-`
 
 const ownerlisttrailer = `
 </tbody>
@@ -215,17 +624,6 @@ type ownerfilesvar struct {
 	Overview  string
 	Desc      bool
 }
-
-var ownerfilesline = `
-<tr>
-<td class="boxid" title="{{.Overview}}">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
-<td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
-<td class="name">{{.Name}}</td>
-<td class="contents">{{.Contents}}</td>
-<td class="review_date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
-
-</tr>
-`
 
 const ownerfilestrailer = `
 </tbody>
@@ -253,28 +651,6 @@ type boxvars struct {
 	DeleteOK        bool
 }
 
-var boxtablerow = `
-<tr>
-<td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
-<td class="location">{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{.Location}}{{if .Location}}</a>{{end}}</td>
-<td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
-<td class="overview">{{.Overview}}</td>
-<td class="numdocs">{{.NumFilesX}}</td>
-<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
-</tr>
-`
-
-// Header for box listing by location
-var locboxtablerow = `
-<tr>
-<td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
-<td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
-<td class="overview">{{.Contents}}</td>
-<td class="numdocs">{{.NumFiles}}</td>
-<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
-</tr>
-`
-
 type boxfilevars struct {
 	Boxid     string
 	BoxidUrl  string
@@ -292,30 +668,6 @@ type boxfilevars struct {
 	Id        int
 	Select    string
 }
-
-var boxfilesline = `
-<tr data-id="{{.Id}}">
-<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
-<td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
-<td class="name" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
-<td class="contents" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Contents}}</td>
-{{if .UpdateOK}}
-<td class="date center">
-#DATESELECTORS#
-</td>
-{{else}}
-<td class="date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
-{{end}}
-{{end}}</td>
-{{if .UpdateOK}}<td class="center">
-<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="update_box_content_line(this);">
-{{if .DeleteOK}}
-<input type="checkbox" title="Enable delete button" onchange="this.nextElementSibling.classList.remove('hide');this.classList.add('hide');">
-<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
-{{end}}
-</td>{{end}}
-</tr>
-`
 
 func emit_owner_list(w http.ResponseWriter) {
 
@@ -365,25 +717,37 @@ func emit_name_list(w http.ResponseWriter) {
 
 }
 
-var newboxcontentline = `
-<tr>
-<td><input type="text" autofocus style="width:95%" list="ownerlist" class="keyinput" oninput="newContentSaveNeeded(this);"></td>
-<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);newContentSaveNeeded(this);"></td>
-<td><input type="text" style="width:95%" list="namelist" oninput="newContentSaveNeeded(this);"></td>
-<td><input type="text" style="width:95%" oninput="newContentSaveNeeded(this);"></td>
-<td class="date">
-#DATESELECTORS#
-</td>
-<td class="center"><input type="button" class="btn" data-boxid="{{.Boxid}}" disabled value="Add!" onclick="add_new_box_content(this);">
-</tr>
-`
-
 const boxfilestrailer = `
 </tbody>
 </table>
 `
 
 func start_html(w http.ResponseWriter, r *http.Request) {
+
+	var html1 = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>{{.Apptitle}}{{if .Userid}}&#9997;{{end}}</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>` + script + `</script>
+
+<style>
+
+`
+
+	const html2 = `
+-->
+</style>
+</head>
+<body onload="bodyLoaded();">
+<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
+<div class="topmenu">
+`
+
+	const errormsgdiv = `<div id="errormsgdiv"></div>`
+
 	var basicMenu = `
 	[<a href="/search">` + prefs.Menu_Labels["search"] + `</a>] 
 	[<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a>] 

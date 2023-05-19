@@ -13,25 +13,6 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 	// This needs to be here in order to collect runtime values from prefs
 
-	var searchResultsHdr1 = `
-<p>{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}{{if .Field}} in {{.Field}}{{end}}{{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}{{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}</span> and{{end}} I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
-`
-
-	var searchResultsHdr2 = `
-	<table class="searchresults">
-	<thead>
-	<tr>
-	<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-	<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-	<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-	<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-	<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-	<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-	</tr>
-	</thead>
-	<tbody>
-	`
-
 	start_html(w, r)
 
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
@@ -127,7 +108,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Found2 = FoundRecCount > 1
 	res.Field = prefs.Field_Labels[r.FormValue(Param_Labels["field"])]
 
-	html, err := template.New("searchResultsHdr1").Parse(searchResultsHdr1)
+	html, err := template.New("searchResultsHdr1").Parse(templateSearchResultsHdr1)
 	checkerr(err)
 	html.Execute(w, res)
 
@@ -142,11 +123,11 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		fmt.Printf("Omg! %v\n", sqlx)
 		panic(err)
 	}
-	html, err = template.New("searchResultsHdr2").Parse(searchResultsHdr2)
+	html, err = template.New("searchResultsHdr2").Parse(templateSearchResultsHdr2)
 	checkerr(err)
 	html.Execute(w, res)
 
-	html, err = template.New("searchResultsLine").Parse(searchResultsLine)
+	html, err = template.New("searchResultsLine").Parse(templateSearchResultsLine)
 	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&res.Boxid, &res.Owner, &res.Client, &res.Name, &res.Contents, &res.Date, &res.Storeref, &res.Overview)
@@ -167,13 +148,6 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 func show_search_params(w http.ResponseWriter, r *http.Request) {
 
-	var paramsHTML = `
-
-	<form action="/params">
-	<main>
-	<p>The settings you choose here will be used to restrict searches until you reset them or until your session ends.</p>
-	<p><input data-triggered="0" id="savesettings" class="btn" name="` + Param_Labels["savesettings"] + `" disabled onclick="this.setAttribute('data-triggered','1');return true;" type="submit" value="Save settings"></p>`
-
 	var params struct {
 		Lrange    string
 		Locations string
@@ -181,24 +155,6 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 		Orange string
 		Owners string
 	}
-
-	var locnsRadios = `
-	<p>
-	<input type="radio" id="range_all" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(this.checked);">
-	<label for="range_all"> All </label> &nbsp;&nbsp;&nbsp; 
-	<input type="radio" id="range_sel" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(!this.checked);">
-	<label for="range_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
-	</p>
-`
-
-	var ownerRadios = `
-	<p>
-	<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(this.checked);">
-	<label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
-	<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(!this.checked);">
-	<label for="orange_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
-	</p>
-`
 
 	r.ParseForm()
 	session, err := store.Get(r, cookie_name)
@@ -264,12 +220,11 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	//fmt.Fprintf(w, `DEBUG: %v<hr>`, r.Form["qlo"])
 	//fmt.Fprintf(w, `DEBUG: %v<hr>`, strings.Join(r.Form["qlo"], ","))
 
-	fmt.Fprintln(w, paramsHTML)
+	temp, err := template.New("searchParamsHead").Parse(templateSearchParamsHead)
+	checkerr(err)
+	temp.Execute(w, "")
 
-	fmt.Fprintln(w, `<div id="locationfilter">`)
-	fmt.Fprintln(w, `<h2>`+prefs.Field_Labels["location"]+`s</h2>`)
-
-	temp, err := template.New("locnsRadios").Parse(locnsRadios)
+	temp, err = template.New("searchParamsLocationRadios").Parse(templateSearchParamsLocationRadios)
 	checkerr(err)
 	temp.Execute(w, params)
 
@@ -300,9 +255,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprintln(w, "</div></div>")
 
-	fmt.Fprintln(w, `<div id="ownerfilter">`)
-	fmt.Fprintln(w, `<h2>`+prefs.Field_Labels["owner"]+`s</h2>`)
-	temp, err = template.New("ownerRadios").Parse(ownerRadios)
+	temp, err = template.New("searchParamsOwnerRadios").Parse(templateSearchParamsOwnerRadios)
 	checkerr(err)
 	temp.Execute(w, params)
 	sqlx = "SELECT DISTINCT Trim(owner) As ownerx FROM contents ORDER BY ownerx"
@@ -340,36 +293,6 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 
 	var sv searchVars
 
-	var searchHTML = `
-<p>I'm currently minding <strong>{{.NumDocsX}}</strong> individual files packed into
-<strong>{{.NumBoxesX}}</strong> boxes stored in <strong>{{.NumLocnsX}}
-</strong> locations.</p>
-
-<form action="/find" onsubmit="if (this.fld.value=='') { this.fld.name=''; }">
-<main>You can search the archives by entering the text you're looking for
-here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
-<details title="Fields to search" style="display:inline;">
-<summary><strong>&#8799;</strong></summary>
-<select id="fld" name="` + Param_Labels["field"] + `">
-<option value="">any field</option>
-<option value="client">` + prefs.Field_Labels["client"] + `</option>
-<option value="name">` + prefs.Field_Labels["name"] + `</option>
-<option value="owner">` + prefs.Field_Labels["owner"] + `</option>
-<option value="contents">` + prefs.Field_Labels["contents"] + `</option>
-<option value="review_date">` + prefs.Field_Labels["review_date"] + `</option>
-<option value="storeref">` + prefs.Field_Labels["storeref"] + `</option>
-<option value="boxid">` + prefs.Field_Labels["boxid"] + `</option>
-</select>
-</details>
-<input type="submit" class="btn" value="Find it!"/><br />
-You can enter a partner's initials, a client number or name, a box number or storage reference, a common term such as <em>tax</em> or a review date* or year.<br>
-Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.<br>
-* Enter review dates as <em>yyyy</em> or <em>yyyy-mm</em> eg: '2026-03'.
-</main></form>
-<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
-<p>{{if or .Locations .Owners}}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{end}}</p>
-`
-
 	start_html(w, r)
 
 	session, err := store.Get(r, cookie_name)
@@ -389,7 +312,7 @@ Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.<br>
 	sv.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "Rex", "-1"))
 	sv.NumLocnsX = commas(sv.NumLocns)
 
-	html, err := template.New("searchHTML").Parse(searchHTML)
+	html, err := template.New("searchHome").Parse(templateSearchHome)
 	checkerr(err)
 
 	html.Execute(w, sv)

@@ -103,85 +103,11 @@ func insertNewUser(w http.ResponseWriter, r *http.Request) {
 
 func showusers(w http.ResponseWriter, r *http.Request) {
 
-	var userpasschg = `
-	<p>You may alter your own password by entering the existing password and a new one twice. If you don't know your existing password you'll have to get someone with an accesslevel of ` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + ` to change it for you.</p>
-	<form action="/users" method="post" onsubmit="return pwd_validateSingleChange(this);">
-	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["single"] + `"|>
-	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
-	<label for="oldpass">Current password </label> <input autofocus type="password" id="oldpass" name="` + Param_Labels["oldpass"] + `">
-	<label for="newpass">New password </label> <input type="password" id="mynewpass" name="` + Param_Labels["newpass"] + `">
-	<label for="newpass2">and again </label> <input type="password" id="mynewpass2">
-	<input type="submit" value="Change my password!">
-	</form>
-	`
-	var multipasschghead = `
-	<form>
-	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["multiple"] + `"|>
-	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
-	<table id="tabusers">
-	<thead><tr>
-	<th>Userid</th>
-	<th>Accesslevel</th>
-	<th>New password</th>
-	<th>and again</th>
-	<th></th>
-	<th></th>
-	</tr></thead>
-	<tbody>
-	`
-
 	type MultiPassVars = struct {
 		Userid      string
 		Accesslevel int
 		Row         int
 	}
-	var multipassline = `
-	<tr>
-	<td><input type="text" readonly name="m` + Param_Labels["userid"] + `_{{.Row}}" value="{{.Userid}}"></td>
-	<td>
-		<select name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_updateAccesslevel(this);">
-		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_READONLY) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
-		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
-		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `"{{if eq .Accesslevel  ` + strconv.Itoa(ACCESSLEVEL_SUPER) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
-		</select>
-	</td>
-	<td><input type="password" name="m` + Param_Labels["newpass"] + `_{{.Row}}" oninput="pwd_enableSave(this);"></td>
-	<td><input type="password" id="newpass2:{{.Row}}" oninput="pwd_enableSave(this);"></td>
-	<td><input type="button" disabled value="Set password" onclick="pwd_savePasswordChanges(this);"></td>
-	<td class="center">
-		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `_{{.Row}}" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
-		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
-	</td>
-	</tr>
-	`
-	var multipasschgfoot = `
-
-	</tbody>
-	</table>
-	<input type="hidden" id="rowcount" name="` + Param_Labels["rowcount"] + `" value="{{.Row}}">
-	<input type="button" value="+" onclick="pwd_insertNewRow(); return false;">
-	</form>
-	<table class="hide">
-	<tr id="newrow">
-	<td><input type="text" id="newuserid" name="m` + Param_Labels["userid"] + `" data-ok="0" oninput="pwd_useridChanged(this);"></td>
-	<td>
-		<select id="newal" name="m` + Param_Labels["accesslevel"] + `">
-		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `" selected>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
-		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `">` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
-		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `">` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
-		</select>
-	</td>
-	<td><input type="password" data-ok="0" id="newpass1" name="m` + Param_Labels["newpass"] + `" oninput="pwd_checkpass(this);"></td>
-	<td><input type="password" data-ok="0" id="newpass2" oninput="pwd_checkpass(this);"></td>
-	<td><input type="button" id="savenewuser" disabled value="Save user" onclick="pwd_insertNewUser(this);"></td>
-	<td class="hide">
-		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
-		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
-	</td>
-
-	</tr>
-	</table>
-	`
 	err := r.ParseForm()
 	checkerr(err)
 
@@ -207,12 +133,12 @@ func showusers(w http.ResponseWriter, r *http.Request) {
 
 	if al.(int) < ACCESSLEVEL_SUPER {
 
-		fmt.Fprint(w, userpasschg)
+		fmt.Fprint(w, templateUserPasswordChange)
 		fmt.Fprint(w, "</main>")
 		return
 	}
-	fmt.Fprint(w, multipasschghead)
-	temp, err := template.New("multipassline").Parse(multipassline)
+	fmt.Fprint(w, templateMultiUserPasswordChangeHead)
+	temp, err := template.New("multiUserPasswordChangeLine").Parse(templateMultiUserPasswordChangeLine)
 	checkerr(err)
 	sqlx := "SELECT userid,accesslevel FROM users WHERE userid<>'" + runvars.Userid + "' ORDER BY userid"
 	rows, err := DBH.Query(sqlx)
@@ -227,13 +153,13 @@ func showusers(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-	temp, err = template.New("multipasschgfoot").Parse(multipasschgfoot)
+	temp, err = template.New("multiUserPasswordChangeFoot").Parse(templateMultiUserPasswordChangeFoot)
 	checkerr(err)
 	err = temp.Execute(w, v)
 	checkerr(err)
 
 	fmt.Fprint(w, "<hr>")
-	fmt.Fprint(w, userpasschg)
+	fmt.Fprint(w, templateUserPasswordChange)
 
 	fmt.Fprint(w, "</main>")
 }

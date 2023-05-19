@@ -72,24 +72,6 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var locationlisthdr = `
-<table class="locationlist">
-<thead>
-<tr>
-
-
-<th class="location">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + prefs.Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + prefs.Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-</tr>
-</thead>
-<tbody>
-`
-	var newlocation = `
-<tr><td class="location"><input type="text" style="width:95%;" autofocus></td>
-<td><input type="button" class="btn" value="Add new ` + prefs.Field_Labels["location"] + `"
-onclick="add_new_location(this);"></td></tr>
-`
-
 	start_html(w, r)
 
 	sqlx := " FROM locations "
@@ -129,12 +111,12 @@ onclick="add_new_location(this);"></td></tr>
 	loc.Single = r.FormValue(Param_Labels["location"]) != ""
 	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
-	temp, err := template.New("locationlisthdr").Parse(locationlisthdr)
+	temp, err := template.New("locationListHead").Parse(templateLocationListHead)
 	checkerr(err)
 	err = temp.Execute(w, loc)
 	checkerr(err)
 
-	temp, err = template.New("locationlistline2").Parse(locationlistline)
+	temp, err = template.New("locationListLine2").Parse(templateLocationListLine)
 	if err != nil {
 		panic(err)
 	}
@@ -144,12 +126,13 @@ onclick="add_new_location(this);"></td></tr>
 		loc.NumBoxesX = commas(loc.NumBoxes)
 		loc.DeleteOK = runvars.Updating && loc.NumBoxes == 0
 		err := temp.Execute(w, loc)
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 	}
 	if runvars.Updating {
-		fmt.Fprint(w, newlocation)
+		temp, err = template.New("newLocation").Parse(templateNewLocation)
+		checkerr(err)
+		err = temp.Execute(w, "")
+		checkerr(err)
 	}
 	fmt.Fprint(w, ownerlisttrailer)
 
@@ -160,21 +143,6 @@ onclick="add_new_location(this);"></td></tr>
 }
 
 func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, NumBoxes int) {
-
-	// Header for box listing by location
-	var locboxtablehdr = `
-<table class="boxlist">
-<thead>
-<tr>
-<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-<th class="storeref"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
-<th class="contents"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-</tr>
-</thead>
-<tbody>
-`
 
 	if r.FormValue(Param_Labels["location"]) == "" {
 		show_search(w, r)
@@ -190,7 +158,7 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	loc.NumBoxesX = commas(loc.NumBoxes)
 	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
-	temp, err := template.New("locboxtablehdr").Parse(locboxtablehdr)
+	temp, err := template.New("locationBoxTableHead").Parse(templateLocationBoxTableHead)
 	checkerr(err)
 	err = temp.Execute(w, loc)
 	checkerr(err)
@@ -215,7 +183,7 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	bv.Single = r.FormValue(Param_Labels["location"]) != ""
 	bv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
-	temp, err = template.New("locboxtablerow").Parse(locboxtablerow)
+	temp, err = template.New("locationBoxTableRow").Parse(templateLocationBoxTableRow)
 	checkerr(err)
 
 	for rows.Next() {
@@ -244,22 +212,6 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 
 func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
-	var boxfileshdr = `
-<table class="boxfiles">
-<thead>
-<tr>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-
-
-</tr>
-</thead>
-<tbody>
-`
-
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
 	sqlx := "SELECT owner,client,name,contents,review_date FROM contents "
@@ -276,7 +228,7 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	rows, _ := DBH.Query(sqlx + sqllimit)
 	defer rows.Close()
 
-	temp, err := template.New("boxfileshdr").Parse(boxfileshdr)
+	temp, err := template.New("locationBoxFilesHead").Parse(templateLocationBoxFilesHead)
 	checkerr(err)
 
 	var bfv boxfilevars
@@ -287,7 +239,7 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	checkerr(err)
 
 	nrows := 0
-	temp, err = template.New("boxfilesline").Parse(boxfilesline)
+	temp, err = template.New("boxFilesLine").Parse(templateBoxFilesLine)
 	checkerr(err)
 
 	for rows.Next() {
@@ -295,9 +247,7 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 		bfv.OwnerUrl = template.URLQueryEscaper(bfv.Owner)
 		bfv.ClientUrl = template.URLQueryEscaper(bfv.Client)
 		err = temp.Execute(w, bfv)
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 
 		nrows++
 	}
