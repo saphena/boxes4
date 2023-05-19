@@ -424,7 +424,21 @@ func initSearchTemplates() {
 
 	// Search response header before page links
 	templateSearchResultsHdr1 = `
-<p>{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}{{if .Field}} in {{.Field}}{{end}}{{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}{{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}</span> and{{end}} I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
+<p>
+{{if .Find}}I was looking for <span class="searchedfor">{{.Find}}
+{{if .Field}} in {{.Field}}{{end}}
+{{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}
+{{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}
+</span> and
+{{else}}{{if or .Locations .Owners}}
+	<span class="searchedfor">
+	{{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}
+	{{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}
+	</span>
+{{end}}
+{{end}}
+
+I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the one match.{{end}}{{if .Found2}}{{.Found}} matches.{{end}}</p>
 `
 
 	// Search response header after page links
@@ -579,6 +593,9 @@ const searchResultsTrailer = `
 </tbody>
 </table>
 `
+
+//go:embed normalize.css
+var cssreset string
 
 //go:embed boxes.css
 var css string
@@ -774,14 +791,14 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	runvars.Updating = updating
 	//fmt.Printf("DEBUG: updating=%v usr=%v\n", runvars.Updating, usr)
 	if !runvars.Updating {
-		ht = html1 + css + html2 + basicMenu + "</div>" + errormsgdiv
+		ht = html1 + cssreset + css + html2 + basicMenu + "</div>" + errormsgdiv
 	} else {
 		if usr != nil {
 			runvars.Userid = usr.(string)
 		} else {
 			runvars.Userid = ""
 		}
-		ht = html1 + css + html2 + updateMenu + "</div>" + errormsgdiv
+		ht = html1 + cssreset + css + html2 + updateMenu + "</div>" + errormsgdiv
 	}
 	html, err := template.New("mainmenu").Parse(ht)
 	checkerr(err)

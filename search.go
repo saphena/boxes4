@@ -185,7 +185,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 			locs = append(locs, "'"+strings.ReplaceAll(x, "'", "''")+"'")
 		}
 		params.Locations = strings.Join(locs, ",")
-		if params.Lrange == Param_Labels["all"] {
+		if params.Lrange == Param_Labels["all"] || len(params.Locations) == 0 {
 			session.Values["locations"] = nil
 		} else {
 			session.Values["locations"] = params.Locations
@@ -201,7 +201,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 			owners = append(owners, "'"+strings.ReplaceAll(x, "'", "''")+"'")
 		}
 		params.Owners = strings.Join(owners, ",")
-		if params.Orange == Param_Labels["all"] {
+		if params.Orange == Param_Labels["all"] || len(params.Owners) == 0 {
 			session.Values["owners"] = nil
 		} else {
 			session.Values["owners"] = params.Owners
