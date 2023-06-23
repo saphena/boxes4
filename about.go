@@ -46,6 +46,9 @@ func about(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprintf(w, ` The following userids have that accesslevel: <strong>%v</strong></p>`, uids)
 
+		fmt.Fprint(w, `<hr><h4>Terms used by this application</h4>`)
+		show_terminology(w, r)
+
 		return
 	}
 
@@ -84,4 +87,27 @@ func about(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprint(w, `<p><a class="btn" href="/check">Check database</a></p>`)
 
+}
+
+func show_terminology(w http.ResponseWriter, r *http.Request) {
+	const terms = `
+	<dl class="termstable">
+	<dt>Location</dt>
+	<dd>A storage location, a place to store <em>boxes</em>. A warehouse, cellar, cupboard, etc.</dd>
+	<dt>Owner</dt>
+	<dd>The individual, entity or department responsible for or having ownership of one or more <em>files</em>. Owners are identified usually by short codes representing, say, a partner's initials or a department such as 'PAYROLL'.</dd>
+	<dt>File (Contents)</dt>
+	<dd>A folder of related documents, belonging to a particular <em>owner</em> and <em>client</em>.</dd>
+	<dt>Box</dt>
+	<dd>A box or container holding one or more <em>files</em>, stored in a <em>location</em> often having a <em>storage reference</em> associated with that particular location. Each box is identified by a unique 'boxid'.</dd>
+	<dt>Client</dt>
+	<dd>Identifies which of the firm's clients or other external entities a <em>file</em> relates to. Both client numbers and names are held and are searchable.</dd>
+	<dt>Review date</dt>
+	<dd>The date (month &amp; year) when individual <em>files</em> should be considered for destruction or other disposal.</dd>
+	<dt>Storage reference</dt>
+	<dd>A unique reference assigned by the manager of a particular <em>location</em> to individual <em>boxes</em>. In a large facility this might be used to identify, say, a particular rack within a warehouse.</dd>
+	</dl>
+	`
+
+	fmt.Fprint(w, terms)
 }

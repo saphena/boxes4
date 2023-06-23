@@ -110,6 +110,9 @@ input[type="submit"]:disabled {
 .boxlist,
 .boxfiles			{ margin-left: auto; margin-right: auto; }
 
+.termstable dt 		{ font-weight: bold; padding-bottom: 5px; }
+.termstable dd 		{ margin-bottom: .5em; }
+.termstable em 		{ font-weight: bolder; }
 .pagelinks			{ 
 	margin					: 6px 0 6px 0; 
 	background-color		: var(--pagelinks-background);

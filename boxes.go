@@ -152,6 +152,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("xx=%v\n", xx)
 	var mindate, maxdate string
 	rows.Scan(&bv.Storeref, &bv.Boxid, &bv.Location, &bv.Contents, &bv.NumFiles, &mindate, &maxdate)
+	bv.StorerefUrl = template.URLQueryEscaper(bv.Storeref)
 	if mindate == maxdate {
 		bv.Date = formatShowDate(mindate)
 	} else {
