@@ -70,6 +70,9 @@ var Param_Labels = map[string]string{
 	"savecontent":     "dsc",
 	"chgboxlocn":      "dxl",
 	"savebox":         "dbx",
+	"newok":           "xid",
+	"newbox":          "xnb",
+	"delbox":          "kbx",
 }
 
 type AppVars struct {
@@ -136,6 +139,7 @@ var templateOwnerFilesLine string
 var templateBoxTableHead string
 var templateBoxTableRow string
 var templateLocationBoxTableRow string
+var templateCreateNewBox string
 var templateBoxDetails string
 var templateBoxFilesHead string
 var templateBoxFilesLine string
@@ -251,6 +255,12 @@ func initBoxTemplates() {
 <td class="overview">{{.Overview}}</td>
 <td class="numdocs">{{.NumFilesX}}</td>
 <td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+</tr>
+`
+	templateCreateNewBox = `
+<tr>
+<td><input type="text" autofocus placeholder="` + prefs.Literals["newboxnumber"] + `" class="keyinput" oninput="check_new_boxid(this);"></td>
+<td><input type="button" disabled class="btn" value="` + prefs.Literals["createnewbox"] + `" onclick="start_new_box(this);"></td>
 </tr>
 `
 
@@ -843,7 +853,7 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 		varx += "&"
 	}
 
-	fmt.Fprintf(w, `<div class="pagelinks">`)
+	fmt.Fprintf(w, `<div class="pagelinks"><span id="pagelinks">`)
 	thisPage := (offset / pagesize) + 1
 	if thisPage > 1 {
 		prevPageOffset := (thisPage * pagesize) - (2 * pagesize)
@@ -893,7 +903,7 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	}
 	fmt.Fprint(w, "</select>")
 
-	fmt.Fprintf(w, `</div>`)
+	fmt.Fprintf(w, `</span></div>`)
 
 	return res
 }
@@ -906,6 +916,7 @@ type userpreferences struct {
 	Field_Labels         map[string]string `yaml:"FieldLabels"`
 	Menu_Labels          map[string]string `yaml:"MenuLabels"`
 	Table_Labels         map[string]string `yaml:"TableLabels"`
+	Literals             map[string]string `yaml:"Literals"`
 	AppTitle             string            `yaml:"AppTitle"`
 	CookieMaxAgeMins     int               `yaml:"LoginMinutes"`
 	PasswordMinLength    int               `yaml:"PasswordMinLength"`

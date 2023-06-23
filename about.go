@@ -21,7 +21,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 	lastUpdated := getValueFromDB("SELECT recordedat FROM history ORDER BY recordedat DESC LIMIT 0,1", "recordedat", "")
 	if lastUpdated != "" {
 		updatedBy := getValueFromDB("SELECT userid FROM history ORDER BY recordedat DESC LIMIT 0,1", "userid", "")
-		tsfmt := "2006-01-02T15:04:05Z"
+		tsfmt := time.RFC3339 //"2006-01-02T15:04:05Z"
 		ts, err := time.Parse(tsfmt, lastUpdated)
 		if err != nil {
 			fmt.Fprint(w, err)

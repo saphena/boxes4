@@ -1,24 +1,26 @@
 
 :root	{
 	--regular-background	: #ffffe0;
-	--regular-foreground	: black;
+	--regular-foreground	: rgb(78, 77, 77);
 	--hilite-background		: yellow;
 	--hilite-foreground		: black;
 	--error-background		: red;
 	--error-foreground		: white;
-	--link-color			: blue;
-	--link-hilite-fore		: black;
+	--link-color			: darkblue;
 	--link-hilite-back		: orange;
+	--link-hilite-fore		: black;
 	--button-background		: lightgray;
 	--button-foreground		: black;
 	--disabled-background	: lightgray;
 	--disabled-foreground	: darkgray;
-	--cell-background		: white;
-	--cell-border-color		: #bb0000;
-	--cell-border			: var(--cell-border-color) solid 3px;
+	--cell-background		: #fdfdb2;
+	--cell-border-color		: lightgray; 
+	--pagelinks-background 	: rgb(241, 239, 239);
+
 }
 body 				{
 	background-color		: var(--regular-background);
+	color					: var(--regular-foreground);
 	font-family				: Verdana, Arial, Helvetica, sans-serif; 
 	font-size				: 16px; 
 	margin					: 1em;
@@ -50,7 +52,7 @@ td {
 	font-weight				: bold; 
 	padding					: 4px;
 	text-align				: left; 
-	border					: var(--cell-border);
+	border-top				: var(--cell-border-color) solid 3px;
 }
 li					{ 
 	list-style-type			: none; 
@@ -58,7 +60,6 @@ li					{
 
 em					{ 
 	font-style				: italic; 
-	font-size				: larger; 
 }
 
 th                  { 
@@ -85,7 +86,7 @@ input[type="submit"]:disabled {
 	color: var(--disabled-foreground);
 }
 
-.pagelinks			{ padding: 2px 0 6px 0; }
+::placeholder 		{ text-transform:lowercase; }
 .numdocs,
 .numboxes			{ text-align: center; }
 .keydata			{ 
@@ -99,6 +100,25 @@ input[type="submit"]:disabled {
 	padding-right			: 0.5em; 
 }
 .keyinput			{ text-transform: uppercase; }
+
+.boxfunctionspanel 	{ display: table; margin: 0 auto 0 auto;}
+
+.searchresults,
+.locationlist,
+.ownerlist,
+.boxheader,
+.boxlist,
+.boxfiles			{ margin-left: auto; margin-right: auto; }
+
+.pagelinks			{ 
+	margin					: 6px 0 6px 0; 
+	background-color		: var(--pagelinks-background);
+}
+
+#pagelinks			{ 
+	display: table;
+	margin: 0 auto;
+}
 
 .filteritems		{ 
 	height					: 100%; 

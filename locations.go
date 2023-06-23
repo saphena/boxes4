@@ -116,22 +116,20 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	err = temp.Execute(w, loc)
 	checkerr(err)
 
-	temp, err = template.New("locationListLine2").Parse(templateLocationListLine)
-	if err != nil {
-		panic(err)
+	if runvars.Updating {
+		temp, err = template.New("newLocation").Parse(templateNewLocation)
+		checkerr(err)
+		err = temp.Execute(w, "")
+		checkerr(err)
 	}
+	temp, err = template.New("locationListLine2").Parse(templateLocationListLine)
+	checkerr(err)
 	for rows.Next() {
 		rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
 		loc.LocationUrl = url.QueryEscape(loc.Location)
 		loc.NumBoxesX = commas(loc.NumBoxes)
 		loc.DeleteOK = runvars.Updating && loc.NumBoxes == 0
 		err := temp.Execute(w, loc)
-		checkerr(err)
-	}
-	if runvars.Updating {
-		temp, err = template.New("newLocation").Parse(templateNewLocation)
-		checkerr(err)
-		err = temp.Execute(w, "")
 		checkerr(err)
 	}
 	fmt.Fprint(w, ownerlisttrailer)
@@ -254,5 +252,12 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	temp, err = template.New("boxfilestrailer").Parse(boxfilestrailer)
 	temp.Execute(w, "")
 	checkerr(err)
+
+}
+
+func default_location() string {
+
+	sqlx := "SELECT location FROM locations ORDER BY location LIMIT 1"
+	return getValueFromDB(sqlx, "location", "")
 
 }

@@ -42,6 +42,9 @@ const Param_Labels = {
 	"savecontent":     "dsc",
 	"chgboxlocn":      "dxl",
 	"savebox":         "dbx",
+	"newok":           "xid",
+	"newbox":          "xnb",
+	"delbox":          "kbx",
 }
 
 
@@ -519,6 +522,27 @@ function delete_location(obj) {
 
 }
 
+function check_new_boxid(obj) {
+
+	let boxid = obj.value.toLocaleUpperCase();
+	let tr = obj.parentElement.parentElement;
+	let btn = tr.children[1].firstElementChild;
+	btn.disabled = true;
+	if (boxid.length < 1) return;
+
+	let url = "/boxes?"+Param_Labels["newok"]+"="+encodeURIComponent(boxid)
+
+	fetch(url,{method: "GET"})
+	.then(res => res.json())
+	.then(res => {
+		console.log(res);
+		if (res.res=="ok") {
+			btn.disabled = false
+		}
+	});
+
+}
+
 function add_new_box_content(obj) {
 
 	obj.disabled = true;
@@ -865,4 +889,44 @@ function change_box_location(sel) {
 
 
 }
+
+function delete_empty_box(boxid) {
+
+	let url = "/boxes?"+Param_Labels["delbox"]+"="+encodeURIComponent(boxid)
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			url = "/boxes"
+			window.location.replace(url)
+		} else {
+			showerrormsg(res.res);
+		}
+	});
+}
+
+
+
+function start_new_box(btn) {
+
+
+	btn.disabled = true;
+	let tr = btn.parentElement.parentElement;
+	let boxid = tr.children[0].firstElementChild.value;
+	boxid = boxid.toLocaleUpperCase();
+	let url = "/boxes?"+Param_Labels["newbox"]+"="+encodeURIComponent(boxid)
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			url = "/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid)
+			window.location.replace(url)
+		} else {
+			btn.disabled = false;
+			showerrormsg(res.res);
+		}
+	});
+
+}
+
 

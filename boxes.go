@@ -14,6 +14,21 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 
 	r.ParseForm()
 
+	if r.FormValue(Param_Labels["delbox"]) != "" {
+		ajax_delete_empty_box(w, r)
+		return
+	}
+
+	if r.FormValue(Param_Labels["newbox"]) != "" {
+		ajax_create_new_box(w, r)
+		return
+	}
+
+	if r.FormValue(Param_Labels["newok"]) != "" {
+		ajax_check_new_boxid(w, r)
+		return
+	}
+
 	if r.FormValue(Param_Labels["savebox"]) != "" {
 		ajax_update_box_details(w, r)
 		return
@@ -79,6 +94,10 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	err = html.Execute(w, box)
 	checkerr(err)
 
+	html, err = template.New("createNewBox").Parse(templateCreateNewBox)
+	checkerr(err)
+	err = html.Execute(w, "")
+	checkerr(err)
 	html, err = template.New("boxTableRow").Parse(templateBoxTableRow)
 	checkerr(err)
 	for rows.Next() {
@@ -126,7 +145,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	bv.DeleteOK = runvars.Updating
 
 	if !rows.Next() {
-		fmt.Fprintf(w, "<p>Bugger! %v</p>", r.FormValue(Param_Labels["boxid"]))
+		fmt.Fprintf(w, "<p>No such box! %v</p>", r.FormValue(Param_Labels["boxid"]))
 		return
 	}
 	//xx := prefs.Field_Labels["boxid"]
@@ -144,6 +163,11 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	err = html.Execute(w, bv)
 	checkerr(err)
+	if runvars.Updating && bv.NumFiles < 1 {
+		fmt.Fprint(w, `<div class="boxfunctionspanel">`)
+		fmt.Fprintf(w, `<input type="button" value="Delete empty box" onclick="return delete_empty_box('%v');">`, r.FormValue(Param_Labels["boxid"]))
+		fmt.Fprint(w, `</div>`)
+	}
 	showBoxfiles(w, r, sqlboxid)
 
 }
@@ -358,6 +382,9 @@ func update_ajax_box_contents(boxid string) (int, string, string) {
 		}
 	}
 	rows.Close()
+	if nfiles < 1 {
+		hidate = lodate
+	}
 	sqlx = "UPDATE boxes SET numdocs=" + strconv.Itoa(nfiles)
 	sqlx += ",min_review_date='" + lodate + "'"
 	sqlx += ",max_review_date='" + hidate + "'"
@@ -367,6 +394,20 @@ func update_ajax_box_contents(boxid string) (int, string, string) {
 
 	return nfiles, lodate, hidate
 
+}
+
+func ajax_check_new_boxid(w http.ResponseWriter, r *http.Request) {
+
+	boxid := r.FormValue(Param_Labels["newok"])
+
+	sqlx := "SELECT boxid FROM boxes WHERE boxid='" + safesql(boxid) + "'"
+	if len(boxid) < 1 || getValueFromDB(sqlx, "boxid", "") != "" {
+		fmt.Println("DEBUG: Replying boxid exists")
+		fmt.Fprint(w, `{"res":"Duplicate!"}`)
+	} else {
+		fmt.Println("DEBUG: Replying boxid ok")
+		fmt.Fprint(w, `{"res":"ok"}`)
+	}
 }
 
 func ajax_update_box_details(w http.ResponseWriter, r *http.Request) {
@@ -403,6 +444,52 @@ func ajax_change_box_location(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sqlx = "UPDATE boxes SET location='" + safesql(locn) + "' WHERE boxid='" + safesql(boxid) + "'"
+	fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+}
+
+func ajax_delete_empty_box(w http.ResponseWriter, r *http.Request) {
+
+	boxid := r.FormValue(Param_Labels["delbox"])
+
+	sqlx := "DELETE FROM boxes WHERE boxid='" + safesql(boxid) + "'"
+
+	fmt.Println("DEBUG: " + sqlx)
+	res := DBExec(sqlx)
+	n, err := res.RowsAffected()
+	checkerr(err)
+	if n < 1 {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
+func ajax_create_new_box(w http.ResponseWriter, r *http.Request) {
+
+	boxid := r.FormValue(Param_Labels["newbox"])
+
+	sqlx := "SELECT boxid FROM boxes WHERE boxid='" + safesql(boxid) + "'"
+	if getValueFromDB(sqlx, "boxid", "") != "" {
+		fmt.Fprint(w, `{"res":"`+prefs.Field_Labels["boxid"]+` already exists"}`)
+		return
+	}
+	sqlx = "INSERT INTO boxes (boxid,location,storeref,overview) VALUES("
+	sqlx += "'" + safesql(boxid) + "'"
+	sqlx += ",'" + safesql(default_location()) + "'"
+	sqlx += ",'" + safesql(boxid) + "'"
+	sqlx += ",'" + prefs.Literals["newboxoverview"] + "'"
+	sqlx += ")"
+
 	fmt.Println("DEBUG: " + sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()

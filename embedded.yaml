@@ -65,7 +65,7 @@ FixAllLowercaseFields: [name,contents,overview,location]
 FieldLabels:
   boxid:           'BoxID'
   owner:           'Owner'
-  contents:        'Files'
+  contents:        'Contents'
   review_date:     'Review date'
   name:            'Name'
   client:          'Client'
@@ -97,3 +97,8 @@ TableLabels:
   locations:	locations
   users:		users
   history:		history
+
+Literals:
+  newboxoverview:   "Empty box"
+  newboxnumber:     "Box number"
+  createnewbox:     "Create new box"

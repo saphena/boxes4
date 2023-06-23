@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // These table definitions are used as templates for
@@ -58,10 +60,26 @@ func DBExec(sqlx string) sql.Result {
 		fmt.Printf("DBExec = %v\n", sqlx)
 		panic(err)
 	}
+	re := regexp.MustCompile(`(?i)^(ALTER|CREATE|DELETE|DROP|INSERT|REPLACE|UPDATE|UPSERT)`)
+	if re.MatchString(sqlx) {
+		markDBTouch(sqlx)
+	}
 	return res
 
 }
 
+func markDBTouch(sqlx string) {
+
+	touch := "INSERT INTO history (recordedat,userid,thesql,theresult) VALUES("
+	dt := time.Now().Format(time.RFC3339)
+	touch += "'" + dt + "'"
+	touch += ",'" + runvars.Userid + "'"
+	touch += ",'" + safesql(sqlx) + "'"
+	touch += ",0)"
+	_, err := DBH.Exec(touch)
+	checkerr(err)
+
+}
 func check_boxes_with_contents(w http.ResponseWriter, r *http.Request) {
 
 	const ISODATE_NULL_LIT = "0000-00-00"
