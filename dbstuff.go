@@ -78,8 +78,31 @@ func markDBTouch(sqlx string) {
 	touch += ",0)"
 	_, err := DBH.Exec(touch)
 	checkerr(err)
+	trimHistoryLog()
 
 }
+
+func trimHistoryLog() {
+
+	maxentries := prefs.HistoryLog["maxentries"]
+	if maxentries < 1 {
+		return
+	}
+	sqlx := "SELECT count(*) AS rex FROM history"
+	hrex, _ := strconv.Atoi(getValueFromDB(sqlx, "rex", "0"))
+	if hrex <= maxentries {
+		return
+	}
+	sqlx = "SELECT recordedat FROM history ORDER BY recordedat DESC LIMIT "
+	sqlx += strconv.Itoa(maxentries) + ",1"
+	cutoff := getValueFromDB(sqlx, "recordedat", "2006-01-02")
+	sqlx = "DELETE FROM history WHERE recordedat < '" + cutoff + "'"
+	fmt.Println("DEBUG: Trimming history - " + sqlx)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+
+}
+
 func check_boxes_with_contents(w http.ResponseWriter, r *http.Request) {
 
 	const ISODATE_NULL_LIT = "0000-00-00"

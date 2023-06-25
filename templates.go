@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 
 	_ "embed"
 )
@@ -168,12 +169,12 @@ func initBoxTemplates() {
 <tr>
 
 
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-<th class="location"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + prefs.Field_Labels["location"] + `</a></th>
-<th class="storeref"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
-<th class="contents"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
-<th class="boxid"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
-<th class="date center"><a title="&#8645;" href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+<th class="boxid"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="location"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">` + prefs.Field_Labels["location"] + `</a></th>
+<th class="storeref"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
+<th class="contents"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
+<th class="boxid"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
+<th class="date center"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 </tr>
 </thead>
 <tbody>
@@ -196,7 +197,7 @@ func initBoxTemplates() {
 </tr>
 
 <tr><td class="vlabel">` + prefs.Field_Labels["storeref"] + ` : </td>
-<td class="vdata" id="boxstoreref"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);">{{.Storeref}}{{else}}><a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a>{{end}}</td></tr>
+<td class="vdata" id="boxstoreref"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);">{{.Storeref}}{{else}}><a class="lookuplink" title="Search for {{.Storeref}}" href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{.Storeref}}</a>{{end}}</td></tr>
 
 <tr><td class="vlabel">` + prefs.Field_Labels["overview"] + ` : </td>
 <td class="vdata" id="boxoverview"{{if .UpdateOK}} contenteditable="true" oninput="boxDetailsSaveNeeded(this);"{{end}}>{{.Contents}}</td></tr>
@@ -211,11 +212,11 @@ func initBoxTemplates() {
 <table class="boxfiles">
 <thead>
 <tr>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="owner"><a class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 
 
 </tr>
@@ -225,8 +226,8 @@ func initBoxTemplates() {
 
 	templateBoxFilesLine = `
 <tr data-id="{{.Id}}">
-<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
-<td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
+<td class="owner" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Owner}}{{else}}>{{if .Owner}}<a class="lookuplink" href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{.Owner}}{{if .Owner}}</a>{{end}}{{end}}</td>
+<td class="client" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);">{{.Client}}{{else}}>{{if .Client}}<a class="lookuplink" href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}{{end}}</td>
 <td class="name" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Name}}</td>
 <td class="contents" {{if .UpdateOK}}contenteditable="true" oninput="contentSaveNeeded(this);"{{end}}>{{.Contents}}</td>
 {{if .UpdateOK}}
@@ -234,7 +235,7 @@ func initBoxTemplates() {
 #DATESELECTORS#
 </td>
 {{else}}
-<td class="date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
+<td class="date center">{{if .Date}}<a class="lookuplink" href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
 {{end}}
 {{end}}</td>
 {{if .UpdateOK}}<td class="center">
@@ -251,16 +252,16 @@ func initBoxTemplates() {
 <tr>
 <td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
 <td class="location">{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{.Location}}{{if .Location}}</a>{{end}}</td>
-<td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
+<td class="storeref">{{if .Storeref}}<a class="lookuplink" title="Search for {{.Storeref}}" href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 <td class="overview">{{.Overview}}</td>
 <td class="numdocs">{{.NumFilesX}}</td>
-<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+<td class="review_date center">{{if .Single}}{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 </tr>
 `
 	templateCreateNewBox = `
 <tr>
-<td><input type="text" autofocus placeholder="` + prefs.Literals["newboxnumber"] + `" class="keyinput" oninput="check_new_boxid(this);"></td>
-<td><input type="button" disabled class="btn" value="` + prefs.Literals["createnewbox"] + `" onclick="start_new_box(this);"></td>
+<td colspan="6"><input type="text" autofocus placeholder="` + prefs.Literals["newboxnumber"] + `" class="keyinput boxid" oninput="check_new_boxid(this);">
+ <input type="button" disabled class="btn" value="` + prefs.Literals["createnewbox"] + `" onclick="start_new_box(this);"></td>
 </tr>
 `
 
@@ -287,8 +288,8 @@ func initOwnerTemplates() {
 	<tr>
 	
 	
-	<th class="owner">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + prefs.Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-	<th class="number">{{if .Single}}{{else}}<a title="&#8645;" href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + prefs.Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+	<th class="owner">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + prefs.Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+	<th class="number">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + prefs.Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
 	</tr>
 	</thead>
 	<tbody>
@@ -299,11 +300,11 @@ func initOwnerTemplates() {
 	<thead>
 	<tr>
 	
-	<th class="owner"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-	<th class="client"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-	<th class="name"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-	<th class="contents"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-	<th class="review_date"><a title="&#8645;" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+	<th class="owner"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+	<th class="client"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+	<th class="name"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+	<th class="contents"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+	<th class="review_date"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 	</tr>
 	</thead>
 	<tbody>
@@ -322,7 +323,7 @@ func initOwnerTemplates() {
 	<td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 	<td class="name">{{.Name}}</td>
 	<td class="contents">{{.Contents}}</td>
-	<td class="review_date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
+	<td class="review_date center">{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
 	
 	</tr>
 	`
@@ -336,11 +337,11 @@ func initLocationTemplates() {
 		<table class="boxlist">
 		<thead>
 		<tr>
-		<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-		<th class="storeref"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
-		<th class="contents"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
-		<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
-		<th class="boxid"><a title="&#8645;" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+		<th class="boxid"><a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+		<th class="storeref"><a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=storeref{{if .Desc}}&` + Param_Labels["desc"] + `=storeref{{end}}">` + prefs.Field_Labels["storeref"] + `</a></th>
+		<th class="contents"><a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=overview{{if .Desc}}&` + Param_Labels["desc"] + `=overview{{end}}">` + prefs.Field_Labels["overview"] + `</a></th>
+		<th class="boxid"><a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">` + prefs.Field_Labels["numdocs"] + `</a></th>
+		<th class="boxid"><a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}&` + Param_Labels["order"] + `=min_review_date{{if .Desc}}&` + Param_Labels["desc"] + `=min_review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 		</tr>
 		</thead>
 		<tbody>
@@ -352,8 +353,8 @@ func initLocationTemplates() {
 		<tr>
 		
 		
-		<th class="location">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + prefs.Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-		<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + prefs.Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+		<th class="location">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + prefs.Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+		<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + prefs.Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -375,11 +376,11 @@ func initLocationTemplates() {
 		<table class="boxfiles">
 		<thead>
 		<tr>
-		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-		<th class="owner"><a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-		<th class="owner"><a href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+		<th class="owner"><a class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 		
 		
 		</tr>
@@ -391,10 +392,10 @@ func initLocationTemplates() {
 	templateLocationBoxTableRow = `
 	<tr>
 	<td class="boxid">{{if .Boxid}}<a href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}">{{end}}{{.Boxid}}{{if .Boxid}}</a>{{end}}</td>
-	<td class="storeref">{{if .Storeref}}<a href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
+	<td class="storeref">{{if .Storeref}}<a class="lookuplink" title="Search for {{.Storeref}}" href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 	<td class="overview">{{.Contents}}</td>
 	<td class="numdocs">{{.NumFiles}}</td>
-	<td class="review_date center">{{if .Single}}{{if .Date}}<a href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+	<td class="review_date center">{{if .Single}}{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 	</tr>
 	`
 
@@ -456,12 +457,12 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 <table class="searchresults">
 <thead>
 <tr>
-<th class="ourbox"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-<th class="owner"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-<th class="client"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-<th class="name"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-<th class="contents"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-<th class="date"><a href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+<th class="ourbox"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="owner"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+<th class="client"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="name"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="contents"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="date"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 </tr>
 </thead>
 <tbody>
@@ -474,7 +475,7 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
-<td class="date center">{{if .Date}}<a href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
+<td class="date center">{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
 </tr>
 `
 
@@ -770,29 +771,29 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 </head>
 <body onload="bodyLoaded();">
 <h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
-<div class="topmenu">
+<div class="topmenu"><div class="menulinks">
 `
 
 	const errormsgdiv = `<div id="errormsgdiv"></div>`
 
 	var basicMenu = `
-	[<a href="/search">` + prefs.Menu_Labels["search"] + `</a>] 
-	[<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a>] 
-	[<a href="/owners">` + prefs.Menu_Labels["owners"] + `</a>] 
-	[<a href="/boxes">` + prefs.Menu_Labels["boxes"] + `</a>] 
-	[<a href="/update">` + prefs.Menu_Labels["update"] + `</a>] 
-	[<a href="/about">` + prefs.Menu_Labels["about"] + `</a>] 
+	<a href="/search">` + prefs.Menu_Labels["search"] + `</a> 
+	<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a> 
+	<a href="/owners">` + prefs.Menu_Labels["owners"] + `</a> 
+	<a href="/boxes">` + prefs.Menu_Labels["boxes"] + `</a>  
+	<a href="/update">` + prefs.Menu_Labels["update"] + `</a>   
+	<a href="/about">` + prefs.Menu_Labels["about"] + `</a>  
 	
 	`
 
 	var updateMenu = `
-	[<a href="/search">` + prefs.Menu_Labels["search"] + `</a>] 
-	[<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a>] 
-	[<a href="/owners">` + prefs.Menu_Labels["owners"] + `</a>] 
-	[<a href="/boxes">` + prefs.Menu_Labels["boxes"] + `</a>] 
-	[<a href="/users">` + prefs.Menu_Labels["users"] + `</a>]
-	[<a href="/logout">` + prefs.Menu_Labels["logout"] + ` {{.Userid}}</a>] 
-	[<a href="/about">` + prefs.Menu_Labels["about"] + `</a>] 
+	<a href="/search">` + prefs.Menu_Labels["search"] + `</a> 
+	<a href="/locations">` + prefs.Menu_Labels["locations"] + `</a> 
+	<a href="/owners">` + prefs.Menu_Labels["owners"] + `</a> 
+	<a href="/boxes">` + prefs.Menu_Labels["boxes"] + `</a> 
+	<a href="/users">` + prefs.Menu_Labels["users"] + `</a>
+	<a href="/logout">` + prefs.Menu_Labels["logout"] + ` {{.Userid}}</a> 
+	<a href="/about">` + prefs.Menu_Labels["about"] + `</a> 
 	`
 
 	var ht string
@@ -801,20 +802,27 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	runvars.Updating = updating
 	//fmt.Printf("DEBUG: updating=%v usr=%v\n", runvars.Updating, usr)
 	if !runvars.Updating {
-		ht = html1 + cssreset + css + html2 + basicMenu + "</div>" + errormsgdiv
+		ht = html1 + cssreset + css + html2 + mark_current_menu_path(basicMenu, r.URL.Path) + "</div></div>" + errormsgdiv
 	} else {
 		if usr != nil {
 			runvars.Userid = usr.(string)
 		} else {
 			runvars.Userid = ""
 		}
-		ht = html1 + cssreset + css + html2 + updateMenu + "</div>" + errormsgdiv
+		ht = html1 + cssreset + css + html2 + mark_current_menu_path(updateMenu, r.URL.Path) + "</div></div>" + errormsgdiv
 	}
 	html, err := template.New("mainmenu").Parse(ht)
 	checkerr(err)
 
 	html.Execute(w, runvars)
 
+	fmt.Println("DEBUG: " + r.URL.Path)
+}
+
+func mark_current_menu_path(menu string, path string) string {
+
+	res := strings.Replace(menu, `href="`+path, `class="currentlink" href="`+path, 1)
+	return res
 }
 
 func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totrows int) string {
@@ -917,6 +925,7 @@ type userpreferences struct {
 	Menu_Labels          map[string]string `yaml:"MenuLabels"`
 	Table_Labels         map[string]string `yaml:"TableLabels"`
 	Literals             map[string]string `yaml:"Literals"`
+	HistoryLog           map[string]int    `yaml:"HistoryLog"`
 	AppTitle             string            `yaml:"AppTitle"`
 	CookieMaxAgeMins     int               `yaml:"LoginMinutes"`
 	PasswordMinLength    int               `yaml:"PasswordMinLength"`

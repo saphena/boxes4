@@ -26,7 +26,7 @@ MaxBoxContents: 70
 # This determines how long before a logged-in user is automatically logged out
 # A value of 0 indicates logout whenever the browser session closes but this
 # might not work as expected because of the browser's own settings
-LoginMinutes: 60
+LoginMinutes: 600   # 10 hours
 
 PasswordMinLength: 4
 
@@ -102,3 +102,8 @@ Literals:
   newboxoverview:   "Empty box"
   newboxnumber:     "Box number"
   createnewbox:     "Create new box"
+
+HistoryLog:
+  # maxentries > 0 = maximum number of records to hold
+  # maxentries <= 0 = unlimited history kept
+  maxentries: 5
