@@ -73,7 +73,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	sqlx = " FROM contents  LEFT JOIN boxes ON contents.boxid=boxes.boxid "
 	sqlx += " WHERE owner='" + strings.ReplaceAll(owner, "'", "''") + "'"
-	NumRows, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex"+sqlx, "rex", "0"))
+	NumRows, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex"+sqlx, "0"))
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += " ORDER BY Upper(Trim(contents." + r.FormValue(Param_Labels["order"]) + "))"
 		if r.FormValue(Param_Labels["desc"]) != "" {

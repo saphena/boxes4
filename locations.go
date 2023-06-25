@@ -15,7 +15,7 @@ func ajax_add_location(w http.ResponseWriter, r *http.Request) {
 	newloc := r.FormValue(Param_Labels["newloc"])
 	newlocsql := strings.ReplaceAll(newloc, "'", "''")
 	sqlx := "SELECT Count(location) As rex FROM locations WHERE location LIKE '" + newlocsql + "'"
-	dupe := getValueFromDB(sqlx, "rex", "0") != "0"
+	dupe := getValueFromDB(sqlx, "0") != "0"
 	if dupe {
 		fmt.Fprint(w, `{"res":"That `+prefs.Field_Labels["location"]+` already exists!"}`)
 		return
@@ -40,7 +40,7 @@ func ajax_del_location(w http.ResponseWriter, r *http.Request) {
 	oldloc := r.FormValue(Param_Labels["delloc"])
 	oldlocsql := strings.ReplaceAll(oldloc, "'", "''")
 	sqlx := "SELECT Count(boxid) As rex FROM boxes WHERE location LIKE '" + oldlocsql + "'"
-	dupe := getValueFromDB(sqlx, "rex", "0")
+	dupe := getValueFromDB(sqlx, "0")
 	if dupe != "0" {
 		fmt.Fprint(w, `{"res":"That `+prefs.Field_Labels["location"]+` contains at least one box!"}`)
 		return
@@ -76,7 +76,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := " FROM locations "
 
-	NumLocations, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "rex", "0"))
+	NumLocations, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "0"))
 
 	sqlx = " FROM locations LEFT JOIN boxes ON locations.location=boxes.location"
 
@@ -152,7 +152,7 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 	loc.Location, _ = url.QueryUnescape(r.FormValue(Param_Labels["location"]))
 	loc.LocationUrl = r.FormValue(Param_Labels["location"])
-	loc.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As rex FROM boxes WHERE location='"+sqllocation+"'", "rex", "0"))
+	loc.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As rex FROM boxes WHERE location='"+sqllocation+"'", "0"))
 	loc.NumBoxesX = commas(loc.NumBoxes)
 	loc.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 
@@ -210,7 +210,7 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 
 func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
-	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
+	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
 	sqlx := "SELECT owner,client,name,contents,review_date FROM contents "
 	sqlx += " WHERE boxid='" + boxid + "'"
@@ -258,6 +258,6 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 func default_location() string {
 
 	sqlx := "SELECT location FROM locations ORDER BY location LIMIT 1"
-	return getValueFromDB(sqlx, "location", "")
+	return getValueFromDB(sqlx, "")
 
 }

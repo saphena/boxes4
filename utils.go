@@ -169,6 +169,7 @@ func loadConfiguration(cfgfile *string) {
 
 func checkerr(err error) {
 	if err != nil {
+		fmt.Printf("ERROR: %v\n", err)
 		panic(err)
 	}
 }
@@ -182,7 +183,7 @@ func contains(elems []string, v string) bool {
 	return false
 }
 
-func getValueFromDB(sqlx string, col string, defval string) string {
+func getValueFromDB(sqlx string, defval string) string {
 
 	rows, err := DBH.Query(sqlx)
 	if err != nil {

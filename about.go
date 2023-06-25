@@ -12,15 +12,15 @@ import (
 func about(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w, r)
-	fmt.Fprint(w, "<h2>BOXES4 version 0.1</h2>")
-	fmt.Fprint(w, `<p class='copyrite'>Copyright &copy; 2023 Bob Stammers <a href="mailto:stammers.bob@gmail.com">stammers.bob@gmail.com</a> </p>`)
+	fmt.Fprintf(w, "<h2>%v</h2>", apptitle)
+	fmt.Fprintf(w, `<p class='copyrite'>%v <a href="mailto:stammers.bob@gmail.com">stammers.bob@gmail.com</a> </p>`, copyrite)
 
 	ex, err := os.Executable()
 	checkerr(err)
 	updating, usr, alevel := updateok(r)
-	lastUpdated := getValueFromDB("SELECT recordedat FROM history ORDER BY recordedat DESC LIMIT 0,1", "recordedat", "")
+	lastUpdated := getValueFromDB("SELECT recordedat FROM history ORDER BY recordedat DESC LIMIT 0,1", "")
 	if lastUpdated != "" {
-		updatedBy := getValueFromDB("SELECT userid FROM history ORDER BY recordedat DESC LIMIT 0,1", "userid", "")
+		updatedBy := getValueFromDB("SELECT userid FROM history ORDER BY recordedat DESC LIMIT 0,1", "")
 		tsfmt := time.RFC3339 //"2006-01-02T15:04:05Z"
 		ts, err := time.Parse(tsfmt, lastUpdated)
 		if err != nil {
@@ -70,7 +70,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "<ul>")
 	for _, tab := range tables {
 		sqlx := "SELECT Count(*) As Rex FROM " + tab.Table
-		rex, _ := strconv.Atoi(getValueFromDB(sqlx, "Rex", "0"))
+		rex, _ := strconv.Atoi(getValueFromDB(sqlx, "0"))
 		tabname := prefs.Table_Labels[tab.Table]
 		fmt.Fprintf(w, `<li>Table <span class="keydata">%v</span> has <span class="keydata">%v</span> records `, tabname, commas(rex))
 

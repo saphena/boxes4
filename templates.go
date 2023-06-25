@@ -816,7 +816,7 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 
 	html.Execute(w, runvars)
 
-	fmt.Println("DEBUG: " + r.URL.Path)
+	//fmt.Println("DEBUG: " + r.URL.Path)
 }
 
 func mark_current_menu_path(menu string, path string) string {
@@ -865,7 +865,7 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	thisPage := (offset / pagesize) + 1
 	if thisPage > 1 {
 		prevPageOffset := (thisPage * pagesize) - (2 * pagesize)
-		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="prevpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Previous page">%v</a>&nbsp;&nbsp;`, cmd, varx, prevPageOffset, ArrowPrevPage)
+		fmt.Fprintf(w, `<span class="pagelink"><a id="prevpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Previous page">%v</a></span>`, cmd, varx, prevPageOffset, ArrowPrevPage)
 	}
 	minPage := 1
 	if thisPage > prefs.MaxAdjacentPagelinks {
@@ -878,11 +878,11 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	for pageNum := 1; pageNum <= numPages; pageNum++ {
 		if pageNum == 1 || pageNum == numPages || (pageNum >= minPage && pageNum <= maxPage) {
 			if pageNum == thisPage {
-				fmt.Fprintf(w, "[ <strong>%v</strong> ]", thisPage)
+				fmt.Fprintf(w, `<span class="pagelink">&nbsp; <strong>%v</strong> &nbsp;</span>`, thisPage)
 			} else {
 				pOffset := (pageNum * pagesize) - pagesize
 
-				fmt.Fprintf(w, `[<a href="/%v?%v`+Param_Labels["offset"]+`=%v" title="">%v</a>]`, cmd, varx, pOffset, strconv.Itoa(pageNum))
+				fmt.Fprintf(w, `<span class="pagelink"><a href="/%v?%v`+Param_Labels["offset"]+`=%v" title="">%v</a></span>`, cmd, varx, pOffset, strconv.Itoa(pageNum))
 			}
 		} else if pageNum == thisPage-(prefs.MaxAdjacentPagelinks+1) || pageNum == thisPage+prefs.MaxAdjacentPagelinks+1 {
 			fmt.Fprintf(w, " ... ")
@@ -890,10 +890,10 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	}
 	if thisPage < numPages {
 		nextPageOffset := (thisPage * pagesize)
-		fmt.Fprintf(w, `&nbsp;&nbsp;<a id="nextpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Next page">%v</a>&nbsp;&nbsp;`, cmd, varx, nextPageOffset, ArrowNextPage)
+		fmt.Fprintf(w, `<span class="pagelink"><a id="nextpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Next page">%v</a></span>`, cmd, varx, nextPageOffset, ArrowNextPage)
 	}
 
-	fmt.Fprint(w, `<select onchange="changepagesize(this);">`)
+	fmt.Fprint(w, `<span class="pagelink"><select onchange="changepagesize(this);"></span>`)
 	//pagesizes := []int{0, 20, 40, 60, 100}
 	pagesizes := prefs.Pagesizes
 	for _, ps := range pagesizes {

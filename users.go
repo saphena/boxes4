@@ -74,7 +74,7 @@ func insertNewUser(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := "SELECT userid FROM users WHERE userid LIKE '" + strings.ReplaceAll(uid, "'", "''") + "'"
 	fmt.Println("DEBUG: " + sqlx)
-	if getValueFromDB(sqlx, "userid", "") != "" {
+	if getValueFromDB(sqlx, "") != "" {
 		fmt.Fprintf(w, `{"res":"User %v already exists!"}`, uid)
 		return
 	}

@@ -80,7 +80,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("DEBUG: " + sqlx)
-	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "Rexx", "0"))
+	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "0"))
 
 	var res searchResultsVar
 
@@ -305,11 +305,11 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 		sv.Owners = session.Values["owners"].(string)
 	}
 	sv.Apptitle = prefs.AppTitle
-	sv.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM boxes", "Rex", "-1"))
+	sv.NumBoxes, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM boxes", "-1"))
 	sv.NumBoxesX = commas(sv.NumBoxes)
-	sv.NumDocs, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM contents", "Rex", "-1"))
+	sv.NumDocs, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM contents", "-1"))
 	sv.NumDocsX = commas(sv.NumDocs)
-	sv.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "Rex", "-1"))
+	sv.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "-1"))
 	sv.NumLocnsX = commas(sv.NumLocns)
 
 	html, err := template.New("searchHome").Parse(templateSearchHome)

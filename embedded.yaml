@@ -35,7 +35,7 @@ PasswordMinLength: 4
 DefaultPagesize: 20
 
 
-PagesizeOptions: [0,20,40,60,100]
+PagesizeOptions: [0,10,20,40,60,100]
 
 
 DefaultReviewMonths: 84		# 7 years

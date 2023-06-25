@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -82,6 +83,15 @@ func markDBTouch(sqlx string) {
 
 }
 
+func checkDatabaseVersion(dbx string) {
+
+	sqlx := "SELECT count(*) AS rex FROM boxes"
+	x := getValueFromDB(sqlx, "-1")
+	if x == "-1" {
+		fmt.Printf("ERROR: the database [%v] is non-compliant\n", dbx)
+		os.Exit(1)
+	}
+}
 func trimHistoryLog() {
 
 	maxentries := prefs.HistoryLog["maxentries"]
@@ -89,13 +99,13 @@ func trimHistoryLog() {
 		return
 	}
 	sqlx := "SELECT count(*) AS rex FROM history"
-	hrex, _ := strconv.Atoi(getValueFromDB(sqlx, "rex", "0"))
+	hrex, _ := strconv.Atoi(getValueFromDB(sqlx, "0"))
 	if hrex <= maxentries {
 		return
 	}
 	sqlx = "SELECT recordedat FROM history ORDER BY recordedat DESC LIMIT "
 	sqlx += strconv.Itoa(maxentries) + ",1"
-	cutoff := getValueFromDB(sqlx, "recordedat", "2006-01-02")
+	cutoff := getValueFromDB(sqlx, "2006-01-02")
 	sqlx = "DELETE FROM history WHERE recordedat < '" + cutoff + "'"
 	fmt.Println("DEBUG: Trimming history - " + sqlx)
 	_, err := DBH.Exec(sqlx)

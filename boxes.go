@@ -68,7 +68,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := " FROM boxes "
 
-	NumBoxes, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "rex", "0"))
+	NumBoxes, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "0"))
 
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += "ORDER BY " + r.FormValue(Param_Labels["order"])
@@ -94,10 +94,12 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	err = html.Execute(w, box)
 	checkerr(err)
 
-	html, err = template.New("createNewBox").Parse(templateCreateNewBox)
-	checkerr(err)
-	err = html.Execute(w, "")
-	checkerr(err)
+	if runvars.Updating {
+		html, err = template.New("createNewBox").Parse(templateCreateNewBox)
+		checkerr(err)
+		err = html.Execute(w, "")
+		checkerr(err)
+	}
 	html, err = template.New("boxTableRow").Parse(templateBoxTableRow)
 	checkerr(err)
 	for rows.Next() {
@@ -175,7 +177,7 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 
 func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
-	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "rex", "0"))
+	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "0"))
 	sqllimit := emit_page_anchors(w, r, "boxes", NumFiles)
 	sqlx := "SELECT owner,client,name,contents,review_date,id FROM contents WHERE boxid='" + boxid + "'"
 
@@ -402,7 +404,7 @@ func ajax_check_new_boxid(w http.ResponseWriter, r *http.Request) {
 	boxid := r.FormValue(Param_Labels["newok"])
 
 	sqlx := "SELECT boxid FROM boxes WHERE boxid='" + safesql(boxid) + "'"
-	if len(boxid) < 1 || getValueFromDB(sqlx, "boxid", "") != "" {
+	if len(boxid) < 1 || getValueFromDB(sqlx, "") != "" {
 		fmt.Println("DEBUG: Replying boxid exists")
 		fmt.Fprint(w, `{"res":"Duplicate!"}`)
 	} else {
@@ -440,7 +442,7 @@ func ajax_change_box_location(w http.ResponseWriter, r *http.Request) {
 	locn := r.FormValue(Param_Labels["chgboxlocn"])
 
 	sqlx := "SELECT location FROM locations WHERE location='" + safesql(locn) + "'"
-	if getValueFromDB(sqlx, "location", "") == "" {
+	if getValueFromDB(sqlx, "") == "" {
 		fmt.Fprint(w, `{"res":"`+prefs.Field_Labels["location"]+` doesn't exist"}`)
 		return
 	}
@@ -480,7 +482,7 @@ func ajax_create_new_box(w http.ResponseWriter, r *http.Request) {
 	boxid := r.FormValue(Param_Labels["newbox"])
 
 	sqlx := "SELECT boxid FROM boxes WHERE boxid='" + safesql(boxid) + "'"
-	if getValueFromDB(sqlx, "boxid", "") != "" {
+	if getValueFromDB(sqlx, "") != "" {
 		fmt.Fprint(w, `{"res":"`+prefs.Field_Labels["boxid"]+` already exists"}`)
 		return
 	}
