@@ -113,7 +113,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 			box.ShowDate = formatShowDate(box.Date)
 			box.Single = true
 		} else {
-			fmt.Printf("Min date is %v, max date is %v\n", box.Min_review_date, box.Max_review_date)
+			//fmt.Printf("Min date is %v, max date is %v\n", box.Min_review_date, box.Max_review_date)
 			box.Date = formatShowDate(box.Min_review_date) + " to " + formatShowDate(box.Max_review_date)
 			box.ShowDate = box.Date
 			box.Single = false
@@ -246,7 +246,7 @@ func ajax_fetch_name_list(w http.ResponseWriter, r *http.Request) {
 		sqlx += " WHERE client='" + strings.ReplaceAll(client, "'", "''") + "'"
 	}
 	sqlx += " ORDER BY Trim(name)"
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -293,7 +293,7 @@ func ajax_add_new_content(w http.ResponseWriter, r *http.Request) {
 	sqlx += ",'" + safesql(client) + "'"
 	sqlx += ")"
 
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)
@@ -318,7 +318,7 @@ func ajax_delete_content_line(w http.ResponseWriter, r *http.Request) {
 	sqlx := "DELETE FROM contents WHERE id=" + id
 	sqlx += " AND owner='" + safesql(owner) + "'"
 	sqlx += " AND client='" + safesql(client) + "'"
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)
@@ -351,7 +351,7 @@ func ajax_update_content_line(w http.ResponseWriter, r *http.Request) {
 
 	sqlx += " WHERE id=" + id
 
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)
@@ -392,7 +392,7 @@ func update_ajax_box_contents(boxid string) (int, string, string) {
 	sqlx += ",min_review_date='" + lodate + "'"
 	sqlx += ",max_review_date='" + hidate + "'"
 	sqlx += "WHERE boxid='" + safesql(boxid) + "'"
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	DBExec(sqlx)
 
 	return nfiles, lodate, hidate
@@ -447,7 +447,7 @@ func ajax_change_box_location(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sqlx = "UPDATE boxes SET location='" + safesql(locn) + "' WHERE boxid='" + safesql(boxid) + "'"
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)
@@ -465,7 +465,7 @@ func ajax_delete_empty_box(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := "DELETE FROM boxes WHERE boxid='" + safesql(boxid) + "'"
 
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)
@@ -493,7 +493,7 @@ func ajax_create_new_box(w http.ResponseWriter, r *http.Request) {
 	sqlx += ",'" + prefs.Literals["newboxoverview"] + "'"
 	sqlx += ")"
 
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)

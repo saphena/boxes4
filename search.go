@@ -79,7 +79,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	FoundRecCount, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) AS Rexx"+sqlx, "0"))
 
 	var res searchResultsVar
@@ -115,8 +115,6 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	flds := "contents.boxid,contents.owner,contents.client,contents.name,contents.contents,contents.review_date,boxes.storeref,boxes.overview"
 
 	sqllimit := emit_page_anchors(w, r, "find", FoundRecCount)
-
-	//fmt.Printf("DEBUG: sql = SELECT %v%v%v\n", flds, sqlx, sqllimit)
 
 	rows, err := DBH.Query("SELECT " + flds + sqlx + sqllimit)
 	if err != nil {
@@ -179,7 +177,6 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 
 	if r.FormValue("l"+Param_Labels["range"]) != "" {
 		params.Lrange = r.FormValue("l" + Param_Labels["range"])
-		//fmt.Printf("DEBUG: params lrange is %v\n", params.Lrange)
 		var locs []string
 		for _, x := range r.Form[Param_Labels["location"]] {
 			locs = append(locs, "'"+strings.ReplaceAll(x, "'", "''")+"'")
@@ -195,7 +192,6 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	}
 	if r.FormValue("o"+Param_Labels["range"]) != "" {
 		params.Orange = r.FormValue("o" + Param_Labels["range"])
-		//fmt.Printf("DEBUG: params orange is %v\n", params.Orange)
 		var owners []string
 		for _, x := range r.Form[Param_Labels["owner"]] {
 			owners = append(owners, "'"+strings.ReplaceAll(x, "'", "''")+"'")
@@ -215,10 +211,6 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	start_html(w, r)
-
-	//fmt.Fprintf(w, `DEBUG: %v<hr>`, r)
-	//fmt.Fprintf(w, `DEBUG: %v<hr>`, r.Form["qlo"])
-	//fmt.Fprintf(w, `DEBUG: %v<hr>`, strings.Join(r.Form["qlo"], ","))
 
 	temp, err := template.New("searchParamsHead").Parse(templateSearchParamsHead)
 	checkerr(err)

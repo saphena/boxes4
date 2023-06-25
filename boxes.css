@@ -158,6 +158,23 @@ input[type="submit"]:disabled	{
 	margin					: 0 auto;
 }
 
+.pagelink	{
+	font-size				: 1.2em;
+}
+
+.pagelink a	{
+	font-size 				: 1.0em;
+	padding 				: 0 5px 0 5px;
+}
+
+.pagelink a::after 	{
+	content 				: ']';
+}
+
+.pagelink a::before	{
+	content 				: '[';
+}
+
 .filteritems	{ 
 	height					: 100%; 
 	min-width				: 10em;

@@ -354,7 +354,7 @@ func initLocationTemplates() {
 		
 		
 		<th class="location">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["order"] + `=location{{if .Desc}}&` + Param_Labels["desc"] + `=location{{end}}">{{end}}` + prefs.Field_Labels["location"] + `{{if .Single}}{{else}}</a>{{end}}</th>
-		<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["order"] + `=numboxes{{if .Desc}}&` + Param_Labels["desc"] + `=numboxes{{end}}">{{end}}` + prefs.Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+		<th class="numboxes">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/locations?` + Param_Labels["order"] + `=NumBoxes{{if .Desc}}&` + Param_Labels["desc"] + `=NumBoxes{{end}}">{{end}}` + prefs.Field_Labels["numboxes"] + `{{if .Single}}{{else}}</a>{{end}}</th>
 		</tr>
 		</thead>
 		<tbody>
@@ -800,7 +800,7 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 
 	updating, usr, _ := updateok(r)
 	runvars.Updating = updating
-	//fmt.Printf("DEBUG: updating=%v usr=%v\n", runvars.Updating, usr)
+
 	if !runvars.Updating {
 		ht = html1 + cssreset + css + html2 + mark_current_menu_path(basicMenu, r.URL.Path) + "</div></div>" + errormsgdiv
 	} else {
@@ -816,7 +816,6 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 
 	html.Execute(w, runvars)
 
-	//fmt.Println("DEBUG: " + r.URL.Path)
 }
 
 func mark_current_menu_path(menu string, path string) string {

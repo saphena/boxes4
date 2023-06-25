@@ -73,7 +73,7 @@ func insertNewUser(w http.ResponseWriter, r *http.Request) {
 	np2 := r.FormValue(Param_Labels["newpass2"])
 
 	sqlx := "SELECT userid FROM users WHERE userid LIKE '" + strings.ReplaceAll(uid, "'", "''") + "'"
-	fmt.Println("DEBUG: " + sqlx)
+	printDebug(sqlx)
 	if getValueFromDB(sqlx, "") != "" {
 		fmt.Fprintf(w, `{"res":"User %v already exists!"}`, uid)
 		return
@@ -117,8 +117,6 @@ func showusers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	start_html(w, r)
-
-	//fmt.Fprintf(w, "DEBUG: %v<hr>", r)
 
 	if r.PostFormValue(Param_Labels["passchg"]) == Param_Labels["single"] {
 		changeSinglePassword(w, r)
@@ -204,7 +202,7 @@ func ajax_users(w http.ResponseWriter, r *http.Request) {
 	}
 	if sqlx != "" {
 		sqlx += " WHERE userid='" + uid + "'"
-		fmt.Printf("DEBUG: %v\n", sqlx)
+		printDebug(sqlx)
 		res := DBExec(sqlx)
 		n, err := res.RowsAffected()
 		checkerr(err)

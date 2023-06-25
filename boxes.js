@@ -134,9 +134,13 @@ function showwarning(msg) {
 
 let touchstartX = 0
 let touchendX = 0
-    
+let touchthresholdX = 20; // Arbitrary value chosen using a Lenovo tablet
+
 function checkDirection() {
-  if (touchendX < touchstartX) { // swipe left
+  let delta = touchendX - touchstartX;
+  if (Math.abs(delta) < touchthresholdX) return;
+  if (touchendX < touchstartX ) { // swipe left
+//	alert("" + (touchendX - touchstartX));
 	loadNextPage();
   }
   if (touchendX > touchstartX) {

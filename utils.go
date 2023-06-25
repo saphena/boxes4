@@ -198,6 +198,14 @@ func getValueFromDB(sqlx string, defval string) string {
 	return res
 }
 
+func printDebug(txt string) {
+
+	if !*debug {
+		return
+	}
+	fmt.Println("DEBUG: " + txt)
+
+}
 func rangepagesize(r *http.Request) int {
 
 	n, _ := strconv.Atoi(r.FormValue(Param_Labels["pagesize"]))

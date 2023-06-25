@@ -10,10 +10,20 @@ import (
 	"path/filepath"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pkg/browser"
 )
 
 const apptitle = "BOXES4 version 0.2"
 const copyrite = "Copyright © 2023 Bob Stammers"
+
+var cfgfile = flag.String("cfg", "", "Path to YAML configuration file")
+var serveport = flag.String("port", "", "HTTP port to serve on")
+var dbx = flag.String("db", "boxes.db", "Path to database file")
+var silent = flag.Bool("silent", false, "Suppress terminal output")
+
+// Be sure to set these correctly for production releases!
+var debug = flag.Bool("debug", true, "Show debug messages")
+var nolocal = flag.Bool("nolocal", true, "Suppress autostart of browser window")
 
 var DBH *sql.DB
 var runvars AppVars
@@ -21,10 +31,6 @@ var prefs userpreferences
 
 func main() {
 
-	cfgfile := flag.String("cfg", "", "Path to YAML configuration file")
-	serveport := flag.String("port", "", "HTTP port to serve on")
-	dbx := flag.String("db", "boxes.db", "Path to database file")
-	silent := flag.Bool("silent", false, "Suppress terminal output")
 	flag.Parse()
 	loadConfiguration(cfgfile)
 
@@ -74,6 +80,9 @@ func main() {
 	http.HandleFunc("/userx", ajax_users)
 	http.HandleFunc("/secret", secret)
 
+	if !*nolocal {
+		browser.OpenURL("http://127.0.0.1:" + prefs.HttpPort)
+	}
 	log.Fatal(http.ListenAndServe(":"+prefs.HttpPort, nil))
 
 }

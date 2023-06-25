@@ -36,7 +36,6 @@ func ajax_add_location(w http.ResponseWriter, r *http.Request) {
 func ajax_del_location(w http.ResponseWriter, r *http.Request) {
 	// form already parsed so just get on with it
 
-	//fmt.Printf("DEBUG: %v\n", r)
 	oldloc := r.FormValue(Param_Labels["delloc"])
 	oldlocsql := strings.ReplaceAll(oldloc, "'", "''")
 	sqlx := "SELECT Count(boxid) As rex FROM boxes WHERE location LIKE '" + oldlocsql + "'"
@@ -46,7 +45,7 @@ func ajax_del_location(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sqlx = "DELETE FROM locations WHERE location='" + oldlocsql + "'"
-	//fmt.Println("DEBUG: " + sqlx)
+
 	res := DBExec(sqlx)
 	n, err := res.RowsAffected()
 	checkerr(err)
@@ -78,7 +77,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 
 	NumLocations, _ := strconv.Atoi(getValueFromDB("SELECT Count(*) As rex "+sqlx, "0"))
 
-	sqlx = " FROM locations LEFT JOIN boxes ON locations.location=boxes.location"
+	sqlx = " FROM locations LEFT JOIN (SELECT location AS xlocation,count(boxid) AS NumBoxes FROM boxes GROUP BY location) xlocations ON locations.location=xlocations.xlocation"
 
 	sqllocation := ""
 	if r.FormValue(Param_Labels["location"]) != "" {
@@ -90,7 +89,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 
 	sqlx += " GROUP BY locations.location "
 	if r.FormValue(Param_Labels["order"]) != "" && r.FormValue(Param_Labels["location"]) == "" {
-		sqlx += "ORDER BY locations." + r.FormValue(Param_Labels["order"])
+		sqlx += "ORDER BY " + r.FormValue(Param_Labels["order"])
 		if r.FormValue(Param_Labels["desc"]) != "" {
 			sqlx += " DESC"
 		}
@@ -98,11 +97,12 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 		sqlx += "ORDER BY locations.location"
 	}
 
-	flds := " id,locations.location, Count(boxid) As NumBoxes "
+	flds := " id,locations.location, NumBoxes "
 	if r.FormValue(Param_Labels["location"]) == "" {
 		sqlx += emit_page_anchors(w, r, "locations", NumLocations)
 	}
 	//fmt.Printf("DEBUG: SELECT %v%v\n", flds, sqlx)
+	printDebug("SELECT " + flds + " " + sqlx)
 	rows, err := DBH.Query("SELECT  " + flds + sqlx)
 	checkerr(err)
 	defer rows.Close()
