@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -139,6 +140,20 @@ func commas(n int) string {
 	}
 }
 
+func loadCSS(cssfile *string) {
+
+	if *cssfile == "" {
+		*cssfile = "boxes.css"
+	}
+	xcss, err := os.ReadFile(*cssfile)
+	if err == nil {
+		css += string(xcss)
+		if !*silent {
+			cssf, _ := filepath.Abs(*cssfile)
+			fmt.Println("Applying " + cssf)
+		}
+	}
+}
 func loadConfiguration(cfgfile *string) {
 
 	file := strings.NewReader(internal_config)
@@ -159,6 +174,10 @@ func loadConfiguration(cfgfile *string) {
 		err = D.Decode(&prefs)
 		if err != nil {
 			panic(err)
+		}
+		if !*silent {
+			yml, _ := filepath.Abs(*cfgfile)
+			fmt.Println("Applying " + yml)
 		}
 	}
 

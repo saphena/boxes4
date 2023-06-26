@@ -1,4 +1,7 @@
 # YAML configuration for document archives application Boxes.
+#
+# Do not use tabs in this document. Lettercase and indentation matters.
+
 
 # The application title displayed in various locations, lettercase
 # varied by CSS
@@ -80,6 +83,7 @@ FieldLabels:
   storeref:        'Storage ref'
   overview:        'Contents'
   id:              'Id'
+  dates:           'Dates'
 
 MenuLabels:
   search:    search
@@ -107,3 +111,11 @@ HistoryLog:
   # maxentries > 0 = maximum number of records to hold
   # maxentries <= 0 = unlimited history kept
   maxentries: 5
+
+
+# This controls whether old records, based on review_date, are included
+# in searches. In 2023 a value of 2 means that records dated 2021 onwards
+# are included, 2020 and earlier are excluded. This setting can be 
+# overridden by the user for individual searches.
+# A value of 0 means don't filter old records
+IncludePastYears: 2

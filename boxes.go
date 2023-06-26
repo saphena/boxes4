@@ -15,7 +15,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	r.ParseForm()
 
 	if r.FormValue(Param_Labels["delbox"]) != "" {
-		ajax_delete_empty_box(w, r)
+		ajax_deleteEmptyBox(w, r)
 		return
 	}
 
@@ -35,7 +35,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if r.FormValue(Param_Labels["chgboxlocn"]) != "" {
-		ajax_change_box_location(w, r)
+		ajax_changeBoxLocation(w, r)
 		return
 	}
 
@@ -161,14 +161,14 @@ func showbox(w http.ResponseWriter, r *http.Request) {
 		bv.Date = formatShowDate(mindate) + " to " + formatShowDate(maxdate)
 	}
 	bv.NumFilesX = commas(bv.NumFiles)
-	t := strings.ReplaceAll(templateBoxDetails, "#LOCSELECTOR#", generateLocationPicklist(bv.Location, "change_box_location(this);"))
+	t := strings.ReplaceAll(templateBoxDetails, "#LOCSELECTOR#", generateLocationPicklist(bv.Location, "changeBoxLocation(this);"))
 	html, err := template.New("boxDetails").Parse(t)
 	checkerr(err)
 	err = html.Execute(w, bv)
 	checkerr(err)
 	if runvars.Updating && bv.NumFiles < 1 {
 		fmt.Fprint(w, `<div class="boxfunctionspanel">`)
-		fmt.Fprintf(w, `<input type="button" value="Delete empty box" onclick="return delete_empty_box('%v');">`, r.FormValue(Param_Labels["boxid"]))
+		fmt.Fprintf(w, `<input type="button" value="Delete empty box" onclick="return deleteEmptyBox('%v');">`, r.FormValue(Param_Labels["boxid"]))
 		fmt.Fprint(w, `</div>`)
 	}
 	showBoxfiles(w, r, sqlboxid)
@@ -436,7 +436,7 @@ func ajax_update_box_details(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func ajax_change_box_location(w http.ResponseWriter, r *http.Request) {
+func ajax_changeBoxLocation(w http.ResponseWriter, r *http.Request) {
 
 	boxid := r.FormValue(Param_Labels["boxid"])
 	locn := r.FormValue(Param_Labels["chgboxlocn"])
@@ -459,7 +459,7 @@ func ajax_change_box_location(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `{"res":"ok"}`)
 }
 
-func ajax_delete_empty_box(w http.ResponseWriter, r *http.Request) {
+func ajax_deleteEmptyBox(w http.ResponseWriter, r *http.Request) {
 
 	boxid := r.FormValue(Param_Labels["delbox"])
 
@@ -486,11 +486,12 @@ func ajax_create_new_box(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"res":"`+prefs.Field_Labels["boxid"]+` already exists"}`)
 		return
 	}
-	sqlx = "INSERT INTO boxes (boxid,location,storeref,overview) VALUES("
+	sqlx = "INSERT INTO boxes (boxid,location,storeref,overview,numdocs) VALUES("
 	sqlx += "'" + safesql(boxid) + "'"
 	sqlx += ",'" + safesql(default_location()) + "'"
 	sqlx += ",'" + safesql(boxid) + "'"
 	sqlx += ",'" + prefs.Literals["newboxoverview"] + "'"
+	sqlx += ",0"
 	sqlx += ")"
 
 	printDebug(sqlx)

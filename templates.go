@@ -28,52 +28,53 @@ const ACCESSLEVEL_SUPER = 9
 // These labels, which must be unique, are used in URLs
 // URL components might be found using RE matching, hence the 'q'
 var Param_Labels = map[string]string{
-	"boxid":           "qbx",
-	"owner":           "qow",
-	"contents":        "qcn",
-	"review_date":     "qdt",
-	"name":            "qnm",
-	"client":          "qcl",
-	"location":        "qlo",
-	"storeref":        "qlr",
-	"numdocs":         "qnd",
-	"min_review_date": "qd1",
-	"max_review_date": "qd2",
-	"userid":          "quu",
-	"userpass":        "qup",
-	"accesslevel":     "qal",
-	"pagesize":        "qps",
-	"offset":          "qof",
-	"order":           "qor",
-	"find":            "qqq",
-	"desc":            "qds",
-	"field":           "qfd",
-	"overview":        "qov",
-	"table":           "qtb",
-	"textfile":        "qtx",
-	"passchg":         "zpc",
-	"single":          "z11",
-	"multiple":        "z99",
-	"oldpass":         "zop",
-	"newpass":         "znp",
-	"newpass2":        "z22",
-	"adduser":         "zau",
-	"deleteuser":      "zdu",
-	"rowcount":        "zrc",
-	"all":             "xal",
-	"selected":        "xse",
-	"range":           "xrg",
-	"savesettings":    "sss",
-	"newloc":          "nlc",
-	"delloc":          "ndc",
-	"newcontent":      "nct",
-	"delcontent":      "dct",
-	"savecontent":     "dsc",
-	"chgboxlocn":      "dxl",
-	"savebox":         "dbx",
-	"newok":           "xid",
-	"newbox":          "xnb",
-	"delbox":          "kbx",
+	"boxid":             "qbx",
+	"owner":             "qow",
+	"contents":          "qcn",
+	"review_date":       "qdt",
+	"name":              "qnm",
+	"client":            "qcl",
+	"location":          "qlo",
+	"storeref":          "qlr",
+	"numdocs":           "qnd",
+	"min_review_date":   "qd1",
+	"max_review_date":   "qd2",
+	"userid":            "quu",
+	"userpass":          "qup",
+	"accesslevel":       "qal",
+	"pagesize":          "qps",
+	"offset":            "qof",
+	"order":             "qor",
+	"find":              "qqq",
+	"desc":              "qds",
+	"field":             "qfd",
+	"overview":          "qov",
+	"table":             "qtb",
+	"textfile":          "qtx",
+	"passchg":           "zpc",
+	"single":            "z11",
+	"multiple":          "z99",
+	"oldpass":           "zop",
+	"newpass":           "znp",
+	"newpass2":          "z22",
+	"adduser":           "zau",
+	"deleteuser":        "zdu",
+	"rowcount":          "zrc",
+	"all":               "xal",
+	"selected":          "xse",
+	"range":             "xrg",
+	"savesettings":      "sss",
+	"newloc":            "nlc",
+	"delloc":            "ndc",
+	"newcontent":        "nct",
+	"delcontent":        "dct",
+	"savecontent":       "dsc",
+	"chgboxlocn":        "dxl",
+	"savebox":           "dbx",
+	"newok":             "xid",
+	"newbox":            "xnb",
+	"delbox":            "kbx",
+	"ExcludeBeforeYear": "xby",
 }
 
 type AppVars struct {
@@ -84,15 +85,16 @@ type AppVars struct {
 }
 
 type searchVars struct {
-	Apptitle  string
-	NumBoxes  int
-	NumBoxesX string
-	NumDocs   int
-	NumDocsX  string
-	NumLocns  int
-	NumLocnsX string
-	Locations string
-	Owners    string
+	Apptitle          string
+	NumBoxes          int
+	NumBoxesX         string
+	NumDocs           int
+	NumDocsX          string
+	NumLocns          int
+	NumLocnsX         string
+	Locations         string
+	Owners            string
+	ExcludeBeforeYear int
 }
 
 type searchResultsVar struct {
@@ -128,6 +130,7 @@ var templateSearchResultsLine string
 var templateSearchParamsHead string
 var templateSearchParamsLocationRadios string
 var templateSearchParamsOwnerRadios string
+var templateSearchParamsDateRadios string
 var templateLocationBoxTableHead string
 var templateLocationListHead string
 var templateLocationListLine string
@@ -187,7 +190,7 @@ func initBoxTemplates() {
 
 <tr><td class="vlabel">{{if .Single}}{{else}}<a title="&#8645;" href="/boxes?` + Param_Labels["boxid"] + `={{.BoxidUrl}}&` + Param_Labels["order"] + `=boxid&` + Param_Labels["desc"] + `=boxid">{{end}}` + prefs.Field_Labels["boxid"] + `{{if .Single}}{{else}}</a>{{end}} : </td><td id="boxboxid" class="vdata">{{.Boxid}}</td>
 {{if .UpdateOK}}
-<td class="nude"><input type="button" class="btn hide" id="updateboxbutton" value="Save changes" data-boxid="{{.Boxid}}" onclick="update_box_details(this);">
+<td class="nude"><input type="button" class="btn hide" id="updateboxbutton" value="Save changes" data-boxid="{{.Boxid}}" onclick="updateBoxDetails(this);">
 {{end}}
 </tr>
 
@@ -239,10 +242,10 @@ func initBoxTemplates() {
 {{end}}
 {{end}}</td>
 {{if .UpdateOK}}<td class="center">
-<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="update_box_content_line(this);">
+<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Save changes" onclick="updateBoxContentLine(this);">
 {{if .DeleteOK}}
 <input type="checkbox" title="Enable delete button" onchange="this.nextElementSibling.classList.remove('hide');this.classList.add('hide');">
-<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="delete_box_content_line(this);">
+<input type="button" class="btn hide" data-id="{{.Id}}" data-boxid="{{.Boxid}}" value="Delete" onclick="deleteBoxContentLine(this);">
 {{end}}
 </td>{{end}}
 </tr>
@@ -260,21 +263,21 @@ func initBoxTemplates() {
 `
 	templateCreateNewBox = `
 <tr>
-<td colspan="6"><input type="text" autofocus placeholder="` + prefs.Literals["newboxnumber"] + `" class="keyinput boxid" oninput="check_new_boxid(this);">
- <input type="button" disabled class="btn" value="` + prefs.Literals["createnewbox"] + `" onclick="start_new_box(this);"></td>
+<td colspan="6"><input type="text" autofocus placeholder="` + prefs.Literals["newboxnumber"] + `" class="keyinput boxid" oninput="checkNewBoxid(this);">
+ <input type="button" disabled class="btn" value="` + prefs.Literals["createnewbox"] + `" onclick="startNewBox(this);"></td>
 </tr>
 `
 
 	templateNewBoxContentLine = `
 <tr>
 <td><input type="text" autofocus style="width:95%" list="ownerlist" class="keyinput" oninput="newContentSaveNeeded(this);"></td>
-<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetch_client_name_list(this);newContentSaveNeeded(this);"></td>
+<td><input type="text" style="width:95%" list="clientlist" class="keyinput" oninput="fetchClientNamelist(this);newContentSaveNeeded(this);"></td>
 <td><input type="text" style="width:95%" list="namelist" oninput="newContentSaveNeeded(this);"></td>
 <td><input type="text" style="width:95%" oninput="newContentSaveNeeded(this);"></td>
 <td class="date">
 #DATESELECTORS#
 </td>
-<td class="center"><input type="button" class="btn" data-boxid="{{.Boxid}}" disabled value="Add!" onclick="add_new_box_content(this);">
+<td class="center"><input type="button" class="btn" data-boxid="{{.Boxid}}" disabled value="Add!" onclick="addNewBoxContent(this);">
 </tr>
 `
 
@@ -362,13 +365,13 @@ func initLocationTemplates() {
 	templateNewLocation = `
 		<tr><td class="location"><input type="text" style="width:95%;" autofocus></td>
 		<td><input type="button" class="btn" value="Add new ` + prefs.Field_Labels["location"] + `"
-		onclick="add_new_location(this);"></td></tr>
+		onclick="addNewLocation(this);"></td></tr>
 		`
 
 	templateLocationListLine = `
 		<tr>
 		<td class="location">{{if .Single}}{{else}}{{if .Location}}<a href="/locations?` + Param_Labels["location"] + `={{.LocationUrl}}">{{end}}{{end}}{{.Location}}{{if .Single}}{{else}}{{if .Location}}</a>{{end}}{{end}}</td>
-		<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="delete_location(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
+		<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="deleteLocation(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
 		</tr>
 		`
 
@@ -430,7 +433,7 @@ func initSearchTemplates() {
 	* Enter review dates as <em>yyyy</em> or <em>yyyy-mm</em> eg: '2026-03'.
 	</main></form>
 	<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
-	<p>{{if or .Locations .Owners}}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{end}}</p>
+	<p>{{if or .Locations .Owners .ExcludeBeforeYear }}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{if .ExcludeBeforeYear}}<strong>` + prefs.Field_Labels["review_date"] + ` >= {{.ExcludeBeforeYear}}</strong>{{end}}{{end}}</p>
 	`
 
 	// Search response header before page links
@@ -484,14 +487,14 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 <form action="/params">
 <main>
 <p>The settings you choose here will be used to restrict searches until you reset them or until your session ends.</p>
-<p><input data-triggered="0" id="savesettings" class="btn" name="` + Param_Labels["savesettings"] + `" disabled onclick="this.setAttribute('data-triggered','1');return true;" type="submit" value="Save settings"></p>`
+<p><input data-triggered="0" id="savesettings" class="btn" name="` + Param_Labels["savesettings"] + `" disabled onclick="this.setAttribute('data-triggered','1');this.value=this.name;return true;" type="submit" value="Save settings"></p>`
 
 	templateSearchParamsLocationRadios = `
 	<div id="locationfilter"><h2>` + prefs.Field_Labels["location"] + `s</h2>
 <p>
-<input type="radio" id="range_all" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(this.checked);">
+<input type="radio" id="range_all" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectLocations(this.checked);">
 <label for="range_all"> All </label> &nbsp;&nbsp;&nbsp; 
-<input type="radio" id="range_sel" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_locations(!this.checked);">
+<input type="radio" id="range_sel" name="l` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Lrange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectLocations(!this.checked);">
 <label for="range_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
 </p>
 `
@@ -499,10 +502,18 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 	templateSearchParamsOwnerRadios = `
 	<div id="ownerfilter"><h2>` + prefs.Field_Labels["owner"] + `s</h2>
 <p>
-<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(this.checked);">
+<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectOwners(this.checked);">
 <label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
-<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_select_owners(!this.checked);">
+<input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectOwners(!this.checked);">
 <label for="orange_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
+</p>
+`
+
+	templateSearchParamsDateRadios = `
+<div id="datesfilter"><h2>` + prefs.Field_Labels["dates"] + `</h2>
+<p>
+<label for="excludeBeforeYear">Exclude everything before</label>
+<input type="number" name="` + Param_Labels["ExcludeBeforeYear"] + `" min="0" max="{{.MaxYear}}" class="year" onchange="enableSaveSettings();" value="{{.ExcludeBeforeYear}}">
 </p>
 `
 
@@ -608,7 +619,7 @@ const searchResultsTrailer = `
 //go:embed normalize.css
 var cssreset string
 
-//go:embed boxes.css
+//go:embed embedded.css
 var css string
 
 type locationlistvars struct {
@@ -892,7 +903,7 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 		fmt.Fprintf(w, `<span class="pagelink"><a id="nextpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Next page">%v</a></span>`, cmd, varx, nextPageOffset, ArrowNextPage)
 	}
 
-	fmt.Fprint(w, `<span class="pagelink"><select onchange="changepagesize(this);"></span>`)
+	fmt.Fprint(w, `<span class="pagelink"><select onchange="changePagesize(this);"></span>`)
 	//pagesizes := []int{0, 20, 40, 60, 100}
 	pagesizes := prefs.Pagesizes
 	for _, ps := range pagesizes {
@@ -935,6 +946,7 @@ type userpreferences struct {
 	AutosaveSeconds      int               `yaml:"AutosaveSeconds"`
 	DefaultReviewMonths  int               `yaml:"DefaultReviewMonths"`
 	ShowDateFormat       string            `yaml:"ShowDateFormat"`
+	IncludePastYears     int               `yaml:"IncludePastYears"`
 	//pagesizes := []int{0, 20, 40, 60, 100}
 
 }

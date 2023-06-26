@@ -7,6 +7,7 @@
 ### Create new location
 ### Delete empty location
 ### Record database touch
+### Date filtering
 
 
 
@@ -16,4 +17,3 @@
 ### Login to view
 ### Filter on review date
 ### Move multiple boxes to different location
-

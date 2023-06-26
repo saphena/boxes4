@@ -125,6 +125,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	temp, err = template.New("locationListLine2").Parse(templateLocationListLine)
 	checkerr(err)
 	for rows.Next() {
+		loc.NumBoxes = 0
 		rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
 		loc.LocationUrl = url.QueryEscape(loc.Location)
 		loc.NumBoxesX = commas(loc.NumBoxes)

@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func exec_search(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +56,21 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, cookie_name)
 	checkerr(err)
 
+	printDebug(fmt.Sprintf("%v", session.Values))
+	if prefs.IncludePastYears > 0 || session.Values["ExcludeBeforeYear"] != nil {
+		firstyear := 0
+		currentyear := time.Now().Year()
+		if session.Values["ExcludeBeforeYear"] != nil {
+			firstyear = session.Values["ExcludeBeforeYear"].(int)
+		} else {
+			firstyear = currentyear - prefs.IncludePastYears
+		}
+		if wherex != "" {
+			wherex += " AND "
+		}
+		wherex += " review_date >= '" + strconv.Itoa(firstyear) + "'"
+		printDebug(wherex)
+	}
 	if session.Values["locations"] != nil {
 		if wherex != "" {
 			wherex += " AND "
@@ -150,8 +166,10 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 		Lrange    string
 		Locations string
 
-		Orange string
-		Owners string
+		Orange            string
+		Owners            string
+		MaxYear           string
+		ExcludeBeforeYear int
 	}
 
 	r.ParseForm()
@@ -201,6 +219,18 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 			session.Values["owners"] = nil
 		} else {
 			session.Values["owners"] = params.Owners
+		}
+		err = store.Save(r, w, session)
+		checkerr(err)
+	}
+
+	xby := r.FormValue(Param_Labels["ExcludeBeforeYear"])
+	if xby != "" {
+		xbyn, _ := strconv.Atoi(xby)
+		if xbyn < 1 {
+			session.Values["ExcludeBeforeYear"] = 0
+		} else {
+			session.Values["ExcludeBeforeYear"] = xbyn
 		}
 		err = store.Save(r, w, session)
 		checkerr(err)
@@ -279,6 +309,21 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Fprintln(w, "</div></div>")
 
+	temp, err = template.New("searchParamsDateRadios").Parse(templateSearchParamsDateRadios)
+	checkerr(err)
+
+	params.MaxYear = getValueFromDB("SELECT max(review_date) FROM contents", "2100")[0:4]
+	params.ExcludeBeforeYear = 0
+	if session.Values["ExcludeBeforeYear"] != nil {
+		params.ExcludeBeforeYear = session.Values["ExcludeBeforeYear"].(int)
+	} else if prefs.IncludePastYears > 0 {
+		params.ExcludeBeforeYear = time.Now().Year() - prefs.IncludePastYears
+	}
+
+	err = temp.Execute(w, params)
+	checkerr(err)
+	fmt.Fprintln(w, "</div>")
+
 }
 
 func show_search(w http.ResponseWriter, r *http.Request) {
@@ -303,11 +348,18 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 	sv.NumDocsX = commas(sv.NumDocs)
 	sv.NumLocns, _ = strconv.Atoi(getValueFromDB("SELECT Count(*) As Rex FROM locations", "-1"))
 	sv.NumLocnsX = commas(sv.NumLocns)
+	sv.ExcludeBeforeYear = 0
+	if session.Values["ExcludeBeforeYear"] != nil {
+		sv.ExcludeBeforeYear = session.Values["ExcludeBeforeYear"].(int)
+	} else if prefs.IncludePastYears > 0 {
+		sv.ExcludeBeforeYear = time.Now().Year() - prefs.IncludePastYears
+	}
 
 	html, err := template.New("searchHome").Parse(templateSearchHome)
 	checkerr(err)
 
-	html.Execute(w, sv)
+	err = html.Execute(w, sv)
+	checkerr(err)
 
 	fmt.Fprintln(w, "</body></html>")
 }

@@ -45,19 +45,12 @@ const Param_Labels = {
 	"newok":           "xid",
 	"newbox":          "xnb",
 	"delbox":          "kbx",
+	"ExcludeBeforeYear": "xby",
 }
 
 
-function isBadLength(sObj,iLen,sMsg) {
 
-    if (sObj.value.length < iLen) {
-      alert(sMsg)
-      sObj.focus()
-      return true
-    }
-  }
-
-function changepagesize(sel) {
+function changePagesize(sel) {
 	let newpagesize = sel.value;
 	let url = window.location.href;
 	// Need to strip out any existing PAGESIZE
@@ -92,7 +85,7 @@ function loadNextPage() {
 	}
    return false;
 }
-function trapkeys() {
+function trapKeys() {
 	document.getElementsByTagName('body')[0].onkeyup = function(e) { 
 		var ev = e || window.event;
 	 	if (ev.keyCode == 37 || ev.keyCode == 33) { // Left arrow or PageUp
@@ -103,7 +96,7 @@ function trapkeys() {
 	}
 }
 
-function activatemsgpane(msg,cssclass) {
+function activateMsgPane(msg,cssclass) {
 
 	let pane = document.getElementById('errormsgdiv');
 	if (!pane) { return; }
@@ -111,7 +104,7 @@ function activatemsgpane(msg,cssclass) {
 	pane.innerHTML = msg;
 }
 
-function hideerrorpane() {
+function hideErrorPane() {
 
 	let pane = document.getElementById('errormsgdiv');
 	if (!pane) { return; }
@@ -119,16 +112,17 @@ function hideerrorpane() {
 	pane.innerHTML = "";
 
 }
-function showerrormsg(msg) {
 
-	console.log('showerrormsg '+msg);
-	activatemsgpane(msg,"errormsg");
+function showErrorMsg(msg) {
+
+	console.log('showErrorMsg '+msg);
+	activateMsgPane(msg,"errormsg");
 	
 }
 
-function showwarning(msg) {
+function showWarning(msg) {
 
-	activatemsgpane(msg,"warning");
+	activateMsgPane(msg,"warning");
 	
 }
 
@@ -167,15 +161,15 @@ document.addEventListener('touchend', e => {
 function pwd_validateSingleChange(frm) {
 
 	if (this.oldpass.value == '' || this.mynewpass.value == '') { 
-		showerrormsg("Password must not be left blank");
+		showErrorMsg("Password must not be left blank");
 		return false; 
 	}
 	if (this.mynewpass.value != this.mynewpass2.value) {
-		showerrormsg("New passwords don't match");
+		showErrorMsg("New passwords don't match");
 		return false;
 	}
 	if (this.mynewpass.value.length < parseInt(this.minpwlen.value)) {
-		showerrormsg("Password not long enough");
+		showErrorMsg("Password not long enough");
 		return false;
 	}
 	return true;
@@ -195,11 +189,11 @@ function pwd_deleteUser(btn) {
 	.then(function (res) {
 		console.log(res.res);
 		if (res.res=="ok") {
-			hideerrorpane();
+			hideErrorPane();
 			console.log("row is "+tr.rowIndex);
 			tab.removeChild(tr);
 		} else {
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
@@ -219,10 +213,10 @@ function pwd_updateAccesslevel(sel) {
 	.then(res => res.json())
 	.then(res => {
 		if (res.res=="ok") {
-			hideerrorpane();
+			hideErrorPane();
 			save.disabled = true;
 		} else {
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
@@ -257,9 +251,9 @@ function pwd_savePasswordChanges(btn) {
 	.then(res => res.json())
 	.then(res => {
 		if (res.res=="ok") {
-			hideerrorpane();
+			hideErrorPane();
 		} else {
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
@@ -360,13 +354,13 @@ function pwd_insertNewUser(btn) {
 			console.log("Fetching users");
 			window.location.replace("/users");
 		} else {
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
 }
 
-function param_select_keys(selectall,key) {
+function param_selectKeys(selectall,key) {
 
 	let divs = document.querySelectorAll("#"+key+"filter>.filteritems");
 	for (let i = 0; i < divs.length; i++) {
@@ -383,15 +377,15 @@ function param_select_keys(selectall,key) {
 	enableSaveSettings();
 }
 
-function param_select_locations(selectall) {
+function param_selectLocations(selectall) {
 
-	param_select_keys(selectall,'location');
+	param_selectKeys(selectall,'location');
 
 }
 
-function param_select_owners(selectall) {
+function param_selectOwners(selectall) {
 
-	param_select_keys(selectall,'owner');
+	param_selectKeys(selectall,'owner');
 
 }
 
@@ -427,12 +421,12 @@ function trapDirtyPage() {
 
 function bodyLoaded() {
 
-	trapkeys();
+	trapKeys();
 	trapDirtyPage();
 
 }
 
-function add_new_location(obj) {
+function addNewLocation(obj) {
 
 	obj.disabled = true;
 
@@ -448,19 +442,19 @@ function add_new_location(obj) {
 			window.location.replace("/locations");
 		} else {
 			obj.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
 }
 
 
-function delete_location(obj) {
+function deleteLocation(obj) {
 
 	obj.disabled = true;
 
 	let tr = obj.parentElement.parentElement;
-	let loc = tr.firstElementChild.firstElementChild.innerText
+	let loc = tr.firstElementChild.innerText
 	let url = "/locations?"+Param_Labels["delloc"]+"="+encodeURIComponent(loc)
 	console.log(url);
 	fetch(url,{method: "POST"})
@@ -471,17 +465,17 @@ function delete_location(obj) {
 			window.location.replace("/locations");
 		} else {
 			obj.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
 }
 
-function check_new_boxid(obj) {
+function checkNewBoxid(obj) {
 
 	let boxid = obj.value.toLocaleUpperCase();
-	let tr = obj.parentElement.parentElement;
-	let btn = tr.children[1].firstElementChild;
+	
+	let btn = obj.nextElementSibling;
 	btn.disabled = true;
 	if (boxid.length < 1) return;
 
@@ -492,13 +486,14 @@ function check_new_boxid(obj) {
 	.then(res => {
 		console.log(res);
 		if (res.res=="ok") {
+			console.log(btn.value);
 			btn.disabled = false
 		}
 	});
 
 }
 
-function add_new_box_content(obj) {
+function addNewBoxContent(obj) {
 
 	obj.disabled = true;
 
@@ -565,13 +560,13 @@ function add_new_box_content(obj) {
 
 		} else {
 			obj.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
 }
 
-function fetch_client_name_list(obj) {
+function fetchClientNamelist(obj) {
 
 	let client = obj.value;
 	let url = "/boxes?"+Param_Labels["client"]+"="+encodeURIComponent(client);
@@ -601,7 +596,7 @@ function fetch_client_name_list(obj) {
 	})
 }
 
-function delete_box_content_line(obj) {
+function deleteBoxContentLine(obj) {
 
 	obj.disabled = true;
 
@@ -626,7 +621,7 @@ function delete_box_content_line(obj) {
 			window.location.replace("/boxes?"+Param_Labels["boxid"]+"="+encodeURIComponent(boxid));
 		} else {
 			obj.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
@@ -653,7 +648,7 @@ function autosave_UBC(obj) {
 	if (btn.timer) {
 		clearTimeout(btn.timer);
 	}
-	btn.timer = setTimeout(update_box_content_line,ass * 1000,btn);
+	btn.timer = setTimeout(updateBoxContentLine,ass * 1000,btn);
 
 }
 
@@ -667,7 +662,7 @@ function autosave_Box() {
 	if (btn.timer) {
 		clearTimeout(btn.timer);
 	}
-	btn.timer = setTimeout(update_box_details,ass * 1000,btn);
+	btn.timer = setTimeout(updateBoxDetails,ass * 1000,btn);
 
 }
 function boxDetailsSaved() {
@@ -677,7 +672,7 @@ function boxDetailsSaved() {
 }
 
 
-function update_box_details(obj) {
+function updateBoxDetails(obj) {
 
 	obj.disabled = true;
 	let boxid = obj.getAttribute('data-boxid');
@@ -698,14 +693,14 @@ function update_box_details(obj) {
 			obj.classList.add('hide');
 		} else {
 			obj.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
 
 }
 
-function update_box_content_line(obj) {
+function updateBoxContentLine(obj) {
 
 	obj.disabled = true;
 
@@ -747,7 +742,7 @@ function update_box_content_line(obj) {
 			}
 		} else {
 			obj.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
@@ -823,7 +818,7 @@ function contentNowSaved(tr) {
 
 }
 
-function change_box_location(sel) {
+function changeBoxLocation(sel) {
 
 	sel.classList.add('warning');
 	let loc = sel.value;
@@ -838,14 +833,14 @@ function change_box_location(sel) {
 			sel.classList.remove('warning');
 		} else {
 			sel.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 
 
 }
 
-function delete_empty_box(boxid) {
+function deleteEmptyBox(boxid) {
 
 	let url = "/boxes?"+Param_Labels["delbox"]+"="+encodeURIComponent(boxid)
 	fetch(url,{method: "POST"})
@@ -855,14 +850,14 @@ function delete_empty_box(boxid) {
 			url = "/boxes"
 			window.location.replace(url)
 		} else {
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 }
 
 
 
-function start_new_box(btn) {
+function startNewBox(btn) {
 
 
 	btn.disabled = true;
@@ -878,7 +873,7 @@ function start_new_box(btn) {
 			window.location.replace(url)
 		} else {
 			btn.disabled = false;
-			showerrormsg(res.res);
+			showErrorMsg(res.res);
 		}
 	});
 

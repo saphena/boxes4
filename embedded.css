@@ -123,6 +123,7 @@ input[type="submit"]:disabled	{
 .searchresults,
 .locationlist,
 .ownerlist,
+.ownerfiles,
 .boxheader,
 .boxlist,
 .boxfiles	{ 
@@ -191,6 +192,13 @@ input[type="submit"]:disabled	{
 #ownerfilter	{ 
 	max-width				: 50em; 
 	float: left; 
+}
+#datesfilter	{ 
+	max-width				: 50em; 
+	float: left; 
+}
+.year 	{
+	width 					: 5em;
 }
 
 				

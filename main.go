@@ -13,17 +13,20 @@ import (
 	"github.com/pkg/browser"
 )
 
-const apptitle = "BOXES4 version 0.2"
+const apptitle = "BOXES4 version 0.3"
+const developmentversion = false
+
 const copyrite = "Copyright © 2023 Bob Stammers"
 
 var cfgfile = flag.String("cfg", "", "Path to YAML configuration file")
+var cssfile = flag.String("css", "", "Path to extra CSS file")
 var serveport = flag.String("port", "", "HTTP port to serve on")
 var dbx = flag.String("db", "boxes.db", "Path to database file")
 var silent = flag.Bool("silent", false, "Suppress terminal output")
 
 // Be sure to set these correctly for production releases!
-var debug = flag.Bool("debug", true, "Show debug messages")
-var nolocal = flag.Bool("nolocal", true, "Suppress autostart of browser window")
+var debug = flag.Bool("debug", developmentversion, "Show debug messages")
+var nolocal = flag.Bool("nolocal", developmentversion, "Suppress autostart of browser window")
 
 var DBH *sql.DB
 var runvars AppVars
@@ -31,9 +34,12 @@ var prefs userpreferences
 
 func main() {
 
+	if !*silent {
+		fmt.Printf("%v - %v\n", apptitle, copyrite)
+	}
 	flag.Parse()
 	loadConfiguration(cfgfile)
-
+	loadCSS(cssfile)
 	if *serveport != "" {
 		prefs.HttpPort = *serveport
 	} else if prefs.HttpPort == "" {
@@ -41,7 +47,6 @@ func main() {
 	}
 
 	if !*silent {
-		fmt.Printf("%v - %v\n", apptitle, copyrite)
 		fmt.Println("Serving on port " + prefs.HttpPort)
 	}
 
