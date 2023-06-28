@@ -413,10 +413,10 @@ func initSearchTemplates() {
 	
 	<form action="/find" onsubmit="if (this.fld.value=='') { this.fld.name=''; }">
 	<main>You can search the archives by entering the text you're looking for
-	here <input type="text" autofocus name="` + Param_Labels["find"] + `"/>
+	here <input type="text" title="Text to find" autofocus name="` + Param_Labels["find"] + `"/>
 	<details title="Fields to search" style="display:inline;">
 	<summary><strong>&#8799;</strong></summary>
-	<select id="fld" name="` + Param_Labels["field"] + `">
+	<select title="Field to search" id="fld" name="` + Param_Labels["field"] + `">
 	<option value="">any field</option>
 	<option value="client">` + prefs.Field_Labels["client"] + `</option>
 	<option value="name">` + prefs.Field_Labels["name"] + `</option>
@@ -513,7 +513,7 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 <div id="datesfilter"><h2>` + prefs.Field_Labels["dates"] + `</h2>
 <p>
 <label for="excludeBeforeYear">Exclude everything before</label>
-<input type="number" name="` + Param_Labels["ExcludeBeforeYear"] + `" min="0" max="{{.MaxYear}}" class="year" onchange="enableSaveSettings();" value="{{.ExcludeBeforeYear}}">
+<input type="number" id="excludeBeforeYear" name="` + Param_Labels["ExcludeBeforeYear"] + `" min="0" max="{{.MaxYear}}" class="year" onchange="enableSaveSettings();" value="{{.ExcludeBeforeYear}}">
 </p>
 `
 
@@ -537,10 +537,9 @@ func initUserTemplates() {
 	<p>You may alter your own password by entering the existing password and a new one twice. If you don't know your existing password you'll have to get someone with an accesslevel of ` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + ` to change it for you.</p>
 	<form action="/users" method="post" onsubmit="return pwd_validateSingleChange(this);">
 	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["single"] + `"|>
-	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
 	<label for="oldpass">Current password </label> <input autofocus type="password" id="oldpass" name="` + Param_Labels["oldpass"] + `">
-	<label for="newpass">New password </label> <input type="password" id="mynewpass" name="` + Param_Labels["newpass"] + `">
-	<label for="newpass2">and again </label> <input type="password" id="mynewpass2">
+	<label for="mynewpass">New password </label> <input type="password" id="mynewpass" name="` + Param_Labels["newpass"] + `">
+	<label for="mynewpass2">and again </label> <input type="password" id="mynewpass2">
 	<input type="submit" value="Change my password!">
 	</form>
 	`
@@ -548,7 +547,6 @@ func initUserTemplates() {
 	templateMultiUserPasswordChangeHead = `
 	<form>
 	<input type="hidden" name="` + Param_Labels["passchg"] + `" value="` + Param_Labels["multiple"] + `"|>
-	<input type="hidden" id="minpwlen" value="` + strconv.Itoa(prefs.PasswordMinLength) + `">
 	<table id="tabusers">
 	<thead><tr>
 	<th>Userid</th>
@@ -563,16 +561,16 @@ func initUserTemplates() {
 
 	templateMultiUserPasswordChangeLine = `
 	<tr>
-	<td><input type="text" readonly name="m` + Param_Labels["userid"] + `_{{.Row}}" value="{{.Userid}}"></td>
+	<td><input title="Userid" type="text" readonly name="m` + Param_Labels["userid"] + `_{{.Row}}" value="{{.Userid}}"></td>
 	<td>
-		<select name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_updateAccesslevel(this);">
+		<select title="Accesslevel" name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_updateAccesslevel(this);">
 		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_READONLY) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `"{{if eq .Accesslevel  ` + strconv.Itoa(ACCESSLEVEL_SUPER) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
 		</select>
 	</td>
-	<td><input type="password" name="m` + Param_Labels["newpass"] + `_{{.Row}}" oninput="pwd_enableSave(this);"></td>
-	<td><input type="password" id="newpass2:{{.Row}}" oninput="pwd_enableSave(this);"></td>
+	<td><input title="New password" type="password" name="m` + Param_Labels["newpass"] + `_{{.Row}}" oninput="pwd_enableSave(this);"></td>
+	<td><input title="New password repeated" type="password" id="newpass2:{{.Row}}" oninput="pwd_enableSave(this);"></td>
 	<td><input type="button" disabled value="Set password" onclick="pwd_savePasswordChanges(this);"></td>
 	<td class="center">
 		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `_{{.Row}}" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
@@ -588,18 +586,18 @@ func initUserTemplates() {
 	<input type="button" value="+" onclick="pwd_insertNewRow(); return false;">
 	</form>
 	<table class="hide">
-	<tr id="newrow">
-	<td><input type="text" id="newuserid" name="m` + Param_Labels["userid"] + `" data-ok="0" oninput="pwd_useridChanged(this);"></td>
+	<tr id="newrow" data-fields="newuserid,newal,newpass1,newpass2,savenewuser">
+	<td><input type="text" name="m` + Param_Labels["userid"] + `" data-ok="0" oninput="pwd_useridChanged(this);"></td>
 	<td>
-		<select id="newal" name="m` + Param_Labels["accesslevel"] + `">
+		<select name="m` + Param_Labels["accesslevel"] + `">
 		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `" selected>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `">` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `">` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
 		</select>
 	</td>
-	<td><input type="password" data-ok="0" id="newpass1" name="m` + Param_Labels["newpass"] + `" oninput="pwd_checkpass(this);"></td>
-	<td><input type="password" data-ok="0" id="newpass2" oninput="pwd_checkpass(this);"></td>
-	<td><input type="button" id="savenewuser" disabled value="Save user" onclick="pwd_insertNewUser(this);"></td>
+	<td><input title="New password" type="password" data-ok="0" name="m` + Param_Labels["newpass"] + `" oninput="pwd_checkpass(this);"></td>
+	<td><input title="New password repeated" type="password" data-ok="0" oninput="pwd_checkpass(this);"></td>
+	<td><input type="button" disabled value="Save user" onclick="pwd_insertNewUser(this);"></td>
 	<td class="hide">
 		<input type="checkbox" title="Enable delete button" name="m` + Param_Labels["deleteuser"] + `" value="` + Param_Labels["deleteuser"] + `" onchange="this.parentElement.children[1].disabled=!this.checked;"> 
 		<input type="button" disabled value="Delete user" onclick="pwd_deleteUser(this);">
@@ -903,7 +901,7 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 		fmt.Fprintf(w, `<span class="pagelink"><a id="nextpage" href="/%v?%v`+Param_Labels["offset"]+`=%v" title="Next page">%v</a></span>`, cmd, varx, nextPageOffset, ArrowNextPage)
 	}
 
-	fmt.Fprint(w, `<span class="pagelink"><select onchange="changePagesize(this);"></span>`)
+	fmt.Fprint(w, `<span class="pagelink"><select title="Choose results page size" onchange="changePagesize(this);"></span>`)
 	//pagesizes := []int{0, 20, 40, 60, 100}
 	pagesizes := prefs.Pagesizes
 	for _, ps := range pagesizes {

@@ -118,6 +118,8 @@ func showusers(w http.ResponseWriter, r *http.Request) {
 	}
 	start_html(w, r)
 
+	fmt.Fprint(w, `<input type="hidden" id="minpwlen" value="`+strconv.Itoa(prefs.PasswordMinLength)+`">
+	`)
 	if r.PostFormValue(Param_Labels["passchg"]) == Param_Labels["single"] {
 		changeSinglePassword(w, r)
 		return

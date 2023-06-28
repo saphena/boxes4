@@ -107,7 +107,7 @@ func trimHistoryLog() {
 	sqlx += strconv.Itoa(maxentries) + ",1"
 	cutoff := getValueFromDB(sqlx, "2006-01-02")
 	sqlx = "DELETE FROM history WHERE recordedat < '" + cutoff + "'"
-	fmt.Println("DEBUG: Trimming history - " + sqlx)
+	printDebug("Trimming history - " + sqlx)
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 

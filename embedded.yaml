@@ -118,4 +118,4 @@ HistoryLog:
 # are included, 2020 and earlier are excluded. This setting can be 
 # overridden by the user for individual searches.
 # A value of 0 means don't filter old records
-IncludePastYears: 2
+IncludePastYears: 5

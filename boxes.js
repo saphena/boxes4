@@ -269,9 +269,13 @@ function pwd_insertNewRow() {
 	console.log("Row inserted, rc="+rc);
 	let nr = document.getElementById('newrow');
 	let nrow = tab.rows[rc];
+	let ids = nr.getAttribute('data-fields').split(',');
 	nrow.innerHTML = nr.innerHTML;
-	
+	nrow.id = '';
 	for (let i=0; i < nrow.children.length; i++) {
+		if (i < ids.length) {
+			nrow.children[i].firstElementChild.setAttribute('id',ids[i]);
+		}
 		if (nrow.children[i].firstElementChild.getAttribute('name')) {
 			let nn = nrow.children[i].firstElementChild.getAttribute('name')+'_'+rc;
 			nrow.children[i].firstElementChild.setAttribute('name',nn);
