@@ -21,12 +21,14 @@ CREATE TABLE IF NOT EXISTS "users" (
 	"userpass"	TEXT,
 	"accesslevel"	INTEGER
 );
+INSERT INTO users (userid,userpass,accesslevel) VALUES('admin','admin',9);
 CREATE TABLE IF NOT EXISTS "locations" (
 	"id"	INTEGER NOT NULL,
 	"location"	TEXT COLLATE NOCASE,
 	"autonum"	INTEGER NOT NULL DEFAULT 1,
 	PRIMARY KEY("id" AUTOINCREMENT)
 );
+INSERT INTO locations (location) VALUES('default');
 CREATE TABLE IF NOT EXISTS "contents" (
 	"id"	INTEGER NOT NULL,
 	"boxid"	TEXT COLLATE NOCASE,

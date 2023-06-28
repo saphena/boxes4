@@ -405,10 +405,10 @@ func ajax_check_new_boxid(w http.ResponseWriter, r *http.Request) {
 
 	sqlx := "SELECT boxid FROM boxes WHERE boxid='" + safesql(boxid) + "'"
 	if len(boxid) < 1 || getValueFromDB(sqlx, "") != "" {
-		fmt.Println("DEBUG: Replying boxid exists")
+		printDebug("Replying boxid exists")
 		fmt.Fprint(w, `{"res":"Duplicate!"}`)
 	} else {
-		fmt.Println("DEBUG: Replying boxid ok")
+		printDebug("Replying boxid ok")
 		fmt.Fprint(w, `{"res":"ok"}`)
 	}
 }

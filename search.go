@@ -128,6 +128,10 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	html.Execute(w, res)
 
+	if res.Found0 {
+		return
+	}
+
 	flds := "contents.boxid,contents.owner,contents.client,contents.name,contents.contents,contents.review_date,boxes.storeref,boxes.overview"
 
 	sqllimit := emit_page_anchors(w, r, "find", FoundRecCount)
@@ -312,7 +316,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	temp, err = template.New("searchParamsDateRadios").Parse(templateSearchParamsDateRadios)
 	checkerr(err)
 
-	params.MaxYear = getValueFromDB("SELECT max(review_date) FROM contents", "2100")[0:4]
+	params.MaxYear = getValueFromDB("SELECT ifnull(max(review_date),'2200') FROM contents", "2100")[0:4]
 	params.ExcludeBeforeYear = 0
 	if session.Values["ExcludeBeforeYear"] != nil {
 		params.ExcludeBeforeYear = session.Values["ExcludeBeforeYear"].(int)
