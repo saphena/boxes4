@@ -111,6 +111,7 @@ type searchResultsVar struct {
 	Find        string
 	FindUrl     string
 	Found       string
+	OneField    string
 	Desc        bool
 	Storeref    string
 	StorerefUrl string
@@ -460,12 +461,12 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 <table class="searchresults">
 <thead>
 <tr>
-<th class="ourbox"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
-<th class="owner"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-<th class="client"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-<th class="name"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-<th class="contents"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-<th class="date"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+<th class="ourbox"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}{{if .OneField}}&` + Param_Labels["field"] + `={{.OneField}}{{end}}&` + Param_Labels["order"] + `=boxid{{if .Desc}}&` + Param_Labels["desc"] + `=boxid{{end}}">` + prefs.Field_Labels["boxid"] + `</a></th>
+<th class="owner"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}{{if .OneField}}&` + Param_Labels["field"] + `={{.OneField}}{{end}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+<th class="client"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}{{if .OneField}}&` + Param_Labels["field"] + `={{.OneField}}{{end}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+<th class="name"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}{{if .OneField}}&` + Param_Labels["field"] + `={{.OneField}}{{end}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+<th class="contents"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}{{if .OneField}}&` + Param_Labels["field"] + `={{.OneField}}{{end}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+<th class="date"><a class="sortlink" href="/find?` + Param_Labels["find"] + `={{.FindUrl}}{{if .OneField}}&` + Param_Labels["field"] + `={{.OneField}}{{end}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 </tr>
 </thead>
 <tbody>

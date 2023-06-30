@@ -117,7 +117,10 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	res.Name = order_dir(r, "name")
 	res.Date = order_dir(r, "review_date")
 	res.Find = x
-	res.FindUrl = template.URLQueryEscaper(res.Find)
+
+	res.FindUrl = template.URLQueryEscaper(x)
+	res.OneField = r.FormValue(Param_Labels["field"])
+
 	res.Found = commas(FoundRecCount)
 	res.Found0 = FoundRecCount == 0
 	res.Found1 = FoundRecCount == 1
