@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"strings"
 
@@ -433,7 +434,7 @@ func initSearchTemplates() {
 	Just enter the terms you're looking for, no quote marks, ANDs, ORs, etc.<br>
 	* Enter review dates as <em>yyyy</em> or <em>yyyy-mm</em> eg: '2026-03'.
 	</main></form>
-	<p>If you want to search only for records belonging to particular ` + prefs.Field_Labels["owner"] + `s or ` + prefs.Field_Labels["location"] + `s, <a href="/params">specify search options here</a>.</p>
+	<p>If you want to restrict the range of records searched, <a href="/params">specify search options here</a>.</p>
 	<p>{{if or .Locations .Owners .ExcludeBeforeYear }}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{if .ExcludeBeforeYear}}<strong>` + prefs.Field_Labels["review_date"] + ` >= {{.ExcludeBeforeYear}}</strong>{{end}}{{end}}</p>
 	`
 
@@ -503,7 +504,7 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 	templateSearchParamsOwnerRadios = `
 	<div id="ownerfilter"><h2>` + prefs.Field_Labels["owner"] + `s</h2>
 <p>
-<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectOwners(this.checked);">
+<input type="radio" id="orange_all" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectOwners(this.checked);" >
 <label for="orange_all"> All </label> &nbsp;&nbsp;&nbsp; 
 <input type="radio" id="orange_sel" name="o` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `" {{if ne .Orange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectOwners(!this.checked);">
 <label for="orange_sel"> Selected only </label>&nbsp;&nbsp;&nbsp;
@@ -513,6 +514,13 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 	templateSearchParamsDateRadios = `
 <div id="datesfilter"><h2>` + prefs.Field_Labels["dates"] + `</h2>
 <p>
+<input type="radio" id="drange_all" name="d` + Param_Labels["range"] + `" value="` + Param_Labels["all"] + `" {{if eq .Drange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectDates(this.checked);">
+<label for="drange_all"> All </label> &nbsp;&nbsp;&nbsp;&nbsp;
+<input type="radio" id="drange_sel" name="d` + Param_Labels["range"] + `" value="` + Param_Labels["selected"] + `"
+{{if ne .Drange "` + Param_Labels["all"] + `"}}checked{{end}} onclick="param_selectDates(!this.checked);">
+<label for="drange_sel"> Exclude old records </label> &nbsp;&nbsp;&nbsp;&nbsp;
+</p>
+<p id="daterangedetails"{{if eq .Drange "` + Param_Labels["all"] + `"}} class="hide"{{end}}>
 <label for="excludeBeforeYear">Exclude everything before</label>
 <input type="number" id="excludeBeforeYear" name="` + Param_Labels["ExcludeBeforeYear"] + `" min="0" max="{{.MaxYear}}" class="year" onchange="enableSaveSettings();" value="{{.ExcludeBeforeYear}}">
 </p>
@@ -610,10 +618,35 @@ func initUserTemplates() {
 
 } // initUserTemplates
 
-const searchResultsTrailer = `
-</tbody>
-</table>
-`
+func emitTrailer(w http.ResponseWriter, r *http.Request) {
+
+	/*
+		mytheme := sessionTheme(r)
+		fmt.Fprint(w, `<script>var r = document.querySelector(':root');`)
+		fmt.Fprint(w, `function ss(v,c){r.style.setProperty(v,c)}`)
+		s := reflect.ValueOf(prefs.Themes[mytheme])
+		st := s.Type()
+		for i := 0; i < s.NumField(); i++ {
+			x := strings.ToLower(strings.ReplaceAll(st.Field(i).Name, "_", "-"))
+			fmt.Fprintf(w, "ss('--%v','%v');", x, s.Field(i).Interface())
+		}
+		fmt.Fprint(w, `</script>`)
+	*/
+	fmt.Fprint(w, `</body></html>`)
+}
+
+func emitRootCSS(w http.ResponseWriter, r *http.Request) string {
+	theme := sessionTheme(r)
+	res := ":root {\n"
+	v := reflect.ValueOf(prefs.Themes[theme])
+	f := v.Type()
+	for i := 0; i < v.NumField(); i++ {
+		x := strings.ToLower(strings.ReplaceAll(f.Field(i).Name, "_", "-"))
+		res += fmt.Sprintf("--%v: %v;\n", x, v.Field(i).Interface())
+	}
+	res += "}\n"
+	return res
+}
 
 //go:embed normalize.css
 var cssreset string
@@ -643,11 +676,6 @@ type ownerlistvars struct {
 	Single    bool
 }
 
-const ownerlisttrailer = `
-</tbody>
-</table>
-`
-
 type ownerfilesvar struct {
 	Owner     string
 	OwnerUrl  string
@@ -662,11 +690,6 @@ type ownerfilesvar struct {
 	Overview  string
 	Desc      bool
 }
-
-const ownerfilestrailer = `
-</tbody>
-</table>
-`
 
 type boxvars struct {
 	Boxid           string
@@ -755,11 +778,6 @@ func emit_name_list(w http.ResponseWriter) {
 
 }
 
-const boxfilestrailer = `
-</tbody>
-</table>
-`
-
 func start_html(w http.ResponseWriter, r *http.Request) {
 
 	var html1 = `
@@ -780,11 +798,11 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 </style>
 </head>
 <body onload="bodyLoaded();">
-<h1><a href="/">&#9783; {{.Apptitle}}</a> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
+<h1><a href="/">{{.Apptitle}}</a> <span class="themepick" title="Choose colours"><span>t</span><span>h</span><span>e</span><span>m</span><span>e</span></span> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu"><div class="menulinks">
 `
 
-	const errormsgdiv = `<div id="errormsgdiv"></div>`
+	const errormsgdiv = `<div id="errormsgdiv" class="hide"></div>`
 
 	var basicMenu = `
 	<a href="/search">` + prefs.Menu_Labels["search"] + `</a> 
@@ -811,16 +829,21 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	updating, usr, _ := updateok(r)
 	runvars.Updating = updating
 
+	ht = html1 + cssreset
+	ht += emitRootCSS(w, r)
+	ht += css + html2
+
 	if !runvars.Updating {
-		ht = html1 + cssreset + css + html2 + mark_current_menu_path(basicMenu, r.URL.Path) + "</div></div>" + errormsgdiv
+		ht += mark_current_menu_path(basicMenu, r.URL.Path)
 	} else {
 		if usr != nil {
 			runvars.Userid = usr.(string)
 		} else {
 			runvars.Userid = ""
 		}
-		ht = html1 + cssreset + css + html2 + mark_current_menu_path(updateMenu, r.URL.Path) + "</div></div>" + errormsgdiv
+		ht += mark_current_menu_path(updateMenu, r.URL.Path)
 	}
+	ht += "</div></div>" + errormsgdiv
 	html, err := template.New("mainmenu").Parse(ht)
 	checkerr(err)
 
@@ -925,6 +948,26 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	return res
 }
 
+type vars struct {
+	Regular_background   string
+	Regular_foreground   string
+	Hilite_background    string
+	Hilite_foreground    string
+	Link_color           string
+	Link_hilite_back     string
+	Link_hilite_fore     string
+	Button_background    string
+	Button_foreground    string
+	Disabled_background  string
+	Disabled_foreground  string
+	Cell_background      string
+	Cell_border_color    string
+	Pagelinks_background string
+	Edit_background      string
+	Edit_foreground      string
+	Error_background     string
+	Error_foreground     string
+}
 type userpreferences struct {
 	HttpPort             string            `yaml:"httpPort"`
 	MaxAdjacentPagelinks int               `yaml:"MaxAdjacentPagelinks"`
@@ -946,8 +989,8 @@ type userpreferences struct {
 	DefaultReviewMonths  int               `yaml:"DefaultReviewMonths"`
 	ShowDateFormat       string            `yaml:"ShowDateFormat"`
 	IncludePastYears     int               `yaml:"IncludePastYears"`
-	//pagesizes := []int{0, 20, 40, 60, 100}
-
+	DefaultTheme         string            `yaml:"DefaultTheme"`
+	Themes               map[string]vars   `yaml:"Themes"`
 }
 
 // YAML format configuration

@@ -5,7 +5,8 @@
 
 # The application title displayed in various locations, lettercase
 # varied by CSS
-AppTitle: 'document archives'
+#AppTitle: 'document &#9783; archives'
+AppTitle: 'document ☷ archives'
 
 
 # The HTTP port served by default unless overridden on commandline
@@ -119,3 +120,48 @@ HistoryLog:
 # overridden by the user for individual searches.
 # A value of 0 means don't filter old records
 IncludePastYears: 5
+
+DefaultTheme: classic #paperwhite
+
+Themes: 
+  classic:
+    regular_background: '#ffffe0'
+    regular_foreground: 'rgb(78, 77, 77)'  
+    hilite_background		: yellow
+    hilite_foreground		: black
+    link_color			: darkblue
+    link_hilite_back		: orange
+    link_hilite_fore		: black
+    button_background		: lightgray
+    button_foreground		: black
+    disabled_background	: lightgray
+    disabled_foreground	: darkgray
+    cell_background		: '#f8f8d6'
+    cell_border_color		: lightgray 
+    pagelinks_background 	: 'rgb(241, 239, 239)'
+    edit_background		: '#f8f8d6'
+    edit_foreground		: navy
+    error_background : red
+    error_foreground : yellow
+
+  paperwhite:
+    regular_background: 'white'
+    regular_foreground: 'black'  
+    hilite_background		: yellow
+    hilite_foreground		: black
+    link_color			: darkblue
+    link_hilite_back		: darkgray
+    link_hilite_fore		: white
+    button_background		: lightgray
+    button_foreground		: black
+    disabled_background	: lightgray
+    disabled_foreground	: darkgray
+    cell_background		: 'white'
+    cell_border_color		: lightgray 
+    pagelinks_background 	: 'rgb(241, 239, 239)'
+    edit_background		: '#f8f8d6'
+    edit_foreground		: navy
+    error_background : red
+    error_foreground : yellow
+
+

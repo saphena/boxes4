@@ -58,12 +58,13 @@ func DBExec(sqlx string) sql.Result {
 
 	res, err := DBH.Exec(sqlx)
 	if err != nil {
-		fmt.Printf("DBExec = %v\n", sqlx)
-		panic(err)
-	}
-	re := regexp.MustCompile(`(?i)^(ALTER|CREATE|DELETE|DROP|INSERT|REPLACE|UPDATE|UPSERT)`)
-	if re.MatchString(sqlx) {
-		markDBTouch(sqlx)
+		fmt.Printf("DBExec = %v [%v]\n", sqlx, err)
+		//		panic(err)
+	} else {
+		re := regexp.MustCompile(`(?i)^(ALTER|CREATE|DELETE|DROP|INSERT|REPLACE|UPDATE|UPSERT)`)
+		if re.MatchString(sqlx) {
+			markDBTouch(sqlx)
+		}
 	}
 	return res
 

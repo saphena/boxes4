@@ -63,9 +63,10 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		err := html.Execute(w, plv)
 		checkerr(err)
 	}
-	fmt.Fprint(w, ownerlisttrailer)
+	fmt.Fprint(w, `</tbody></table>`)
 
 	if owner == "" {
+		emitTrailer(w, r)
 		return
 	}
 
@@ -104,5 +105,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		ofv.ShowDate = formatShowDate((ofv.Date))
 		err = html.Execute(w, ofv)
 	}
-	fmt.Fprint(w, ownerfilestrailer)
+	fmt.Fprint(w, `</tbody></table>`)
+	emitTrailer(w, r)
+
 }

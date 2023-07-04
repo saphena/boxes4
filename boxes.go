@@ -121,7 +121,9 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 		err := html.Execute(w, box)
 		checkerr(err)
 	}
-	fmt.Fprint(w, ownerlisttrailer)
+	fmt.Fprint(w, `</tbody></table>`)
+
+	emitTrailer(w, r)
 
 }
 
@@ -228,13 +230,12 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 		nrows++
 	}
-	html, err = template.New("").Parse(boxfilestrailer)
-	html.Execute(w, "")
-	checkerr(err)
+	fmt.Fprint(w, `</tbody></table>`)
 
 	emit_owner_list(w)
 	emit_client_list(w)
 	emit_name_list(w)
+	emitTrailer(w, r)
 
 }
 
@@ -295,13 +296,20 @@ func ajax_add_new_content(w http.ResponseWriter, r *http.Request) {
 
 	printDebug(sqlx)
 	res := DBExec(sqlx)
-	n, err := res.RowsAffected()
-	checkerr(err)
-	if n < 1 {
-		fmt.Fprint(w, `{"res":"Insertion failed!"}`)
+	printDebug(fmt.Sprintf("Result is %v\n", res))
+	if res == nil {
+		printDebug(`{"res":"Database operation failed!"}`)
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
 		return
 	}
-	n, err = res.LastInsertId()
+	n, _ := res.RowsAffected()
+	//checkerr(err)
+	if n < 1 {
+		printDebug(`{"res":"Database operation failed!"}`)
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
+	n, err := res.LastInsertId()
 	checkerr(err)
 	nf, ld, hd := update_ajax_box_contents(boxid)
 	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v","recid":"%v"}`, nf, ld, hd, n)
@@ -320,10 +328,14 @@ func ajax_delete_content_line(w http.ResponseWriter, r *http.Request) {
 	sqlx += " AND client='" + safesql(client) + "'"
 	printDebug(sqlx)
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
-		fmt.Fprint(w, `{"res":"Deletion failed!"}`)
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
 		return
 	}
 
@@ -353,6 +365,10 @@ func ajax_update_content_line(w http.ResponseWriter, r *http.Request) {
 
 	printDebug(sqlx)
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
@@ -425,6 +441,10 @@ func ajax_update_box_details(w http.ResponseWriter, r *http.Request) {
 	sqlx += " WHERE boxid='" + safesql(boxid) + "'"
 
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
@@ -449,6 +469,10 @@ func ajax_changeBoxLocation(w http.ResponseWriter, r *http.Request) {
 	sqlx = "UPDATE boxes SET location='" + safesql(locn) + "' WHERE boxid='" + safesql(boxid) + "'"
 	printDebug(sqlx)
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
@@ -467,6 +491,10 @@ func ajax_deleteEmptyBox(w http.ResponseWriter, r *http.Request) {
 
 	printDebug(sqlx)
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
@@ -496,6 +524,10 @@ func ajax_create_new_box(w http.ResponseWriter, r *http.Request) {
 
 	printDebug(sqlx)
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {

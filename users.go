@@ -37,6 +37,10 @@ func updateMultipleUsers(w http.ResponseWriter, r *http.Request) {
 		if sqlx != "" {
 			fmt.Printf("DEBUG: %v\n", sqlx)
 			res := DBExec(sqlx)
+			if res == nil {
+				fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+				return
+			}
 			n, err := res.RowsAffected()
 			checkerr(err)
 			if n < 1 {
@@ -91,10 +95,14 @@ func insertNewUser(w http.ResponseWriter, r *http.Request) {
 	sqlx += ",'" + strings.ReplaceAll(np1, "'", "''") + "'"
 	sqlx += "," + al + ")"
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
-		fmt.Fprint(w, `{"res":"Insert failed!"}`)
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
 		return
 	}
 
@@ -206,6 +214,10 @@ func ajax_users(w http.ResponseWriter, r *http.Request) {
 		sqlx += " WHERE userid='" + uid + "'"
 		printDebug(sqlx)
 		res := DBExec(sqlx)
+		if res == nil {
+			fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+			return
+		}
 		n, err := res.RowsAffected()
 		checkerr(err)
 		if n < 1 {

@@ -162,8 +162,9 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 			panic(err)
 		}
 	}
-	html, _ = template.New("searchResultsTrailer").Parse(searchResultsTrailer)
-	html.Execute(w, "")
+	fmt.Fprint(w, `</tbody></table>`)
+
+	emitTrailer(w, r)
 
 }
 
@@ -175,6 +176,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 
 		Orange            string
 		Owners            string
+		Drange            string
 		MaxYear           string
 		ExcludeBeforeYear int
 	}
@@ -183,6 +185,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	session, err := store.Get(r, cookie_name)
 	checkerr(err)
 
+	printDebug(fmt.Sprintf("%v\n", session.Values))
 	if session.Values["locations"] == nil {
 		params.Lrange = Param_Labels["all"]
 		params.Locations = ""
@@ -196,6 +199,22 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	} else {
 		params.Orange = Param_Labels["selected"]
 		params.Owners = session.Values["owners"].(string)
+	}
+
+	if session.Values["ExcludeBeforeYear"] == nil {
+		params.Drange = Param_Labels["all"]
+		params.ExcludeBeforeYear = time.Now().Year() - prefs.IncludePastYears
+		session.Values["ExcludeBeforeYear"] = params.ExcludeBeforeYear
+	} else {
+		eby := session.Values["ExcludeBeforeYear"].(int)
+		if eby < 1 {
+			params.Drange = Param_Labels["all"]
+			params.ExcludeBeforeYear = time.Now().Year() - prefs.IncludePastYears
+			session.Values["ExcludeBeforeYear"] = params.ExcludeBeforeYear
+		} else {
+			params.Drange = Param_Labels["selected"]
+			params.ExcludeBeforeYear = session.Values["ExcludeBeforeYear"].(int)
+		}
 	}
 
 	// Update settings
@@ -231,18 +250,24 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 		checkerr(err)
 	}
 
-	xby := r.FormValue(Param_Labels["ExcludeBeforeYear"])
-	if xby != "" {
-		xbyn, _ := strconv.Atoi(xby)
-		if xbyn < 1 {
-			session.Values["ExcludeBeforeYear"] = 0
-		} else {
-			session.Values["ExcludeBeforeYear"] = xbyn
+	if r.FormValue("d"+Param_Labels["range"]) != "" {
+		params.Drange = r.FormValue("d" + Param_Labels["range"])
+		session.Values["ExcludeBeforeYear"] = 0
+		if params.Drange == Param_Labels["selected"] {
+
+			xby := r.FormValue(Param_Labels["ExcludeBeforeYear"])
+			if xby != "" {
+				xbyn, _ := strconv.Atoi(xby)
+				if xbyn < 1 {
+					session.Values["ExcludeBeforeYear"] = 0
+				} else {
+					session.Values["ExcludeBeforeYear"] = xbyn
+				}
+			}
 		}
 		err = store.Save(r, w, session)
 		checkerr(err)
 	}
-
 	if r.FormValue(Param_Labels["savesettings"]) != "" {
 		show_search(w, r)
 		return
@@ -330,7 +355,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	err = temp.Execute(w, params)
 	checkerr(err)
 	fmt.Fprintln(w, "</div>")
-
+	emitTrailer(w, r)
 }
 
 func show_search(w http.ResponseWriter, r *http.Request) {
@@ -368,5 +393,5 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 	err = html.Execute(w, sv)
 	checkerr(err)
 
-	fmt.Fprintln(w, "</body></html>")
+	emitTrailer(w, r)
 }

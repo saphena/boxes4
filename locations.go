@@ -22,10 +22,14 @@ func ajax_add_location(w http.ResponseWriter, r *http.Request) {
 	}
 	sqlx = "INSERT INTO locations (location) VALUES('" + newlocsql + "')"
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
-		fmt.Fprint(w, `{"res":"Insert failed!"}`)
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
 		return
 	}
 
@@ -47,10 +51,14 @@ func ajax_del_location(w http.ResponseWriter, r *http.Request) {
 	sqlx = "DELETE FROM locations WHERE location='" + oldlocsql + "'"
 
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n < 1 {
-		fmt.Fprint(w, `{"res":"Deletion failed!"}`)
+		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
 		return
 	}
 
@@ -133,11 +141,12 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 		err := temp.Execute(w, loc)
 		checkerr(err)
 	}
-	fmt.Fprint(w, ownerlisttrailer)
+	fmt.Fprint(w, `</tbody></table>`)
 
 	if sqllocation != "" {
 		showlocation(w, r, sqllocation, loc.NumBoxes)
 	}
+	emitTrailer(w, r)
 
 }
 
@@ -205,6 +214,8 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 			panic(err)
 		}
 	}
+	fmt.Fprint(w, `</tbody></table>`)
+
 	//	showBoxfiles(w, r, sqlboxid)
 
 }
@@ -250,9 +261,7 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 		nrows++
 	}
-	temp, err = template.New("boxfilestrailer").Parse(boxfilestrailer)
-	temp.Execute(w, "")
-	checkerr(err)
+	fmt.Fprint(w, `</tbody></table>`)
 
 }
 

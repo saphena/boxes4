@@ -50,6 +50,13 @@ func main() {
 		fmt.Println("Serving on port " + prefs.HttpPort)
 	}
 
+	if false {
+		printDebug("Themes == " + fmt.Sprintf("%v\n", prefs.Themes))
+		for k, v := range prefs.Themes {
+			printDebug("Theme: " + k)
+			printDebug("Colour: " + fmt.Sprintf("%v, %v \n", v.Regular_background, v.Link_color))
+		}
+	}
 	initTemplates()
 
 	var err error

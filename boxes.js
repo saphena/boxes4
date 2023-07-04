@@ -108,7 +108,7 @@ function hideErrorPane() {
 
 	let pane = document.getElementById('errormsgdiv');
 	if (!pane) { return; }
-	pane.className = ""
+	pane.className = "hide"
 	pane.innerHTML = "";
 
 }
@@ -381,6 +381,18 @@ function param_selectKeys(selectall,key) {
 	enableSaveSettings();
 }
 
+function param_selectDates(selectall) {
+
+	let dtls = document.getElementById('daterangedetails');
+	if (!dtls) return;
+	if (selectall) {
+		dtls.classList.add('hide');
+	} else {
+		dtls.classList.remove('hide');
+	}
+	enableSaveSettings();
+}
+
 function param_selectLocations(selectall) {
 
 	param_selectKeys(selectall,'location');
@@ -564,6 +576,7 @@ function addNewBoxContent(obj) {
 
 		} else {
 			obj.disabled = false;
+			console.log('ShowingErrorMsg')
 			showErrorMsg(res.res);
 		}
 	});

@@ -62,6 +62,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 	session.Values["authenticated"] = true
 	session.Values["userid"] = r.FormValue(Param_Labels["userid"])
 	session.Values["accesslevel"] = alevel
+	if session.Values["theme"] == nil {
+		session.Values["theme"] = prefs.DefaultTheme
+	}
 	session.Options.MaxAge = 60 * prefs.CookieMaxAgeMins
 	session.Options.HttpOnly = true
 	session.Options.SameSite = http.SameSiteStrictMode
@@ -70,6 +73,17 @@ func login(w http.ResponseWriter, r *http.Request) {
 	session.Save(r, w)
 	//http.Redirect(w, r, "/search", http.StatusAccepted)
 	show_search(w, r)
+}
+
+func sessionTheme(r *http.Request) string {
+
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+	printDebug(fmt.Sprintf("sessionTheme is %v\n", session.Values["theme"]))
+	if session.Values["theme"] == nil {
+		return prefs.DefaultTheme
+	}
+	return session.Values["theme"].(string)
 }
 
 func updateok(r *http.Request) (bool, any, any) {

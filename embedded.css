@@ -1,11 +1,9 @@
-
+/* root vars loaded from YAML theme
 :root	{
 	--regular-background	: #ffffe0;
 	--regular-foreground	: rgb(78, 77, 77);
 	--hilite-background		: yellow;
 	--hilite-foreground		: black;
-	--error-background		: red;
-	--error-foreground		: white;
 	--link-color			: darkblue;
 	--link-hilite-back		: orange;
 	--link-hilite-fore		: black;
@@ -18,8 +16,11 @@
 	--pagelinks-background 	: rgb(241, 239, 239);
 	--edit-background		: #f8f8d6;
 	--edit-foreground		: navy;
+	--error-background      : red;
+	--error-foreground      : white;
 
 }
+*/
 body	{
 	background-color		: var(--regular-background);
 	color					: var(--regular-foreground);
@@ -27,6 +28,9 @@ body	{
 	font-size				: 16px;
 	padding					: 0 1em 0 1em;
 	max-width          		: 100vw;
+}
+#errormsgdiv 	{
+	padding					: .5em;
 }
 a	{ 
 	text-decoration			: none;  
@@ -176,6 +180,12 @@ input[type="submit"]:disabled	{
 	content 				: '[';
 }
 
+.errormsg	{
+	background-color 		: var(--error-background);
+	color 					: var(--error-foreground);
+	display 				: block;
+}
+
 .filteritems	{ 
 	height					: 100%; 
 	min-width				: 10em;
@@ -255,21 +265,10 @@ input[type="submit"]:disabled	{
 	padding-top				: 4px; 
 	padding-bottom			: 4px; 
 }
-.errormsg	{ 
-	background-color		: var(--error-background); 
-	color					: var(--error-foreground); 
-	padding					: 4px;
-}
 .warning	{ 
 	background-color		: var(--hilite-background); 
 	color					: var(--hilite-foreground); 
-}
-.errordata	{ 
-	background-color		: var(--error-background); 
-	color					: var(--error-foreground); 
-	font-weight				: bold; 
-	font-size				: larger; 
-	padding					: 4px;
+	display 				: block;
 }
 .searchedfor	{ 
 	background-color		: var(--hilite-background); 
@@ -316,3 +315,11 @@ input[type="submit"]:disabled	{
 	font-weight				: bold;  
 	font-size				: 1.3em;
 }
+
+.themepick 	{
+	font-size: 8pt;	
+	vertical-align: middle;
+	cursor: pointer;
+}
+.themepick span:nth-child(1) { color: red;}
+.themepick span:nth-child(2) { color: blue;}
