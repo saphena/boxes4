@@ -76,6 +76,7 @@ var Param_Labels = map[string]string{
 	"newbox":            "xnb",
 	"delbox":            "kbx",
 	"ExcludeBeforeYear": "xby",
+	"theme":             "ttt",
 }
 
 type AppVars struct {
@@ -573,7 +574,7 @@ func initUserTemplates() {
 	<td><input title="Userid" type="text" readonly name="m` + Param_Labels["userid"] + `_{{.Row}}" value="{{.Userid}}"></td>
 	<td>
 		<select title="Accesslevel" name="m` + Param_Labels["accesslevel"] + `_{{.Row}}" onchange="pwd_updateAccesslevel(this);">
-		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_READONLY) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
+
 		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `"{{if eq .Accesslevel ` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `"{{if eq .Accesslevel  ` + strconv.Itoa(ACCESSLEVEL_SUPER) + `}} selected{{end}}>` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
 		</select>
@@ -599,7 +600,7 @@ func initUserTemplates() {
 	<td><input type="text" name="m` + Param_Labels["userid"] + `" data-ok="0" oninput="pwd_useridChanged(this);"></td>
 	<td>
 		<select name="m` + Param_Labels["accesslevel"] + `">
-		<option value="` + strconv.Itoa(ACCESSLEVEL_READONLY) + `" selected>` + prefs.Accesslevels[ACCESSLEVEL_READONLY] + `</option>
+
 		<option value="` + strconv.Itoa(ACCESSLEVEL_UPDATE) + `">` + prefs.Accesslevels[ACCESSLEVEL_UPDATE] + `</option>
 		<option value="` + strconv.Itoa(ACCESSLEVEL_SUPER) + `">` + prefs.Accesslevels[ACCESSLEVEL_SUPER] + `</option>
 		</select>
@@ -620,18 +621,6 @@ func initUserTemplates() {
 
 func emitTrailer(w http.ResponseWriter, r *http.Request) {
 
-	/*
-		mytheme := sessionTheme(r)
-		fmt.Fprint(w, `<script>var r = document.querySelector(':root');`)
-		fmt.Fprint(w, `function ss(v,c){r.style.setProperty(v,c)}`)
-		s := reflect.ValueOf(prefs.Themes[mytheme])
-		st := s.Type()
-		for i := 0; i < s.NumField(); i++ {
-			x := strings.ToLower(strings.ReplaceAll(st.Field(i).Name, "_", "-"))
-			fmt.Fprintf(w, "ss('--%v','%v');", x, s.Field(i).Interface())
-		}
-		fmt.Fprint(w, `</script>`)
-	*/
 	fmt.Fprint(w, `</body></html>`)
 }
 
@@ -778,6 +767,21 @@ func emit_name_list(w http.ResponseWriter) {
 
 }
 
+func offerThemesList(theme string) string {
+
+	sel := `<select onchange="setTheme(this.value);">`
+	for t := range prefs.Themes {
+		sel += `<option value="` + t + `"`
+		if theme == t {
+			sel += ` selected`
+		}
+		sel += `> ` + t + ` </option>`
+	}
+	sel += `</select>`
+	return sel
+
+}
+
 func start_html(w http.ResponseWriter, r *http.Request) {
 
 	var html1 = `
@@ -793,12 +797,12 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 
 `
 
-	const html2 = `
+	var html2 = `
 -->
 </style>
 </head>
 <body onload="bodyLoaded();">
-<h1><a href="/">{{.Apptitle}}</a> <span class="themepick" title="Choose colours"><span>t</span><span>h</span><span>e</span><span>m</span><span>e</span></span> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
+<h1><a href="/">{{.Apptitle}}</a> <span class="themepick" title="Choose colours">###</span> {{if .Updating}} <span style="font-size: 1.2em;" title="Running in Update Mode"> &#9997; </span>{{end}}</h1>
 <div class="topmenu"><div class="menulinks">
 `
 
@@ -831,7 +835,8 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 
 	ht = html1 + cssreset
 	ht += emitRootCSS(w, r)
-	ht += css + html2
+
+	ht += css + strings.ReplaceAll(html2, "###", offerThemesList(sessionTheme(r)))
 
 	if !runvars.Updating {
 		ht += mark_current_menu_path(basicMenu, r.URL.Path)
@@ -946,6 +951,20 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	fmt.Fprintf(w, `</span></div>`)
 
 	return res
+}
+
+func ajax_setTheme(w http.ResponseWriter, r *http.Request) {
+
+	theme := r.FormValue(Param_Labels["theme"])
+	if theme == "" {
+		return
+	}
+
+	printDebug("Setting theme = " + theme)
+	setTheme(w, r, theme)
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
 }
 
 type vars struct {

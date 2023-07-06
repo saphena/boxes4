@@ -46,6 +46,7 @@ const Param_Labels = {
 	"newbox":          "xnb",
 	"delbox":          "kbx",
 	"ExcludeBeforeYear": "xby",
+	"theme":			"ttt",
 }
 
 
@@ -308,9 +309,9 @@ function pwd_useridChanged(obj) {
 	if (obj.value.length > 0) {
 		obj.setAttribute('data-ok','1');
 	}
-	for (let r = 0; r < tab.rows.length; r++) {
+	for (let r = 0; r < tab.rows.length - 1; r++) {
 		let ruid = tab.rows[r].firstElementChild;
-		//console.log(ruid.innerHTML+" == "+uid);
+		console.log(ruid.innerHTML+" == "+uid);
 		ruid = ruid.firstElementChild;
 		obj.classList.remove('warning');
 		if (r + 1 == row[1]) continue;
@@ -876,7 +877,6 @@ function deleteEmptyBox(boxid) {
 
 function startNewBox(btn) {
 
-
 	btn.disabled = true;
 	let tr = btn.parentElement.parentElement;
 	let boxid = tr.children[0].firstElementChild.value;
@@ -896,4 +896,20 @@ function startNewBox(btn) {
 
 }
 
+function setTheme(theme) {
+
+	console.log('setTheme '+theme)
+	let url = "/theme?"+Param_Labels["theme"]+"="+encodeURIComponent(theme)
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			console.log(window.location);
+			window.location.replace(window.location)
+		} else {
+			showErrorMsg(res.res);
+		}
+	});
+
+}
 

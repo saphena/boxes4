@@ -86,6 +86,14 @@ func sessionTheme(r *http.Request) string {
 	return session.Values["theme"].(string)
 }
 
+func setTheme(w http.ResponseWriter, r *http.Request, theme string) {
+
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+	session.Values["theme"] = theme
+	session.Save(r, w)
+
+}
 func updateok(r *http.Request) (bool, any, any) {
 
 	session, err := store.Get(r, cookie_name)

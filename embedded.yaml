@@ -164,4 +164,45 @@ Themes:
     error_background : red
     error_foreground : yellow
 
+  greens:
+    regular_background: '#abed5d'
+    regular_foreground: 'black'  
+    hilite_background		: yellow
+    hilite_foreground		: black
+    link_color			: darkblue
+    link_hilite_back		: darkgray
+    link_hilite_fore		: white
+    button_background		: lightgray
+    button_foreground		: black
+    disabled_background	: lightgray
+    disabled_foreground	: darkgray
+    cell_background		: '#abed5d'
+    cell_border_color		: darkgray 
+    pagelinks_background 	: 'rgb(241, 239, 239)'
+    edit_background		: '#f8f8d6'
+    edit_foreground		: navy
+    error_background : red
+    error_foreground : yellow
+
+  nighttime:
+    regular_background: 'black'
+    regular_foreground: 'white'  
+    hilite_background		: yellow
+    hilite_foreground		: black
+    link_color			: lightgreen
+    link_hilite_back		: darkgray
+    link_hilite_fore		: white
+    button_background		: darkgray
+    button_foreground		: black
+    disabled_background	: lightgray
+    disabled_foreground	: darkgray
+    cell_background		: black
+    cell_border_color		: darkgray 
+    pagelinks_background 	: 'black'
+    edit_background		: '#f8f8d6'
+    edit_foreground		: navy
+    error_background : red
+    error_foreground : yellow
+
+
 

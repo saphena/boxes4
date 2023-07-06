@@ -55,6 +55,10 @@ func changeSinglePassword(w http.ResponseWriter, r *http.Request) {
 	newpass := strings.ReplaceAll(r.PostFormValue(Param_Labels["newpass"]), "'", "''")
 	sqlx := "UPDATE users SET userpass='" + newpass + "' WHERE userid='" + runvars.Userid + "' AND userpass='" + oldpass + "'"
 	res := DBExec(sqlx)
+	if res == nil {
+		fmt.Fprint(w, `<p class="errormsg">Database operation failed!</p>`)
+		return
+	}
 	n, err := res.RowsAffected()
 	checkerr(err)
 	if n == 1 {

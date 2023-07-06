@@ -317,9 +317,13 @@ input[type="submit"]:disabled	{
 }
 
 .themepick 	{
-	font-size: 8pt;	
-	vertical-align: middle;
-	cursor: pointer;
+	height 					: 100%;
+	vertical-align			: middle;
+	cursor					: pointer;
+	display 				: inline-flex;
+	align-items 			: center;
 }
-.themepick span:nth-child(1) { color: red;}
-.themepick span:nth-child(2) { color: blue;}
+.themepick select {
+	font-size				: 8pt;	
+	background-image 		: linear-gradient(to right, yellow , red);
+}

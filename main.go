@@ -91,6 +91,7 @@ func main() {
 	http.HandleFunc("/users", showusers)
 	http.HandleFunc("/userx", ajax_users)
 	http.HandleFunc("/secret", secret)
+	http.HandleFunc("/theme", ajax_setTheme)
 
 	if !*nolocal {
 		browser.OpenURL("http://127.0.0.1:" + prefs.HttpPort)
