@@ -92,7 +92,14 @@ func checkDatabaseVersion(dbx string) {
 		fmt.Printf("ERROR: the database [%v] is non-compliant\n", dbx)
 		os.Exit(1)
 	}
+	sqlx = "SELECT accesslevel FROM users WHERE userid=='admin'"
+	x = getValueFromDB(sqlx, "0")
+	if x == "0" {
+		fmt.Printf("ERROR: the database [%v] is not compatible\n", dbx)
+		os.Exit(2)
+	}
 }
+
 func trimHistoryLog() {
 
 	maxentries := prefs.HistoryLog["maxentries"]

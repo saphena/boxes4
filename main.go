@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/browser"
 )
 
-const apptitle = "BOXES4 version 0.3"
+const apptitle = "BOXES4 version 0.4"
 const developmentversion = false
 
 const copyrite = "Copyright © 2023 Bob Stammers"
