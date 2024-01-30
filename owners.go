@@ -104,6 +104,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		ofv.ClientUrl = template.URLQueryEscaper(ofv.Client)
 		ofv.ShowDate = formatShowDate((ofv.Date))
 		err = html.Execute(w, ofv)
+		checkerr(err)
 	}
 	fmt.Fprint(w, `</tbody></table>`)
 	emitTrailer(w, r)

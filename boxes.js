@@ -53,22 +53,9 @@ const Param_Labels = {
 
 function changePagesize(sel) {
 	let newpagesize = sel.value;
-	let url = window.location.href;
-	// Need to strip out any existing PAGESIZE
-	let ps = url.match(/(&|\?)qps\=\d+/);   // qps must match Param_Labels["pagesize"]
-	console.log('url="'+url+'"; ps="'+ps+'"; NP='+newpagesize);
-	let cleanurl = url;
-	if (ps) {
-		cleanurl = cleanurl.replace(ps[0],'') + ps[1];
-	} else {
-		if (cleanurl.indexOf('?') < 0) {
-			cleanurl += '?';
-		} else {
-			cleanurl += '&';
-		}
-	}
-	console.log("cleanurl='"+cleanurl+"'");
-	window.location.href = cleanurl + "qps=" + newpagesize;
+
+	setPagesize(newpagesize);
+
 }
 
 function loadPrevPage() {
@@ -88,10 +75,10 @@ function loadNextPage() {
 }
 function trapKeys() {
 	document.getElementsByTagName('body')[0].onkeyup = function(e) { 
-		var ev = e || window.event;
-	 	if (ev.keyCode == 37 || ev.keyCode == 33) { // Left arrow or PageUp
+		var ev = e;
+	 	if (ev.key == "ArrowLeft" || ev.key == "PageUp") { // Left arrow or PageUp
 			return loadPrevPage();
-		} else if (ev.keyCode == 39 || ev.keyCode == 34) { // Right arrow or PageDn
+		} else if (ev.key == "ArrowRight" || ev.key == "PageDown") { // Right arrow or PageDn
 			return loadNextPage();
 	    } 
 	}
@@ -202,10 +189,12 @@ function pwd_deleteUser(btn) {
 
 function pwd_updateAccesslevel(sel) {
 
+	const savebutton = 4;
+
 	let al = sel.value;
 	let tr = sel.parentElement.parentElement;
 	let uid = tr.firstElementChild.firstElementChild.value;
-	let save = tr.children[4].firstElementChild;
+	let save = tr.children[savebutton].firstElementChild;
 
 	save.disabled = false;
 	let url = "/userx?"+Param_Labels["passchg"]+"="+Param_Labels["single"];
@@ -226,8 +215,10 @@ function pwd_updateAccesslevel(sel) {
 
 function pwd_enableSave(inp) {
 
+	const savebutton = 4;
+
 	let tr = inp.parentElement.parentElement;
-	let save = tr.children[4].firstElementChild;
+	let save = tr.children[savebutton].firstElementChild;
 
 	console.log("Save is "+save);
 	save.disabled = false;
@@ -782,11 +773,12 @@ function date_from_selects(obj) {
 
 function newContentSaveNeeded(obj) {
 
+	const savebutton = 5;
 	obj.classList.add('warning');
 	let tr = obj.parentElement.parentElement;
-	let save = tr.children[5].firstElementChild;
+	let save = tr.children[savebutton].firstElementChild; 
 	let ok = true;
-	for (let i = 0; i < 5; i++) {
+	for (let i = 0; i < savebutton; i++) {
 		ok = ok && tr.children[i].firstElementChild.value != "";
 	}
 	save.disabled = !ok;
@@ -823,11 +815,13 @@ function contentSaveNeeded(obj) {
 // Save is now complete so clean the whole line
 function contentNowSaved(tr) {
 
-	let save = tr.children[5].firstElementChild;
+	const savebutton = 5;
+
+	let save = tr.children[savebutton].firstElementChild;
 
 	// There might not be a second button so preserve the order below
-	let del = tr.children[5].lastElementChild;
-	for (let i = 0; i < 5; i++) {
+	let del = tr.children[savebutton].lastElementChild;
+	for (let i = 0; i < savebutton; i++) {
 		tr.children[i].classList.remove('warning');
 	}
 	save.classList.add('hide');
@@ -896,6 +890,23 @@ function startNewBox(btn) {
 
 }
 
+function setPagesize(pagesize) {
+
+	console.log('setPagesize '+pagesize)
+	let url = "/ps?"+Param_Labels["pagesize"]+"="+encodeURIComponent(pagesize)
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			console.log(window.location);
+			window.location.replace(window.location)
+		} else {
+			showErrorMsg(res.res);
+		}
+	});
+
+}
+
 function setTheme(theme) {
 
 	console.log('setTheme '+theme)
@@ -912,4 +923,3 @@ function setTheme(theme) {
 	});
 
 }
-

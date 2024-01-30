@@ -138,7 +138,8 @@ var templateLocationBoxTableHead string
 var templateLocationListHead string
 var templateLocationListLine string
 var templateNewLocation string
-var templateLocationBoxFilesHead string
+
+// var templateLocationBoxFilesHead string
 var templateOwnerListHead string
 var templateOwnerListLine string
 var templateOwnerFilesHead string
@@ -377,23 +378,23 @@ func initLocationTemplates() {
 		<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="deleteLocation(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
 		</tr>
 		`
+	/**
+		templateLocationBoxFilesHead = `
+			<table class="boxfiles">
+			<thead>
+			<tr>
+			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
+			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
+			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
+			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
+			<th class="owner"><a class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
 
-	templateLocationBoxFilesHead = `
-		<table class="boxfiles">
-		<thead>
-		<tr>
-		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-		<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-		<th class="owner"><a class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-		
-		
-		</tr>
-		</thead>
-		<tbody>
-		`
 
+			</tr>
+			</thead>
+			<tbody>
+			`
+	**/
 	// Header for box listing by location
 	templateLocationBoxTableRow = `
 	<tr>
@@ -953,6 +954,17 @@ func emit_page_anchors(w http.ResponseWriter, r *http.Request, cmd string, totro
 	return res
 }
 
+func ajax_setPagesize(w http.ResponseWriter, r *http.Request) {
+
+	pagesize, err := strconv.Atoi(r.FormValue(Param_Labels["pagesize"]))
+	if err != nil {
+		pagesize = prefs.DefaultPagesize
+	}
+	setPagesize(w, r, pagesize)
+
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
 func ajax_setTheme(w http.ResponseWriter, r *http.Request) {
 
 	theme := r.FormValue(Param_Labels["theme"])

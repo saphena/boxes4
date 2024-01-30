@@ -231,7 +231,7 @@ func rangepagesize(r *http.Request) int {
 	if r.FormValue(Param_Labels["pagesize"]) != "" {
 		return n
 	}
-	return prefs.DefaultPagesize
+	return sessionPagesize(r)
 }
 
 func rangeoffset(r *http.Request) int {

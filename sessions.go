@@ -70,11 +70,30 @@ func login(w http.ResponseWriter, r *http.Request) {
 	session.Options.SameSite = http.SameSiteStrictMode
 
 	session.Options.Secure = false // we connect using http.
+	if session.Values["pagesize"] == nil {
+		session.Values["pagesize"] = prefs.DefaultPagesize
+	}
 	session.Save(r, w)
 	//http.Redirect(w, r, "/search", http.StatusAccepted)
 	show_search(w, r)
 }
 
+func sessionPagesize(r *http.Request) int {
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+	if session.Values["pagesize"] == nil {
+		return prefs.DefaultPagesize
+	}
+	return session.Values["pagesize"].(int)
+}
+
+func setPagesize(w http.ResponseWriter, r *http.Request, pagesize int) {
+	session, err := store.Get(r, cookie_name)
+	checkerr(err)
+	session.Values["pagesize"] = pagesize
+	session.Save(r, w)
+
+}
 func sessionTheme(r *http.Request) string {
 
 	session, err := store.Get(r, cookie_name)
@@ -98,7 +117,7 @@ func updateok(r *http.Request) (bool, any, any) {
 
 	session, err := store.Get(r, cookie_name)
 	checkerr(err)
-	if session.Values["authenticated"] == nil || session.Values["authenticated"].(bool) != true {
+	if session.Values["authenticated"] == nil || !session.Values["authenticated"].(bool) {
 		return false, "", ACCESSLEVEL_READONLY
 	}
 	return true, session.Values["userid"], session.Values["accesslevel"]

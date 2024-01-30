@@ -291,7 +291,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	fmt.Fprintf(w, `<div class="filteritems%v">`, hideshow)
 	n := 0
-	nmax := prefs.DefaultPagesize
+	nmax := sessionPagesize(r)
 	for rows.Next() {
 		n++
 		if n > nmax {
@@ -322,7 +322,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	//fmt.Printf("Orange is %v; hideshow is %v\n", params.Orange, hideshow)
 	fmt.Fprintf(w, `<div class="filteritems%v">`, hideshow)
 	n = 0
-	nmax = prefs.DefaultPagesize
+	nmax = sessionPagesize(r)
 	for rows.Next() {
 		n++
 		if n > nmax {

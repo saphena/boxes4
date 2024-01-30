@@ -26,7 +26,6 @@ type table_boxes struct {
 	Min_Review_date string
 	Max_Review_date string
 }
-type csv_boxes [7]string
 
 type table_contents struct {
 	Id          int

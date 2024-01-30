@@ -13,10 +13,10 @@ import (
 	"github.com/pkg/browser"
 )
 
-const apptitle = "BOXES4 version 0.4"
+const apptitle = "BOXES4 version 0.5"
 const developmentversion = false
 
-const copyrite = "Copyright © 2023 Bob Stammers"
+const copyrite = "Copyright © 2024 Bob Stammers"
 
 var cfgfile = flag.String("cfg", "", "Path to YAML configuration file")
 var cssfile = flag.String("css", "", "Path to extra CSS file")
@@ -92,6 +92,7 @@ func main() {
 	http.HandleFunc("/userx", ajax_users)
 	http.HandleFunc("/secret", secret)
 	http.HandleFunc("/theme", ajax_setTheme)
+	http.HandleFunc("/ps", ajax_setPagesize)
 
 	if !*nolocal {
 		browser.OpenURL("http://127.0.0.1:" + prefs.HttpPort)

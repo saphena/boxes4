@@ -220,6 +220,7 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 
 }
 
+/**
 func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 	NumFiles, _ := strconv.Atoi(getValueFromDB("SELECT COUNT(*) AS rex FROM contents WHERE boxid='"+boxid+"'", "0"))
@@ -264,6 +265,7 @@ func showlocationfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	fmt.Fprint(w, `</tbody></table>`)
 
 }
+**/
 
 func default_location() string {
 

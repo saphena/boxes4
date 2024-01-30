@@ -212,6 +212,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 		temp, err := template.New("newBoxContentLine").Parse(t)
 		checkerr(err)
 		err = temp.Execute(w, bfv)
+		checkerr(err)
 	}
 	nrows := 0
 
