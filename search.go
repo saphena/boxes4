@@ -202,7 +202,11 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if session.Values["ExcludeBeforeYear"] == nil {
-		params.Drange = Param_Labels["all"]
+		if prefs.IncludePastYears < 1 {
+			params.Drange = Param_Labels["all"]
+		} else {
+			params.Drange = Param_Labels["selected"]
+		}
 		params.ExcludeBeforeYear = time.Now().Year() - prefs.IncludePastYears
 		session.Values["ExcludeBeforeYear"] = params.ExcludeBeforeYear
 	} else {
