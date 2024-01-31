@@ -74,8 +74,8 @@ func login(w http.ResponseWriter, r *http.Request) {
 		session.Values["pagesize"] = prefs.DefaultPagesize
 	}
 	session.Save(r, w)
-	//http.Redirect(w, r, "/search", http.StatusAccepted)
-	show_search(w, r)
+	http.Redirect(w, r, "/search", http.StatusTemporaryRedirect)
+	//	show_search(w, r)
 }
 
 func sessionPagesize(r *http.Request) int {
