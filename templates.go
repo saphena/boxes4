@@ -110,6 +110,7 @@ type searchResultsVar struct {
 	Contents    string
 	Date        string
 	ShowDate    string
+	DateYYMM    string
 	Find        string
 	FindUrl     string
 	Found       string
@@ -242,7 +243,7 @@ func initBoxTemplates() {
 #DATESELECTORS#
 </td>
 {{else}}
-<td class="date center">{{if .Date}}<a class="lookuplink" href="/find?` + Param_Labels["find"] + `={{.Date}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
+<td class="date center">{{if .Date}}<a class="lookuplink" href="/find?` + Param_Labels["find"] + `={{.DateYYMM}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
 {{end}}
 {{end}}</td>
 {{if .UpdateOK}}<td class="center">
@@ -262,7 +263,7 @@ func initBoxTemplates() {
 <td class="storeref">{{if .Storeref}}<a class="lookuplink" title="Search for {{.Storeref}}" href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 <td class="overview">{{.Overview}}</td>
 <td class="numdocs">{{.NumFilesX}}</td>
-<td class="review_date center">{{if .Single}}{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+<td class="review_date center">{{if .Single}}{{if .Date}}<a class="lookuplink" title="Search for {{.DateYYMM}}" href="find?` + Param_Labels["find"] + `={{.DateYYMM}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 </tr>
 `
 	templateCreateNewBox = `
@@ -330,7 +331,7 @@ func initOwnerTemplates() {
 	<td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 	<td class="name">{{.Name}}</td>
 	<td class="contents">{{.Contents}}</td>
-	<td class="review_date center">{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
+	<td class="review_date center">{{if .Date}}<a class="lookuplink" title="Search for {{.DateYYMM}}" href="/find?` + Param_Labels["find"] + `={{.DateYYMM}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
 	
 	</tr>
 	`
@@ -402,7 +403,7 @@ func initLocationTemplates() {
 	<td class="storeref">{{if .Storeref}}<a class="lookuplink" title="Search for {{.Storeref}}" href="/find?` + Param_Labels["find"] + `={{.StorerefUrl}}&` + Param_Labels["field"] + `=storeref">{{end}}{{.Storeref}}{{if .Storeref}}</a>{{end}}</td>
 	<td class="overview">{{.Contents}}</td>
 	<td class="numdocs">{{.NumFiles}}</td>
-	<td class="review_date center">{{if .Single}}{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
+	<td class="review_date center">{{if .Single}}{{if .Date}}<a class="lookuplink" title="Search for {{.DateYYMM}}" href="find?` + Param_Labels["find"] + `={{.DateYYMM}}&` + Param_Labels["field"] + `=review_date">{{end}}{{end}}{{.ShowDate}}{{if .Single}}{{if .Date}}</a>{{end}}{{end}}</td>
 	</tr>
 	`
 
@@ -482,7 +483,7 @@ I found {{if .Found0}}nothing, nada, rien, zilch.{{end}}{{if .Found1}}just the o
 <td class="client">{{if .Client}}<a href="/find?` + Param_Labels["find"] + `={{.ClientUrl}}&` + Param_Labels["field"] + `=client">{{end}}{{.Client}}{{if .Client}}</a>{{end}}</td>
 <td class="name">{{.Name}}</td>
 <td class="contents">{{.Contents}}</td>
-<td class="date center">{{if .Date}}<a class="lookuplink" title="Search for {{.Date}}" href="/find?` + Param_Labels["find"] + `={{.Date}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
+<td class="date center">{{if .Date}}<a class="lookuplink" title="Search for {{.DateYYMM}}" href="/find?` + Param_Labels["find"] + `={{.DateYYMM}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>{{end}}</td>
 </tr>
 `
 
@@ -677,6 +678,7 @@ type ownerfilesvar struct {
 	Contents  string
 	Date      string
 	ShowDate  string
+	DateYYMM  string
 	Overview  string
 	Desc      bool
 }
@@ -696,6 +698,7 @@ type boxvars struct {
 	Max_review_date string
 	Date            string
 	ShowDate        string
+	DateYYMM        string
 	Desc            bool
 	Single          bool
 	UpdateOK        bool

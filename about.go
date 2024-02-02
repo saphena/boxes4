@@ -13,7 +13,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w, r)
 	fmt.Fprintf(w, "<h2>%v</h2>", apptitle)
-	fmt.Fprintf(w, `<p class='copyrite'>%v <a href="mailto:stammers.bob@gmail.com">stammers.bob@gmail.com</a> </p>`, copyrite)
+	fmt.Fprintf(w, `<p class='copyrite'>%v &lt;stammers.bob@gmail.com&gt; </p>`, copyrite)
 
 	ex, err := os.Executable()
 	checkerr(err)

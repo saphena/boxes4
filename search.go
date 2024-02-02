@@ -18,11 +18,13 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
 	var wherex = ``
+	var isDateSearch bool
 	if r.FormValue(Param_Labels["find"]) != "" {
 		if r.FormValue(Param_Labels["field"]) != "" {
 
 			if r.FormValue(Param_Labels["field"]) == "review_date" {
 				wherex += `review_date LIKE '?%'`
+				isDateSearch = true
 			} else if r.FormValue(Param_Labels["field"]) == "contents" {
 				wherex += `contents LIKE '%?%'`
 			} else if r.FormValue(Param_Labels["field"]) == "name" {
@@ -57,19 +59,22 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 
 	printDebug(fmt.Sprintf("%v", session.Values))
-	if prefs.IncludePastYears > 0 || session.Values["ExcludeBeforeYear"] != nil {
-		firstyear := 0
-		currentyear := time.Now().Year()
-		if session.Values["ExcludeBeforeYear"] != nil {
-			firstyear = session.Values["ExcludeBeforeYear"].(int)
-		} else {
-			firstyear = currentyear - prefs.IncludePastYears
+
+	if !isDateSearch {
+		if prefs.IncludePastYears > 0 || session.Values["ExcludeBeforeYear"] != nil {
+			firstyear := 0
+			currentyear := time.Now().Year()
+			if session.Values["ExcludeBeforeYear"] != nil {
+				firstyear = session.Values["ExcludeBeforeYear"].(int)
+			} else {
+				firstyear = currentyear - prefs.IncludePastYears
+			}
+			if wherex != "" {
+				wherex += " AND "
+			}
+			wherex += " review_date >= '" + strconv.Itoa(firstyear) + "'"
+			printDebug(wherex)
 		}
-		if wherex != "" {
-			wherex += " AND "
-		}
-		wherex += " review_date >= '" + strconv.Itoa(firstyear) + "'"
-		printDebug(wherex)
 	}
 	if session.Values["locations"] != nil {
 		if wherex != "" {
@@ -157,6 +162,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		res.ClientUrl = template.URLQueryEscaper(res.Client)
 		res.StorerefUrl = template.URLQueryEscaper(res.Storeref)
 		res.ShowDate = formatShowDate(res.Date)
+		res.DateYYMM = formatDateYYMM(res.Date)
 		err = html.Execute(w, res)
 		if err != nil {
 			panic(err)

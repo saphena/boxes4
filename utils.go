@@ -96,6 +96,11 @@ func fixAllLowercase(s string) string {
 
 }
 
+func formatDateYYMM(iso8601dt string) string {
+
+	return iso8601dt[:7]
+
+}
 func formatShowDate(iso8601dt string) string {
 
 	dt, err := time.Parse("2006-01-02", iso8601dt)

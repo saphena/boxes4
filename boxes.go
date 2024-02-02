@@ -111,6 +111,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 		if box.Max_review_date == box.Min_review_date {
 			box.Date = box.Max_review_date
 			box.ShowDate = formatShowDate(box.Date)
+			box.DateYYMM = formatDateYYMM(box.Date)
 			box.Single = true
 		} else {
 			//fmt.Printf("Min date is %v, max date is %v\n", box.Min_review_date, box.Max_review_date)

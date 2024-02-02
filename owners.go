@@ -103,6 +103,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		ofv.BoxidUrl = template.URLQueryEscaper(ofv.Boxid)
 		ofv.ClientUrl = template.URLQueryEscaper(ofv.Client)
 		ofv.ShowDate = formatShowDate((ofv.Date))
+		ofv.DateYYMM = formatDateYYMM(ofv.Date)
 		err = html.Execute(w, ofv)
 		checkerr(err)
 	}
