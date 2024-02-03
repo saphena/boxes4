@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,11 +10,15 @@ import (
 	"time"
 )
 
+//go:embed contactbob.html
+var contactbob string
+
 func about(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w, r)
 	fmt.Fprintf(w, "<h2>%v</h2>", apptitle)
-	fmt.Fprintf(w, `<p class='copyrite'>%v &lt;stammers.bob@gmail.com&gt; </p>`, copyrite)
+	fmt.Fprint(w, contactbob)
+	fmt.Fprintf(w, `<p class='copyrite lookuplink' onclick="showContactBob()">%v</p>`, copyrite)
 
 	ex, err := os.Executable()
 	checkerr(err)

@@ -1,0 +1,176 @@
+<script>
+  const cbpanelSpinning = [
+    { transform: "rotate(0) scale(1)" },
+    { transform: "rotate(360deg) scale(0)" },
+  ];
+
+  function hidecbpanel() {
+    cbpanel.style.display = "none";
+  }
+
+  function closecbpanel(obj, tim) {
+    cbpanel = obj;
+    closepaneltime = tim;
+    obj.animate(cbpanelSpinning, { duration: tim, iterations: 1 });
+    setTimeout(hidecbpanel, closepaneltime - 10);
+  }
+  function showContactBob() {
+    let cb = document.querySelector("#contactbob");
+    if (cb) {
+      cb.style.display = "block";
+    }
+  }
+</script>
+<style>
+  #contactbob {
+    background-color: lightblue;
+    border: solid;
+    padding: 0 1em 1em 1em;
+    width: 30em;
+    display: none;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+  }
+  #contactbob p {
+    font-size: small;
+  }
+  #contactbob table {
+    border-spacing: 0;
+    border-collapse: collapse;
+    background-color: inherit;
+  }
+  #contactbob td {
+    background-color: inherit;
+    font-size: inherit;
+    padding: 0.5em;
+    border: none;
+  }
+</style>
+<div id="contactbob" onclick="closecbpanel(this,3000)">
+  <h4>Bob Stammers</h4>
+  <p>
+    Bob is the author, maintainer and copyright holder of this software and has
+    licensed it for use with the well-known MIT licence.
+  </p>
+  <table>
+    <tr>
+      <td>
+        <svg
+          version="1.0"
+          xmlns="http://www.w3.org/2000/svg"
+          width="30pt"
+          height="15pt"
+          viewBox="0 0 70.000000 52.000000"
+          36
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <g
+            transform="translate(0.000000,52.000000) scale(0.100000,-0.100000)"
+            fill="#000000"
+            stroke="none"
+          >
+            <path
+              d="M47 472 c-24 -27 -25 -312 -1 -336 13 -13 43 -16 174 -16 l158 0 20
+-34 c26 -43 60 -66 109 -73 40 -5 93 10 93 27 0 6 -22 7 -57 4 -50 -5 -62 -3
+-87 17 -37 29 -58 79 -50 119 9 40 54 85 94 94 69 13 140 -46 140 -116 0 -35
+-2 -39 -22 -36 -19 2 -24 10 -26 45 -3 41 -4 42 -48 49 -54 8 -84 -13 -84 -58
+0 -49 65 -89 96 -58 6 6 21 6 41 -2 28 -10 35 -9 54 7 17 16 20 28 16 64 -6
+55 -32 91 -85 116 l-41 20 -1 73 c0 115 6 112 -258 112 -199 0 -220 -2 -235
+-18z m346 -84 c-48 -39 -93 -75 -99 -80 -10 -7 -125 76 -198 143 -6 5 76 9
+188 9 l197 0 -88 -72z m-228 -28 c54 -44 107 -80 118 -80 11 0 64 36 118 80
+54 44 100 80 103 80 4 0 6 -31 6 -69 0 -68 -1 -70 -28 -76 -41 -9 -90 -63
+-100 -110 l-8 -40 -134 -3 c-197 -4 -180 -19 -180 153 0 80 2 145 4 145 2 0
+47 -36 101 -80z m379 -173 c28 -20 18 -61 -16 -65 -37 -4 -57 31 -32 59 20 23
+25 23 48 6z"
+            />
+          </g>
+        </svg>
+      </td>
+      <td>stammers.bob@gmail.com</td>
+    </tr>
+    <tr>
+      <td>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="30pt"
+          height="20pt"
+          viewBox="0 0 175.216 175.552"
+        >
+          <defs>
+            <linearGradient
+              id="b"
+              x1="85.915"
+              x2="86.535"
+              y1="32.567"
+              y2="137.092"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop offset="0" stop-color="#57d163" />
+              <stop offset="1" stop-color="#23b33a" />
+            </linearGradient>
+            <filter
+              id="a"
+              width="1.115"
+              height="1.114"
+              x="-.057"
+              y="-.057"
+              color-interpolation-filters="sRGB"
+            >
+              <feGaussianBlur stdDeviation="3.531" />
+            </filter>
+          </defs>
+          <path
+            fill="#b3b3b3"
+            d="m54.532 138.45 2.235 1.324c9.387 5.571 20.15 8.518 31.126 8.523h.023c33.707 0 61.139-27.426 61.153-61.135.006-16.335-6.349-31.696-17.895-43.251A60.75 60.75 0 0 0 87.94 25.983c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.312-6.179 22.558zm-40.811 23.544L24.16 123.88c-6.438-11.154-9.825-23.808-9.821-36.772.017-40.556 33.021-73.55 73.578-73.55 19.681.01 38.154 7.669 52.047 21.572s21.537 32.383 21.53 52.037c-.018 40.553-33.027 73.553-73.578 73.553h-.032c-12.313-.005-24.412-3.094-35.159-8.954zm0 0"
+            filter="url(#a)"
+          />
+          <path
+            fill="#fff"
+            d="m12.966 161.238 10.439-38.114a73.42 73.42 0 0 1-9.821-36.772c.017-40.556 33.021-73.55 73.578-73.55 19.681.01 38.154 7.669 52.047 21.572s21.537 32.383 21.53 52.037c-.018 40.553-33.027 73.553-73.578 73.553h-.032c-12.313-.005-24.412-3.094-35.159-8.954z"
+          />
+          <path
+            fill="url(#linearGradient1780)"
+            d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.312-6.179 22.559 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.518 31.126 8.524h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.929z"
+          />
+          <path
+            fill="url(#b)"
+            d="M87.184 25.227c-33.733 0-61.166 27.423-61.178 61.13a60.98 60.98 0 0 0 9.349 32.535l1.455 2.313-6.179 22.558 23.146-6.069 2.235 1.324c9.387 5.571 20.15 8.517 31.126 8.523h.023c33.707 0 61.14-27.426 61.153-61.135a60.75 60.75 0 0 0-17.895-43.251 60.75 60.75 0 0 0-43.235-17.928z"
+          />
+          <path
+            fill="#fff"
+            fill-rule="evenodd"
+            d="M68.772 55.603c-1.378-3.061-2.828-3.123-4.137-3.176l-3.524-.043c-1.226 0-3.218.46-4.902 2.3s-6.435 6.287-6.435 15.332 6.588 17.785 7.506 19.013 12.718 20.381 31.405 27.75c15.529 6.124 18.689 4.906 22.061 4.6s10.877-4.447 12.408-8.74 1.532-7.971 1.073-8.74-1.685-1.226-3.525-2.146-10.877-5.367-12.562-5.981-2.91-.919-4.137.921-4.746 5.979-5.819 7.206-2.144 1.381-3.984.462-7.76-2.861-14.784-9.124c-5.465-4.873-9.154-10.891-10.228-12.73s-.114-2.835.808-3.751c.825-.824 1.838-2.147 2.759-3.22s1.224-1.84 1.836-3.065.307-2.301-.153-3.22-4.032-10.011-5.666-13.647"
+          />
+        </svg>
+      </td>
+      <td>07960 393 026</td>
+    </tr>
+    <tr>
+      <td>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="30pt"
+          height="20pt"
+          viewBox="0 0 92 92"
+        >
+          <defs>
+            <clipPath id="a">
+              <path d="M0 .113h91.887V92H0Zm0 0" />
+            </clipPath>
+          </defs>
+          <g clip-path="url(#a)">
+            <path
+              style="
+                stroke: none;
+                fill-rule: nonzero;
+                fill: #f03c2e;
+                fill-opacity: 1;
+              "
+              d="M90.156 41.965 50.036 1.848a5.918 5.918 0 0 0-8.372 0l-8.328 8.332 10.566 10.566a7.03 7.03 0 0 1 7.23 1.684 7.034 7.034 0 0 1 1.669 7.277l10.187 10.184a7.028 7.028 0 0 1 7.278 1.672 7.04 7.04 0 0 1 0 9.957 7.05 7.05 0 0 1-9.965 0 7.044 7.044 0 0 1-1.528-7.66l-9.5-9.497V59.36a7.04 7.04 0 0 1 1.86 11.29 7.04 7.04 0 0 1-9.957 0 7.04 7.04 0 0 1 0-9.958 7.06 7.06 0 0 1 2.304-1.539V33.926a7.049 7.049 0 0 1-3.82-9.234L29.242 14.272 1.73 41.777a5.925 5.925 0 0 0 0 8.371L41.852 90.27a5.925 5.925 0 0 0 8.37 0l39.934-39.934a5.925 5.925 0 0 0 0-8.371"
+            />
+          </g>
+        </svg>
+      </td>
+      <td>github.com/saphena/boxes4</td>
+    </tr>
+  </table>
+</div>

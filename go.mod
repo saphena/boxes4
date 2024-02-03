@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/gorilla/sessions v1.2.2
-	github.com/mattn/go-sqlite3 v1.14.20
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	golang.org/x/text v0.14.0
 	gopkg.in/yaml.v2 v2.4.0
