@@ -100,31 +100,32 @@ type searchVars struct {
 }
 
 type searchResultsVar struct {
-	Boxid       string
-	BoxidUrl    string
-	Owner       string
-	OwnerUrl    string
-	Client      string
-	ClientUrl   string
-	Name        string
-	Contents    string
-	Date        string
-	ShowDate    string
-	DateYYMM    string
-	Find        string
-	FindUrl     string
-	Found       string
-	OneField    string
-	Desc        bool
-	Storeref    string
-	StorerefUrl string
-	Overview    string
-	Field       string
-	Found0      bool
-	Found1      bool
-	Found2      bool
-	Locations   string
-	Owners      string
+	Boxid             string
+	BoxidUrl          string
+	Owner             string
+	OwnerUrl          string
+	Client            string
+	ClientUrl         string
+	Name              string
+	Contents          string
+	Date              string
+	ShowDate          string
+	DateYYMM          string
+	Find              string
+	FindUrl           string
+	Found             string
+	OneField          string
+	Desc              bool
+	Storeref          string
+	StorerefUrl       string
+	Overview          string
+	Field             string
+	Found0            bool
+	Found1            bool
+	Found2            bool
+	Locations         string
+	Owners            string
+	ExcludeBeforeYear int
 }
 
 var templateSearchHome string
@@ -140,7 +141,6 @@ var templateLocationListHead string
 var templateLocationListLine string
 var templateNewLocation string
 
-// var templateLocationBoxFilesHead string
 var templateOwnerListHead string
 var templateOwnerListLine string
 var templateOwnerFilesHead string
@@ -243,7 +243,7 @@ func initBoxTemplates() {
 #DATESELECTORS#
 </td>
 {{else}}
-<td class="date center">{{if .Date}}<a class="lookuplink" href="/find?` + Param_Labels["find"] + `={{.DateYYMM}}">{{end}}{{.ShowDate}}{{if .Date}}</a>
+<td class="date center">{{if .Date}}<a class="lookuplink" href="/find?` + Param_Labels["find"] + `={{.DateYYMM}}&` + Param_Labels["field"] + `=review_date">{{end}}{{.ShowDate}}{{if .Date}}</a>
 {{end}}
 {{end}}</td>
 {{if .UpdateOK}}<td class="center">
@@ -379,23 +379,6 @@ func initLocationTemplates() {
 		<td class="numboxes">{{if .DeleteOK}}<input type="button" class="btn" value="Delete" onclick="deleteLocation(this);">{{else}}{{.NumBoxesX}}{{end}}</td>
 		</tr>
 		`
-	/**
-		templateLocationBoxFilesHead = `
-			<table class="boxfiles">
-			<thead>
-			<tr>
-			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">` + prefs.Field_Labels["owner"] + `</a></th>
-			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=client{{if .Desc}}&` + Param_Labels["desc"] + `=client{{end}}">` + prefs.Field_Labels["client"] + `</a></th>
-			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
-			<th class="owner"><a title="&#8645;" class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
-			<th class="owner"><a class="sortlink" href="/boxes?` + Param_Labels["boxid"] + `={{.Boxid}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
-
-
-			</tr>
-			</thead>
-			<tbody>
-			`
-	**/
 	// Header for box listing by location
 	templateLocationBoxTableRow = `
 	<tr>
@@ -438,7 +421,7 @@ func initSearchTemplates() {
 	* Enter review dates as <em>yyyy</em> or <em>yyyy-mm</em> eg: '2026-03'.
 	</main></form>
 	<p>If you want to restrict the range of records searched, <a href="/params">specify search options here</a>.</p>
-	<p>{{if or .Locations .Owners .ExcludeBeforeYear }}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{if .ExcludeBeforeYear}}<strong>` + prefs.Field_Labels["review_date"] + ` >= {{.ExcludeBeforeYear}}</strong>{{end}}{{end}}</p>
+	<p>{{if or .Locations .Owners .ExcludeBeforeYear }}Current search restrictions:- {{if .Locations}}<strong>` + prefs.Field_Labels["location"] + `: {{.Locations}};</strong> {{end}} {{if .Owners}}<strong>` + prefs.Field_Labels["owner"] + `: {{.Owners}};</strong> {{end}} {{if .ExcludeBeforeYear}}<strong>` + prefs.Field_Labels["review_date"] + ` &ge; {{.ExcludeBeforeYear}}</strong>{{end}}{{end}}</p>
 	`
 
 	// Search response header before page links
@@ -448,6 +431,7 @@ func initSearchTemplates() {
 {{if .Field}} in {{.Field}}{{end}}
 {{if .Locations}} [` + prefs.Field_Labels["location"] + `: {{.Locations}}]{{end}}
 {{if .Owners}} [` + prefs.Field_Labels["owner"] + `: {{.Owners}}]{{end}}
+{{if .ExcludeBeforeYear}} [` + prefs.Field_Labels["review_date"] + `: &ge; {{.ExcludeBeforeYear}}]{{end}}
 </span> and
 {{else}}{{if or .Locations .Owners}}
 	<span class="searchedfor">
@@ -716,6 +700,7 @@ type boxfilevars struct {
 	Contents  string
 	Date      string
 	ShowDate  string
+	DateYYMM  string
 	Desc      bool
 	DeleteOK  bool
 	UpdateOK  bool

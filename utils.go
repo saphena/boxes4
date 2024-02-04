@@ -194,7 +194,9 @@ func loadConfiguration(cfgfile *string) {
 func checkerr(err error) {
 	if err != nil {
 		fmt.Printf("ERROR: %v\n", err)
-		panic(err)
+		if *debug {
+			panic(err)
+		}
 	}
 }
 

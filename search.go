@@ -19,6 +19,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	var sqlx = ` FROM contents LEFT JOIN boxes ON contents.boxid=boxes.boxid `
 	var wherex = ``
 	var isDateSearch bool
+	var isOwnerSearch bool
 	if r.FormValue(Param_Labels["find"]) != "" {
 		if r.FormValue(Param_Labels["field"]) != "" {
 
@@ -31,6 +32,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 				wherex += `name LIKE '%?%'`
 			} else if r.FormValue(Param_Labels["field"]) == "owner" {
 				wherex += `(owner = '?' OR owner LIKE '?/%' OR owner LIKE '%/?')`
+				isOwnerSearch = true
 			} else if r.FormValue(Param_Labels["field"]) == "client" {
 				wherex += `(client LIKE '?%' OR client LIKE '?/%' OR client LIKE '%/?')`
 			} else {
@@ -82,11 +84,13 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 		}
 		wherex += " location In (" + session.Values["locations"].(string) + ")"
 	}
-	if session.Values["owners"] != nil {
-		if wherex != "" {
-			wherex += " AND "
+	if !isOwnerSearch {
+		if session.Values["owners"] != nil {
+			if wherex != "" {
+				wherex += " AND "
+			}
+			wherex += " owner In (" + session.Values["owners"].(string) + ")"
 		}
-		wherex += " owner In (" + session.Values["owners"].(string) + ")"
 	}
 	x, _ := url.QueryUnescape(r.FormValue(Param_Labels["find"]))
 	wherex = strings.ReplaceAll(wherex, "?", strings.ReplaceAll(x, "'", "''"))
@@ -108,9 +112,21 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	if session.Values["locations"] != nil {
 		res.Locations = session.Values["locations"].(string)
 	}
-	if session.Values["owners"] != nil {
-		res.Owners = session.Values["owners"].(string)
+	if !isOwnerSearch {
+		if session.Values["owners"] != nil {
+			res.Owners = session.Values["owners"].(string)
+		}
 	}
+
+	res.ExcludeBeforeYear = 0
+	if !isDateSearch {
+		if session.Values["ExcludeBeforeYear"] != nil {
+			res.ExcludeBeforeYear = session.Values["ExcludeBeforeYear"].(int)
+		} else if prefs.IncludePastYears > 0 {
+			res.ExcludeBeforeYear = time.Now().Year() - prefs.IncludePastYears
+		}
+	}
+
 	res.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
 
 	res.Boxid = order_dir(r, "boxid")

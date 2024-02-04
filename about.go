@@ -36,10 +36,10 @@ func about(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, "<p>Database not updated</p>")
 	}
 
-	if !updating {
+	if !updating || alevel != ACCESSLEVEL_SUPER {
 		fmt.Fprint(w, `<p>Click [`+prefs.Menu_Labels["update"]+`] above and login as a user with CONTROLLER accesslevel to get more info. `)
 		var uids []string
-		rows, err := DBH.Query("SELECT userid FROM users WHERE accesslevel >= " + strconv.Itoa(ACCESSLEVEL_UPDATE))
+		rows, err := DBH.Query("SELECT userid FROM users WHERE accesslevel >= " + strconv.Itoa(ACCESSLEVEL_SUPER))
 		if err != nil {
 			panic(err)
 		}
@@ -97,16 +97,16 @@ func about(w http.ResponseWriter, r *http.Request) {
 func show_terminology(w http.ResponseWriter, r *http.Request) {
 	const terms = `
 	<dl class="termstable">
-	<dt>Location</dt>
-	<dd>A storage location, a place to store <em>boxes</em>. A warehouse, cellar, cupboard, etc.</dd>
-	<dt>Owner</dt>
-	<dd>The individual, entity or department responsible for or having ownership of one or more <em>files</em>. Owners are identified usually by short codes representing, say, a partner's initials or a department such as 'PAYROLL'.</dd>
-	<dt>File (Contents)</dt>
-	<dd>A folder of related documents, belonging to a particular <em>owner</em> and <em>client</em>.</dd>
 	<dt>Box</dt>
 	<dd>A box or container holding one or more <em>files</em>, stored in a <em>location</em> often having a <em>storage reference</em> associated with that particular location. Each box is identified by a unique 'boxid'.</dd>
 	<dt>Client</dt>
 	<dd>Identifies which of the firm's clients or other external entities a <em>file</em> relates to. Both client numbers and names are held and are searchable.</dd>
+	<dt>File (Contents)</dt>
+	<dd>A folder of related documents, belonging to a particular <em>owner</em> and <em>client</em>.</dd>
+	<dt>Location</dt>
+	<dd>A storage location, a place to store <em>boxes</em>. A warehouse, cellar, cupboard, etc.</dd>
+	<dt>Owner</dt>
+	<dd>The individual, entity or department responsible for or having ownership of one or more <em>files</em>. Owners are identified usually by short codes representing, say, a partner's initials or a department such as 'PAYROLL'.</dd>
 	<dt>Review date</dt>
 	<dd>The date (month &amp; year) when individual <em>files</em> should be considered for destruction or other disposal.</dd>
 	<dt>Storage reference</dt>

@@ -224,6 +224,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 
 		t := strings.ReplaceAll(templateBoxFilesLine, "#DATESELECTORS#", generateDatePicklist(bfv.Date, Param_Labels["review_date"], "contentSaveNeeded(this.parentElement);"))
 		bfv.ShowDate = formatShowDate(bfv.Date)
+		bfv.DateYYMM = formatDateYYMM(bfv.Date)
 		html, err = template.New("boxFilesLine").Parse(t)
 		checkerr(err)
 

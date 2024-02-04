@@ -49,7 +49,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	html, err := template.New("ownerListHead").Parse(templateOwnerListHead)
 	checkerr(err)
-	plv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"])
+	plv.Desc = r.FormValue(Param_Labels["desc"]) != r.FormValue(Param_Labels["order"]) || r.FormValue(Param_Labels["order"]) == ""
 	plv.NumOrder = r.FormValue(Param_Labels["order"]) == Param_Labels["numdocs"]
 	err = html.Execute(w, plv)
 	checkerr(err)

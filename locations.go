@@ -206,6 +206,7 @@ func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, Nu
 			bv.ShowDate = bv.Date
 			bv.Single = false
 		}
+		bv.DateYYMM = formatDateYYMM(bv.Date)
 		bv.LocationUrl = template.URLQueryEscaper(loc.Location)
 		bv.StorerefUrl = template.URLQueryEscaper(bv.Storeref)
 		bv.BoxidUrl = template.URLQueryEscaper(bv.Boxid)
