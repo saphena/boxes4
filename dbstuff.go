@@ -48,6 +48,23 @@ var orphaned_boxes []string
 var empty_boxes []string
 var big_boxes []string
 
+// buildOwnersTable is called only once to populate the new table owners.
+// Repeated calls will do no harm.
+func buildOwnersTable() {
+
+	sqlx := "INSERT OR IGNORE INTO owners(owner,name) SELECT DISTINCT TRIM(owner), LOWER(TRIM(owner)) FROM contents ORDER BY TRIM(owner);"
+	DBExec(sqlx)
+}
+
+// syncOwner is called whenever an owner field is updated in contents in order
+// to maintain the separate owners table. No entries are deleted from the table.
+func syncOwner(owner string) {
+
+	sqlx := "INSERT OR IGNORE INTO owners(owner,name) VALUES('" + safesql(owner) + "','" + strings.ToLower((safesql(owner))) + "');"
+	DBExec(sqlx)
+
+}
+
 func DBEscape(arg string) string {
 
 	return strings.ReplaceAll(arg, "'", "''")
@@ -222,6 +239,8 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	//fmt.Println("Checked for zombies")
+
+	buildOwnersTable()
 
 	list_empty_boxes()
 	if len(empty_boxes) > 0 {

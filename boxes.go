@@ -314,6 +314,7 @@ func ajax_add_new_content(w http.ResponseWriter, r *http.Request) {
 	}
 	n, err := res.LastInsertId()
 	checkerr(err)
+	syncOwner(owner)
 	nf, ld, hd := update_ajax_box_contents(boxid)
 	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v","recid":"%v"}`, nf, ld, hd, n)
 
@@ -378,6 +379,8 @@ func ajax_update_content_line(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, `{"res":"Database operation failed!"}`)
 		return
 	}
+
+	syncOwner(owner)
 
 	nf, ld, hd := update_ajax_box_contents(boxid)
 	fmt.Fprintf(w, `{"res":"ok","nfiles":"%v","lodate":"%v","hidate":"%v"}`, nf, ld, hd)

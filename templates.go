@@ -77,6 +77,7 @@ var Param_Labels = map[string]string{
 	"delbox":            "kbx",
 	"ExcludeBeforeYear": "xby",
 	"theme":             "ttt",
+	"delowner":          "kwn",
 }
 
 type AppVars struct {
@@ -297,6 +298,11 @@ func initOwnerTemplates() {
 	
 	
 	<th class="owner">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["order"] + `=owner{{if .Desc}}&` + Param_Labels["desc"] + `=owner{{end}}">{{end}}` + prefs.Field_Labels["owner"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+
+	<th class="name">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">{{end}}` + prefs.Field_Labels["name"] + `{{if .Single}}{{else}}</a>{{end}}</th>
+	
+	{{if .UpdateOK}}<th></th>{{end}}
+
 	<th class="number">{{if .Single}}{{else}}<a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["order"] + `=numdocs{{if .Desc}}&` + Param_Labels["desc"] + `=numdocs{{end}}">{{end}}` + prefs.Field_Labels["numdocs"] + `{{if .Single}}{{else}}</a>{{end}}</th>
 	</tr>
 	</thead>
@@ -313,6 +319,7 @@ func initOwnerTemplates() {
 	<th class="name"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=name{{if .Desc}}&` + Param_Labels["desc"] + `=name{{end}}">` + prefs.Field_Labels["name"] + `</a></th>
 	<th class="contents"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=contents{{if .Desc}}&` + Param_Labels["desc"] + `=contents{{end}}">` + prefs.Field_Labels["contents"] + `</a></th>
 	<th class="review_date"><a title="&#8645;" class="sortlink" href="/owners?` + Param_Labels["owner"] + `={{.Owner}}&` + Param_Labels["order"] + `=review_date{{if .Desc}}&` + Param_Labels["desc"] + `=review_date{{end}}">` + prefs.Field_Labels["review_date"] + `</a></th>
+
 	</tr>
 	</thead>
 	<tbody>
@@ -321,6 +328,26 @@ func initOwnerTemplates() {
 	templateOwnerListLine = `
 	<tr>
 	<td class="owner">{{if .Single}}{{else}}{{if .Owner}}<a href="/owners?` + Param_Labels["owner"] + `={{.OwnerUrl}}">{{end}}{{end}}{{.Owner}}{{if .Single}}{{else}}{{if .Owner}}</a>{{end}}{{end}}</td>
+
+	<td class="name">
+		{{if and .Single .UpdateOK}}
+			<input type="hidden" id="AutosaveSeconds" value="` + strconv.Itoa(prefs.AutosaveSeconds) + `">
+			<input id="ownername" data-owner="{{.Owner}}" oninput="autosave_OwnerName(this);"  
+			value="{{if .Name}}{{.Name}}{{end}}">
+		{{else}}
+			{{if .Name}}{{.Name}}{{end}}
+		{{end}}
+	</td>
+
+	{{if and .Single .UpdateOK}}
+		<td>
+			<input type="button" class="btn hide" id="saveOwnerName" value="Save changes" onclick="updateOwnerName(this);">
+			{{if .DeleteOK}}
+				<input type="checkbox" title="Enable delete button" onchange="this.nextElementSibling.classList.remove('hide');this.classList.add('hide');">
+				<input type="button" class="btn hide" data-owner="{{.Owner}}" value="Delete" onclick="deleteChildlessOwner(this);">
+			{{end}}
+		</td>
+	{{end}}
 	<td class="vdata">{{.NumFilesX}}</td>
 	</tr>
 	`
@@ -644,11 +671,14 @@ type locationlistvars struct {
 type ownerlistvars struct {
 	Owner     string
 	OwnerUrl  string
+	Name      string
 	NumFiles  int
 	NumFilesX string
 	Desc      bool
 	NumOrder  bool
 	Single    bool
+	UpdateOK  bool
+	DeleteOK  bool
 }
 
 type ownerfilesvar struct {

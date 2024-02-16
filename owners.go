@@ -11,15 +11,31 @@ import (
 
 func showowners(w http.ResponseWriter, r *http.Request) {
 
+	if r.FormValue(Param_Labels["owner"]) != "" && r.FormValue(Param_Labels["name"]) != "" {
+
+		update_owner_name(w, r.FormValue(Param_Labels["owner"]), r.FormValue(Param_Labels["name"]))
+		return
+
+	}
+
+	if r.FormValue(Param_Labels["owner"]) != "" && r.FormValue(Param_Labels["delowner"]) == "1" {
+
+		delete_childless_owner(w, r.FormValue(Param_Labels["owner"]))
+		return
+
+	}
+
 	start_html(w, r)
 
 	owner, _ := url.QueryUnescape(r.FormValue(Param_Labels["owner"]))
-	sqlx := "SELECT DISTINCT TRIM(owner), COUNT(TRIM(owner)) AS numdocs FROM contents "
-	sqlx += "GROUP BY TRIM(owner) "
-	if owner != "" {
-		sqlx += "HAVING TRIM(owner) = '" + strings.ReplaceAll(owner, "'", "''") + "' "
-	}
 
+	sqlx := "SELECT owners.owner AS owner, IFNULL(owners.name,'') AS name, "
+	sqlx += "COUNT(contents.owner) AS numdocs FROM owners "
+	sqlx += "LEFT JOIN contents ON TRIM(contents.owner)=owners.owner "
+	if owner != "" {
+		sqlx += "WHERE owners.owner='" + strings.ReplaceAll(owner, "'", "''") + "' "
+	}
+	sqlx += "GROUP BY TRIM(contents.owner) "
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += "ORDER BY " + r.FormValue(Param_Labels["order"])
 		if r.FormValue(Param_Labels["desc"]) != "" {
@@ -27,6 +43,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	fmt.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()
@@ -46,6 +63,8 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	var plv ownerlistvars
 	plv.Single = owner != ""
+	plv.UpdateOK = runvars.Updating
+	plv.DeleteOK = runvars.Updating
 
 	html, err := template.New("ownerListHead").Parse(templateOwnerListHead)
 	checkerr(err)
@@ -57,7 +76,8 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	html, err = template.New("ownerListLine").Parse(templateOwnerListLine)
 	checkerr(err)
 	for rows.Next() {
-		rows.Scan(&plv.Owner, &plv.NumFiles)
+		plv.Name = ""
+		rows.Scan(&plv.Owner, &plv.Name, &plv.NumFiles)
 		plv.OwnerUrl = template.URLQueryEscaper(plv.Owner)
 		plv.NumFilesX = commas(plv.NumFiles)
 		err := html.Execute(w, plv)
@@ -109,5 +129,23 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `</tbody></table>`)
 	emitTrailer(w, r)
+
+}
+
+func update_owner_name(w http.ResponseWriter, owner string, name string) {
+
+	namex := strings.Trim(name, " ")
+	//fmt.Printf("UON: '%v','%v'\n", owner, name)
+	sqlx := "UPDATE owners SET name='" + safesql(namex) + "' WHERE owner='" + safesql(owner) + "'"
+	DBExec(sqlx)
+	fmt.Fprint(w, `{"res":"ok"}`)
+
+}
+
+func delete_childless_owner(w http.ResponseWriter, owner string) {
+
+	sqlx := "DELETE FROM owners WHERE owner='" + safesql(owner) + "'"
+	DBExec(sqlx)
+	fmt.Fprint(w, `{"res":"ok"}`)
 
 }

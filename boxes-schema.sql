@@ -14,21 +14,21 @@ CREATE TABLE IF NOT EXISTS "boxes" (
 	"overview"	TEXT COLLATE NOCASE,
 	"numdocs"	INTEGER,
 	"min_review_date"	TEXT COLLATE NOCASE,
-	"max_review_date"	TEXT COLLATE NOCASE
+	"max_review_date"	TEXT COLLATE NOCASE,
+	PRIMARY KEY("boxid")
 );
 CREATE TABLE IF NOT EXISTS "users" (
 	"userid"	TEXT,
 	"userpass"	TEXT,
 	"accesslevel"	INTEGER
 );
-INSERT INTO users (userid,userpass,accesslevel) VALUES('admin','admin',9);
+INSERT OR IGNORE INTO users (userid,userpass,accesslevel) VALUES('admin','admin',9);
 CREATE TABLE IF NOT EXISTS "locations" (
 	"id"	INTEGER NOT NULL,
 	"location"	TEXT COLLATE NOCASE,
-	"autonum"	INTEGER NOT NULL DEFAULT 1,
-	PRIMARY KEY("id" AUTOINCREMENT)
+	PRIMARY KEY("id")
 );
-INSERT INTO locations (location) VALUES('default');
+INSERT OR IGNORE INTO locations (location) VALUES('default');
 CREATE TABLE IF NOT EXISTS "contents" (
 	"id"	INTEGER NOT NULL,
 	"boxid"	TEXT COLLATE NOCASE,
@@ -37,6 +37,11 @@ CREATE TABLE IF NOT EXISTS "contents" (
 	"owner"	TEXT COLLATE NOCASE,
 	"name"	TEXT COLLATE NOCASE,
 	"client"	TEXT COLLATE NOCASE,
-	PRIMARY KEY("id" AUTOINCREMENT)
+	PRIMARY KEY("id")
+);
+CREATE TABLE IF NOT EXISTS "owners" (
+	"owner" TEXT COLLATE NOCASE,
+	"name" TEXT COLLATE NOCASE,
+	PRIMARY KEY("owner")
 );
 COMMIT;

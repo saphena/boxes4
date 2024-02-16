@@ -47,6 +47,7 @@ const Param_Labels = {
 	"delbox":          "kbx",
 	"ExcludeBeforeYear": "xby",
 	"theme":			"ttt",
+	"delowner":			"kwn",
 }
 
 
@@ -646,6 +647,75 @@ function my_UBC_button(obj) {
 	return btn;
 
 }
+
+function autosave_OwnerName(obj) {
+
+	obj.classList.add('warning');
+
+	let btn = document.getElementById('saveOwnerName');
+	btn.classList.remove('hide');
+	btn.disabled = false;
+	let ass = 0;
+	let assobj = document.getElementById('AutosaveSeconds');
+	if (assobj) ass = assobj.value;
+	console.log('ass: '+ass);
+	if (btn.timer) {
+		clearTimeout(btn.timer);
+	}
+	btn.timer = setTimeout(updateOwnerName,ass * 1000,btn);
+
+}
+
+function updateOwnerName(btn) {
+
+	let namefield = document.getElementById('ownername');
+	btn.disabled = true;
+	let owner = namefield.getAttribute('data-owner');
+	let name = namefield.value;
+	if (name == '') name = ' '; // an empty string won't be detected in Go
+
+	let url = "/owners?"+Param_Labels["owner"]+"="+owner;
+	url += "&"+Param_Labels["name"]+"="+encodeURIComponent(name);
+
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			namefield.classList.remove('warning');
+			btn.classList.add('hide');
+		} else {
+			btn.disabled = false;
+			showErrorMsg(res.res);
+		}
+	});
+
+}
+
+
+function deleteChildlessOwner(btn) {
+
+	btn.disabled = true;
+	let owner = btn.getAttribute('data-owner');
+
+	let url = "/owners?"+Param_Labels["owner"]+"="+owner;
+	url += "&"+Param_Labels["delowner"]+"=1";
+
+	console.log(url);
+	fetch(url,{method: "POST"})
+	.then(res => res.json())
+	.then(res => {
+		if (res.res=="ok") {
+			btn.classList.add('hide');
+			window.location.replace("/owners");
+		} else {
+			btn.disabled = false;
+			showErrorMsg(res.res);
+		}
+	});
+
+}
+
 
 function autosave_UBC(obj) {
 

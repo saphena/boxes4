@@ -121,7 +121,7 @@ HistoryLog:
 # A value of 0 means don't filter old records
 IncludePastYears: 5
 
-DefaultTheme: classic #paperwhite
+DefaultTheme: paperwhite
 
 Themes: 
   classic:
