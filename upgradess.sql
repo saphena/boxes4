@@ -1,7 +1,7 @@
 -- This script will upgrade boxes.db running live in SS to Boxes4 standard
 BEGIN TRANSACTION;
 CREATE TABLE IF NOT EXISTS "owners" (
-	"owner" TEXT COLLATE NOCASE,
+	"owner" TEXT NOT NULL COLLATE NOCASE,
 	"name" TEXT COLLATE NOCASE,
 	PRIMARY KEY("owner")
 );

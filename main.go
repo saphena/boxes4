@@ -14,7 +14,7 @@ import (
 )
 
 const apptitle = "BOXES4 version 0.5"
-const developmentversion = false
+const developmentversion = true
 
 const copyrite = "Copyright © 2024 Bob Stammers"
 
@@ -23,6 +23,8 @@ var cssfile = flag.String("css", "", "Path to extra CSS file")
 var serveport = flag.String("port", "", "HTTP port to serve on")
 var dbx = flag.String("db", "boxes.db", "Path to database file")
 var silent = flag.Bool("silent", false, "Suppress terminal output")
+var dumpdb = flag.String("export", "", "Dump database to this file")
+var loaddb = flag.String("import", "", "Load database from this file")
 
 // Be sure to set these correctly for production releases!
 var debug = flag.Bool("debug", developmentversion, "Show debug messages")
@@ -66,6 +68,14 @@ func main() {
 	}
 	DBH, err = sql.Open("sqlite3", *dbx)
 	checkerr(err)
+
+	if *loaddb != "" {
+		loaddatabase(*loaddb)
+	}
+	if *dumpdb != "" {
+		dumpdatabase(*dumpdb)
+	}
+
 	checkDatabaseVersion(*dbx)
 	adbx, err := filepath.Abs(*dbx)
 	checkerr(err)

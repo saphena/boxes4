@@ -105,7 +105,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 		sqlx += "ORDER BY locations.location"
 	}
 
-	flds := " id,locations.location, NumBoxes "
+	flds := " locations.location, NumBoxes "
 	if r.FormValue(Param_Labels["location"]) == "" {
 		sqlx += emit_page_anchors(w, r, "locations", NumLocations)
 	}
@@ -134,7 +134,7 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	checkerr(err)
 	for rows.Next() {
 		loc.NumBoxes = 0
-		rows.Scan(&loc.Id, &loc.Location, &loc.NumBoxes)
+		rows.Scan(&loc.Location, &loc.NumBoxes)
 		loc.LocationUrl = url.QueryEscape(loc.Location)
 		loc.NumBoxesX = commas(loc.NumBoxes)
 		loc.DeleteOK = runvars.Updating && loc.NumBoxes == 0

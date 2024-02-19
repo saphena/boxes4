@@ -41,6 +41,24 @@ type table_locations struct {
 	Location string
 }
 
+type table_history struct {
+	Recordedat string
+	Userid     string
+	TheSQL     string
+	TheResult  int
+}
+
+type table_owners struct {
+	Owner string
+	Name  string
+}
+
+type table_users struct {
+	Userid      string
+	Userpass    string
+	Accesslevel int
+}
+
 var boxes_with_contents int
 var boxes_with_contents_updates int
 
@@ -418,11 +436,11 @@ func export_boxes_csv(w http.ResponseWriter, txtname string) {
 	writer := bufio.NewWriter(buffer)
 	defer writer.Flush()
 
+	comma := ""
 	for _, x := range boxx {
-		_, err = writer.WriteString(`"` + x + `",`)
-		if err != nil {
-			panic(err)
-		}
+		_, err = writer.WriteString(comma + `"` + x + `"`)
+		checkerr(err)
+		comma = ","
 	}
 	writer.WriteString("\r\n")
 
@@ -431,33 +449,19 @@ func export_boxes_csv(w http.ResponseWriter, txtname string) {
 		rows.Scan(&box.Storeref, &box.Boxid, &box.Location, &box.Overview, &box.NumDocs, &box.Min_Review_date, &box.Max_Review_date)
 
 		_, err = writer.WriteString(csvquote(box.Storeref) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Boxid) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Location) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Overview) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(strconv.Itoa(box.NumDocs) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Min_Review_date) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Max_Review_date))
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 
 		writer.WriteString("\r\n")
 
@@ -521,11 +525,11 @@ func export_contents_csv(w http.ResponseWriter, txtname string) {
 	writer := bufio.NewWriter(buffer)
 	defer writer.Flush()
 
+	comma := ""
 	for _, x := range boxx {
-		_, err = writer.WriteString(`"` + x + `",`)
-		if err != nil {
-			panic(err)
-		}
+		_, err = writer.WriteString(comma + `"` + x + `"`)
+		checkerr(err)
+		comma = ","
 	}
 	writer.WriteString("\r\n")
 
@@ -534,33 +538,19 @@ func export_contents_csv(w http.ResponseWriter, txtname string) {
 		rows.Scan(&box.Id, &box.Boxid, &box.Review_date, &box.Contents, &box.Owner, &box.Name, &box.Client)
 
 		_, err = writer.WriteString(strconv.Itoa(box.Id) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Boxid) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Review_date) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Contents) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Owner) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Name) + ",")
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 		_, err = writer.WriteString(csvquote(box.Client))
-		if err != nil {
-			panic(err)
-		}
+		checkerr(err)
 
 		writer.WriteString("\r\n")
 

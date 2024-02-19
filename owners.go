@@ -29,13 +29,13 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 
 	owner, _ := url.QueryUnescape(r.FormValue(Param_Labels["owner"]))
 
-	sqlx := "SELECT owners.owner AS owner, IFNULL(owners.name,'') AS name, "
+	sqlx := "SELECT owners.owner AS owner, owners.name AS name, "
 	sqlx += "COUNT(contents.owner) AS numdocs FROM owners "
-	sqlx += "LEFT JOIN contents ON TRIM(contents.owner)=owners.owner "
+	sqlx += "LEFT JOIN contents ON contents.owner=owners.owner "
 	if owner != "" {
 		sqlx += "WHERE owners.owner='" + strings.ReplaceAll(owner, "'", "''") + "' "
 	}
-	sqlx += "GROUP BY TRIM(contents.owner) "
+	sqlx += "GROUP BY contents.owner "
 	if r.FormValue(Param_Labels["order"]) != "" {
 		sqlx += "ORDER BY " + r.FormValue(Param_Labels["order"])
 		if r.FormValue(Param_Labels["desc"]) != "" {

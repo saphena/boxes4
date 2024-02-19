@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "history" (
 );
 CREATE TABLE IF NOT EXISTS "boxes" (
 	"storeref"	TEXT COLLATE NOCASE,
-	"boxid"	TEXT COLLATE NOCASE,
+	"boxid"	TEXT NOT NULL COLLATE NOCASE,
 	"location"	TEXT COLLATE NOCASE,
 	"overview"	TEXT COLLATE NOCASE,
 	"numdocs"	INTEGER,
@@ -18,20 +18,20 @@ CREATE TABLE IF NOT EXISTS "boxes" (
 	PRIMARY KEY("boxid")
 );
 CREATE TABLE IF NOT EXISTS "users" (
-	"userid"	TEXT,
+	"userid"	TEXT NOT NULL NOCASE,
 	"userpass"	TEXT,
-	"accesslevel"	INTEGER
+	"accesslevel"	INTEGER,
+	PRIMARY KEY("userid")
 );
 INSERT OR IGNORE INTO users (userid,userpass,accesslevel) VALUES('admin','admin',9);
 CREATE TABLE IF NOT EXISTS "locations" (
-	"id"	INTEGER NOT NULL,
-	"location"	TEXT COLLATE NOCASE,
-	PRIMARY KEY("id")
+	"location"	TEXT NOT NULL COLLATE NOCASE,
+	PRIMARY KEY("location")
 );
 INSERT OR IGNORE INTO locations (location) VALUES('default');
 CREATE TABLE IF NOT EXISTS "contents" (
 	"id"	INTEGER NOT NULL,
-	"boxid"	TEXT COLLATE NOCASE,
+	"boxid"	TEXT NOT NULL COLLATE NOCASE,
 	"review_date"	TEXT COLLATE NOCASE,
 	"contents"	TEXT COLLATE NOCASE,
 	"owner"	TEXT COLLATE NOCASE,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS "contents" (
 	PRIMARY KEY("id")
 );
 CREATE TABLE IF NOT EXISTS "owners" (
-	"owner" TEXT COLLATE NOCASE,
+	"owner" TEXT NOT NULL COLLATE NOCASE,
 	"name" TEXT COLLATE NOCASE,
 	PRIMARY KEY("owner")
 );
