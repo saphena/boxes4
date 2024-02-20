@@ -159,6 +159,37 @@ func loadCSS(cssfile *string) {
 		}
 	}
 }
+
+func setConfigName() {
+
+	if *cfgfile != "" { // Manually set on commandline
+		return
+	}
+	exe, err := os.Executable()
+	checkerr(err)
+	exex := filepath.Ext(exe)
+	if exex != "" {
+		exe = strings.TrimSuffix(exe, exex)
+	}
+	*cfgfile = exe + ".yaml"
+
+}
+
+func setCssName() {
+
+	if *cssfile != "" { // Manually set on commandline
+		return
+	}
+	exe, err := os.Executable()
+	checkerr(err)
+	exex := filepath.Ext(exe)
+	if exex != "" {
+		exe = strings.TrimSuffix(exe, exex)
+	}
+	*cssfile = exe + ".css"
+
+}
+
 func loadConfiguration(cfgfile *string) {
 
 	file := strings.NewReader(internal_config)

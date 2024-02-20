@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -71,7 +72,22 @@ var big_boxes []string
 func buildOwnersTable() {
 
 	sqlx := "INSERT OR IGNORE INTO owners(owner,name) SELECT DISTINCT TRIM(owner), LOWER(TRIM(owner)) FROM contents ORDER BY TRIM(owner);"
-	DBExec(sqlx)
+	_, err := DBH.Exec(sqlx)
+	checkerr(err)
+}
+
+func setDatabaseName() {
+
+	if *dbx != "" { // Manually set on commandline
+		return
+	}
+	exe, err := os.Executable()
+	checkerr(err)
+	exex := filepath.Ext(exe)
+	if exex != "" {
+		exe = strings.TrimSuffix(exe, exex)
+	}
+	*dbx = exe + ".db"
 }
 
 // syncOwner is called whenever an owner field is updated in contents in order

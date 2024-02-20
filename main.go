@@ -21,10 +21,11 @@ const copyrite = "Copyright © 2024 Bob Stammers"
 var cfgfile = flag.String("cfg", "", "Path to YAML configuration file")
 var cssfile = flag.String("css", "", "Path to extra CSS file")
 var serveport = flag.String("port", "", "HTTP port to serve on")
-var dbx = flag.String("db", "boxes.db", "Path to database file")
+var dbx = flag.String("db", "", "Path to database file")
 var silent = flag.Bool("silent", false, "Suppress terminal output")
 var dumpdb = flag.String("export", "", "Dump database to this file")
 var loaddb = flag.String("import", "", "Load database from this file")
+var makedb = flag.String("makedb", "", "Make a database in this new file")
 
 // Be sure to set these correctly for production releases!
 var debug = flag.Bool("debug", developmentversion, "Show debug messages")
@@ -40,7 +41,16 @@ func main() {
 		fmt.Printf("%v - %v\n", apptitle, copyrite)
 	}
 	flag.Parse()
+
+	if *makedb != "" {
+		makedatabase(*makedb)
+		fmt.Printf("New database %v created\n", *makedb)
+		return
+	}
+
+	setConfigName()
 	loadConfiguration(cfgfile)
+	setCssName()
 	loadCSS(cssfile)
 	if *serveport != "" {
 		prefs.HttpPort = *serveport
@@ -52,20 +62,16 @@ func main() {
 		fmt.Println("Serving on port " + prefs.HttpPort)
 	}
 
-	if false {
-		printDebug("Themes == " + fmt.Sprintf("%v\n", prefs.Themes))
-		for k, v := range prefs.Themes {
-			printDebug("Theme: " + k)
-			printDebug("Colour: " + fmt.Sprintf("%v, %v \n", v.Regular_background, v.Link_color))
-		}
-	}
 	initTemplates()
+
+	setDatabaseName()
 
 	var err error
 	if _, err = os.Stat(*dbx); err != nil {
 		fmt.Printf("Can't access database %v - %v\n", *dbx, err)
 		return
 	}
+
 	DBH, err = sql.Open("sqlite3", *dbx)
 	checkerr(err)
 

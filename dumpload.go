@@ -1,11 +1,16 @@
 package main
 
 import (
+	"database/sql"
+	_ "embed"
 	"encoding/json"
 	"io"
 	"os"
 	"strconv"
 )
+
+//go:embed boxes-schema.sql
+var makedbSQL string
 
 var tables = []string{"boxes", "contents", "history", "locations", "owners", "users"}
 
@@ -29,6 +34,28 @@ type dbjson struct {
 
 var jsondata dbjson
 
+func zapdatabase() {
+
+	for tab := range tables {
+		sqlx := "DELETE FROM " + tables[tab]
+		_, err := DBH.Exec(sqlx)
+		checkerr(err)
+	}
+
+}
+
+func makedatabase(newfile string) {
+
+	f, err := os.Create(newfile)
+	checkerr(err)
+	defer f.Close()
+	DBH, err = sql.Open("sqlite3", newfile)
+	checkerr(err)
+	_, err = DBH.Exec(makedbSQL)
+	checkerr(err)
+	DBH.Close()
+
+}
 func loaddatabase(fromfile string) {
 
 	f, err := os.Open(fromfile)
@@ -41,7 +68,11 @@ func loaddatabase(fromfile string) {
 
 	ownersLoaded := false
 
-	DBExec("BEGIN TRANSACTION")
+	_, err = DBH.Exec("BEGIN TRANSACTION")
+	checkerr(err)
+
+	zapdatabase()
+
 	for i := range jsondata.Boxes {
 		storeBoxRecord(jsondata.Boxes[i])
 	}
@@ -64,20 +95,22 @@ func loaddatabase(fromfile string) {
 	if !ownersLoaded {
 		buildOwnersTable()
 	}
-	DBExec("COMMIT")
+	_, err = DBH.Exec("COMMIT")
+	checkerr(err)
+
 }
 
-func storeBoxRecord(data table_boxes) {
+func storeBoxRecord(rec table_boxes) {
 
 	sqlx := "INSERT OR REPLACE INTO boxes(storeref,boxid,location,overview,numdocs,min_review_date,max_review_date)"
 	sqlx += "VALUES("
-	sqlx += "'" + safesql(data.Storeref) + "'"
-	sqlx += ",'" + safesql(data.Boxid) + "'"
-	sqlx += ",'" + safesql(data.Location) + "'"
-	sqlx += ",'" + safesql(data.Overview) + "'"
-	sqlx += "," + strconv.Itoa(data.NumDocs)
-	sqlx += ",'" + safesql(data.Min_Review_date) + "'"
-	sqlx += ",'" + safesql(data.Max_Review_date) + "'"
+	sqlx += "'" + safesql(rec.Storeref) + "'"
+	sqlx += ",'" + safesql(rec.Boxid) + "'"
+	sqlx += ",'" + safesql(rec.Location) + "'"
+	sqlx += ",'" + safesql(rec.Overview) + "'"
+	sqlx += "," + strconv.Itoa(rec.NumDocs)
+	sqlx += ",'" + safesql(rec.Min_Review_date) + "'"
+	sqlx += ",'" + safesql(rec.Max_Review_date) + "'"
 	sqlx += ")"
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
@@ -99,10 +132,10 @@ func storeContentsRecord(rec table_contents) {
 	checkerr(err)
 }
 
-func storeLocationRecord(data table_locations) {
+func storeLocationRecord(rec table_locations) {
 
 	sqlx := "INSERT OR REPLACE INTO locations(location)"
-	sqlx += "VALUES('" + safesql(data.Location) + "')"
+	sqlx += "VALUES('" + safesql(rec.Location) + "')"
 	_, err := DBH.Exec(sqlx)
 	checkerr(err)
 

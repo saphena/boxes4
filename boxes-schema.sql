@@ -18,17 +18,15 @@ CREATE TABLE IF NOT EXISTS "boxes" (
 	PRIMARY KEY("boxid")
 );
 CREATE TABLE IF NOT EXISTS "users" (
-	"userid"	TEXT NOT NULL NOCASE,
+	"userid"	TEXT NOT NULL COLLATE NOCASE,
 	"userpass"	TEXT,
 	"accesslevel"	INTEGER,
 	PRIMARY KEY("userid")
 );
-INSERT OR IGNORE INTO users (userid,userpass,accesslevel) VALUES('admin','admin',9);
 CREATE TABLE IF NOT EXISTS "locations" (
 	"location"	TEXT NOT NULL COLLATE NOCASE,
 	PRIMARY KEY("location")
 );
-INSERT OR IGNORE INTO locations (location) VALUES('default');
 CREATE TABLE IF NOT EXISTS "contents" (
 	"id"	INTEGER NOT NULL,
 	"boxid"	TEXT NOT NULL COLLATE NOCASE,
@@ -44,4 +42,6 @@ CREATE TABLE IF NOT EXISTS "owners" (
 	"name" TEXT COLLATE NOCASE,
 	PRIMARY KEY("owner")
 );
+INSERT OR IGNORE INTO locations (location) VALUES('default');
+INSERT OR IGNORE INTO users (userid,userpass,accesslevel) VALUES('admin','admin',9);
 COMMIT;
