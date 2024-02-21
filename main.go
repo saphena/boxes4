@@ -14,7 +14,7 @@ import (
 )
 
 const apptitle = "BOXES4 version 0.5"
-const developmentversion = true
+const developmentversion = false
 
 const copyrite = "Copyright © 2024 Bob Stammers"
 
@@ -52,15 +52,6 @@ func main() {
 	loadConfiguration(cfgfile)
 	setCssName()
 	loadCSS(cssfile)
-	if *serveport != "" {
-		prefs.HttpPort = *serveport
-	} else if prefs.HttpPort == "" {
-		prefs.HttpPort = "8081"
-	}
-
-	if !*silent {
-		fmt.Println("Serving on port " + prefs.HttpPort)
-	}
 
 	initTemplates()
 
@@ -77,9 +68,13 @@ func main() {
 
 	if *loaddb != "" {
 		loaddatabase(*loaddb)
+		fmt.Printf("Database %v loaded from %v\n", *dbx, *loaddb)
+		return
 	}
 	if *dumpdb != "" {
 		dumpdatabase(*dumpdb)
+		fmt.Printf("Database %v dumped to %v\n", *dbx, *dumpdb)
+		return
 	}
 
 	checkDatabaseVersion(*dbx)
@@ -87,6 +82,15 @@ func main() {
 	checkerr(err)
 	if !*silent {
 		fmt.Printf("Database is %v\n", adbx)
+	}
+	if *serveport != "" {
+		prefs.HttpPort = *serveport
+	} else if prefs.HttpPort == "" {
+		prefs.HttpPort = "8081"
+	}
+
+	if !*silent {
+		fmt.Println("Serving on port " + prefs.HttpPort)
 	}
 
 	http.HandleFunc("/", show_search)

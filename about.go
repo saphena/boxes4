@@ -64,6 +64,15 @@ func about(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, `<p>I am a server application running on a computer called %v</p>`, servername)
 	exPath := filepath.Dir(ex)
 	fmt.Fprintf(w, "<p>I'm installed in the folder <strong>%v</strong></p>", exPath)
+	fmt.Fprint(w, "<ul>")
+	fmt.Fprintf(w, "<li>The database is stored in the file <strong>%v</strong></li>", *dbx)
+	if *cfgfile != "" {
+		fmt.Fprintf(w, "<li>Additional configuration is <strong>%v</strong></li>", *cfgfile)
+	}
+	if *cssfile != "" {
+		fmt.Fprintf(w, "<li>Additional CSS styling in <strong>%v</strong></li>", *cssfile)
+	}
+	fmt.Fprint(w, "</ul>")
 
 	type tabledtl struct {
 		Table  string

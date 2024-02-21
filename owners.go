@@ -43,7 +43,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	fmt.Println(sqlx)
+	//fmt.Println(sqlx)
 	rows, err := DBH.Query(sqlx)
 	checkerr(err)
 	defer rows.Close()

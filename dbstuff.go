@@ -66,6 +66,7 @@ var boxes_with_contents_updates int
 var orphaned_boxes []string
 var empty_boxes []string
 var big_boxes []string
+var childless_owners []string
 
 // buildOwnersTable is called only once to populate the new table owners.
 // Repeated calls will do no harm.
@@ -136,18 +137,14 @@ func markDBTouch(sqlx string) {
 
 func checkDatabaseVersion(dbx string) {
 
-	sqlx := "SELECT count(*) AS rex FROM boxes"
-	x := getValueFromDB(sqlx, "-1")
-	if x == "-1" {
-		fmt.Printf("ERROR: the database [%v] is non-compliant\n", dbx)
-		os.Exit(1)
+	for _, tab := range tables {
+		x := getValueFromDB("SELECT name FROM sqlite_master WHERE name='"+tab+"'", "")
+		if x != tab {
+			fmt.Printf("ERROR: the database [%v] has no table '%v'\n", dbx, tab)
+			os.Exit(1)
+		}
 	}
-	sqlx = "SELECT accesslevel FROM users WHERE userid=='admin'"
-	x = getValueFromDB(sqlx, "0")
-	if x == "0" {
-		fmt.Printf("ERROR: the database [%v] is not compatible\n", dbx)
-		os.Exit(2)
-	}
+
 }
 
 func trimHistoryLog() {
@@ -233,6 +230,9 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 
 	start_html(w, r)
 
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 	//fmt.Println("Acquiring lock")
 	tx, err := DBH.Begin()
 	if err != nil {
@@ -243,6 +243,9 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 
 	//fmt.Println("Lock acquired")
 	fmt.Fprint(w, "<h2>Checking the database</h2>")
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 
 	boxes_with_contents = 0
 	boxes_with_contents_updates = 0
@@ -250,6 +253,7 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 	orphaned_boxes = []string{}
 	empty_boxes = []string{}
 	big_boxes = []string{}
+	childless_owners = []string{}
 
 	check_boxes_with_contents(w, r)
 	//fmt.Println("Checked boxes with contents")
@@ -299,6 +303,20 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, `<p>I found %v boxes with a very large (&gt;%v) number of contents: `, commas(n), prefs.MaxBoxContents)
 			for _, box := range big_boxes {
 				fmt.Fprintf(w, ` <a href="/boxes?`+Param_Labels["boxid"]+`=%v">%v</a> `, url.QueryEscape(box), box)
+			}
+			fmt.Fprintf(w, `</p>`)
+		}
+	}
+
+	list_childless_owners()
+	if len(childless_owners) > 0 {
+		n := len(childless_owners)
+		if n == 1 {
+			fmt.Fprintf(w, `<p>I found a childless owner <a href="/owners?`+Param_Labels["owner"]+`=%v">%v</a>.</p>`, url.QueryEscape(childless_owners[0]), childless_owners[0])
+		} else {
+			fmt.Fprintf(w, `<p>I found %v childless owners `, commas(n))
+			for _, own := range childless_owners {
+				fmt.Fprintf(w, ` <a href="/owners?`+Param_Labels["owner"]+`=%v">%v</a> `, url.QueryEscape(own), own)
 			}
 			fmt.Fprintf(w, `</p>`)
 		}
@@ -362,6 +380,20 @@ func list_empty_boxes() {
 	for rows.Next() {
 		rows.Scan(&boxid)
 		empty_boxes = append(empty_boxes, boxid)
+	}
+}
+
+func list_childless_owners() {
+	sqlx := "SELECT owners.owner FROM owners LEFT JOIN contents ON owners.owner=contents.owner WHERE contents.boxid IS NULL;"
+
+	var owner string
+	rows, err := DBH.Query(sqlx)
+	checkerr(err)
+	defer rows.Close()
+
+	for rows.Next() {
+		rows.Scan(&owner)
+		childless_owners = append(childless_owners, owner)
 	}
 }
 
