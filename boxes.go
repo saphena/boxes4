@@ -124,7 +124,7 @@ func showboxes(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `</tbody></table>`)
 
-	emitTrailer(w, r)
+	emitTrailer(w)
 
 }
 
@@ -238,7 +238,7 @@ func showBoxfiles(w http.ResponseWriter, r *http.Request, boxid string) {
 	emit_owner_list(w)
 	emit_client_list(w)
 	emit_name_list(w)
-	emitTrailer(w, r)
+	emitTrailer(w)
 
 }
 

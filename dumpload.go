@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"strconv"
@@ -46,6 +47,12 @@ func zapdatabase() {
 
 func makedatabase(newfile string) {
 
+	var err error
+	if _, err = os.Stat(newfile); err == nil {
+		fmt.Printf("Database '%v' already exists. Remove it and try again or omit '-makedb'\n", newfile)
+		return
+	}
+
 	f, err := os.Create(newfile)
 	checkerr(err)
 	defer f.Close()
@@ -53,7 +60,10 @@ func makedatabase(newfile string) {
 	checkerr(err)
 	_, err = DBH.Exec(makedbSQL)
 	checkerr(err)
+	su := getValueFromDB("SELECT userid FROM users", "ERROR!")
+	supw := getValueFromDB("SELECT userpass FROM users", "ERROR!")
 	DBH.Close()
+	fmt.Printf("New database %v created. Superuser is %v / %v\n", newfile, su, supw)
 
 }
 func loaddatabase(fromfile string) {

@@ -52,7 +52,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, ` The following userids have that accesslevel: <strong>%v</strong></p>`, uids)
 
 		fmt.Fprint(w, `<hr><h4>Terms used by this application</h4>`)
-		show_terminology(w, r)
+		show_terminology(w)
 
 		return
 	}
@@ -103,7 +103,7 @@ func about(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func show_terminology(w http.ResponseWriter, r *http.Request) {
+func show_terminology(w http.ResponseWriter) {
 	const terms = `
 	<dl class="termstable">
 	<dt>Box</dt>

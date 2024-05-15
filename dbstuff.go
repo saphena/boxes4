@@ -168,7 +168,7 @@ func trimHistoryLog() {
 
 }
 
-func check_boxes_with_contents(w http.ResponseWriter, r *http.Request) {
+func check_boxes_with_contents(w http.ResponseWriter) {
 
 	const ISODATE_NULL_LIT = "0000-00-00"
 
@@ -255,7 +255,7 @@ func check_database(w http.ResponseWriter, r *http.Request) {
 	big_boxes = []string{}
 	childless_owners = []string{}
 
-	check_boxes_with_contents(w, r)
+	check_boxes_with_contents(w)
 	//fmt.Println("Checked boxes with contents")
 	list_orphaned_boxes()
 	if len(orphaned_boxes) > 0 {

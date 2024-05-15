@@ -14,5 +14,5 @@ func update(w http.ResponseWriter, r *http.Request) {
 
 	err = temp.Execute(w, "")
 	checkerr(err)
-	emitTrailer(w, r)
+	emitTrailer(w)
 }

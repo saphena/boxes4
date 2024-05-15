@@ -632,12 +632,12 @@ func initUserTemplates() {
 
 } // initUserTemplates
 
-func emitTrailer(w http.ResponseWriter, r *http.Request) {
+func emitTrailer(w http.ResponseWriter) {
 
 	fmt.Fprint(w, `</body></html>`)
 }
 
-func emitRootCSS(w http.ResponseWriter, r *http.Request) string {
+func emitRootCSS(r *http.Request) string {
 	theme := sessionTheme(r)
 	res := ":root {\n"
 	v := reflect.ValueOf(prefs.Themes[theme])
@@ -853,7 +853,7 @@ func start_html(w http.ResponseWriter, r *http.Request) {
 	runvars.Updating = updating
 
 	ht = html1 + cssreset
-	ht += emitRootCSS(w, r)
+	ht += emitRootCSS(r)
 
 	ht += css + strings.ReplaceAll(html2, "###", offerThemesList(sessionTheme(r)))
 

@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/browser"
 )
 
-const apptitle = "BOXES4 version 0.5"
+const apptitle = "BOXES4 version 0.6"
 const developmentversion = false
 
 const copyrite = "Copyright © 2024 Bob Stammers"
@@ -26,6 +26,7 @@ var silent = flag.Bool("silent", false, "Suppress terminal output")
 var dumpdb = flag.String("export", "", "Dump database to this file")
 var loaddb = flag.String("import", "", "Load database from this file")
 var makedb = flag.String("makedb", "", "Make a database in this new file")
+var savecfg = flag.Bool("savecfg", false, "Save default setup to external YAML/CSS")
 
 // Be sure to set these correctly for production releases!
 var debug = flag.Bool("debug", developmentversion, "Show debug messages")
@@ -44,13 +45,18 @@ func main() {
 
 	if *makedb != "" {
 		makedatabase(*makedb)
-		fmt.Printf("New database %v created\n", *makedb)
+		pressEnter()
 		return
 	}
 
-	setConfigName()
+	if *savecfg {
+		saveConfiguration()
+		saveCSS()
+		pressEnter()
+		return
+	}
+
 	loadConfiguration(cfgfile)
-	setCssName()
 	loadCSS(cssfile)
 
 	initTemplates()
@@ -59,7 +65,8 @@ func main() {
 
 	var err error
 	if _, err = os.Stat(*dbx); err != nil {
-		fmt.Printf("Can't access database %v - %v\n", *dbx, err)
+		fmt.Printf("Can't access database '%v' no such file. Use -makedb %v to create it\n", *dbx, *dbx)
+		pressEnter()
 		return
 	}
 
@@ -69,11 +76,13 @@ func main() {
 	if *loaddb != "" {
 		loaddatabase(*loaddb)
 		fmt.Printf("Database %v loaded from %v\n", *dbx, *loaddb)
+		pressEnter()
 		return
 	}
 	if *dumpdb != "" {
 		dumpdatabase(*dumpdb)
 		fmt.Printf("Database %v dumped to %v\n", *dbx, *dumpdb)
+		pressEnter()
 		return
 	}
 

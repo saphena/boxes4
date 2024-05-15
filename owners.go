@@ -86,7 +86,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</tbody></table>`)
 
 	if owner == "" {
-		emitTrailer(w, r)
+		emitTrailer(w)
 		return
 	}
 
@@ -128,7 +128,7 @@ func showowners(w http.ResponseWriter, r *http.Request) {
 		checkerr(err)
 	}
 	fmt.Fprint(w, `</tbody></table>`)
-	emitTrailer(w, r)
+	emitTrailer(w)
 
 }
 

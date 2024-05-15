@@ -144,13 +144,13 @@ func showlocations(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, `</tbody></table>`)
 
 	if sqllocation != "" {
-		showlocation(w, r, sqllocation, loc.NumBoxes)
+		showlocation(w, r, sqllocation)
 	}
-	emitTrailer(w, r)
+	emitTrailer(w)
 
 }
 
-func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string, NumBoxes int) {
+func showlocation(w http.ResponseWriter, r *http.Request, sqllocation string) {
 
 	if r.FormValue(Param_Labels["location"]) == "" {
 		show_search(w, r)

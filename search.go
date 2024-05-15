@@ -186,7 +186,7 @@ func exec_search(w http.ResponseWriter, r *http.Request) {
 	}
 	fmt.Fprint(w, `</tbody></table>`)
 
-	emitTrailer(w, r)
+	emitTrailer(w)
 
 }
 
@@ -381,7 +381,7 @@ func show_search_params(w http.ResponseWriter, r *http.Request) {
 	err = temp.Execute(w, params)
 	checkerr(err)
 	fmt.Fprintln(w, "</div>")
-	emitTrailer(w, r)
+	emitTrailer(w)
 }
 
 func show_search(w http.ResponseWriter, r *http.Request) {
@@ -419,5 +419,5 @@ func show_search(w http.ResponseWriter, r *http.Request) {
 	err = html.Execute(w, sv)
 	checkerr(err)
 
-	emitTrailer(w, r)
+	emitTrailer(w)
 }

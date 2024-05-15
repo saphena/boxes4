@@ -148,7 +148,7 @@ func commas(n int) string {
 func loadCSS(cssfile *string) {
 
 	if *cssfile == "" {
-		*cssfile = "boxes.css"
+		setCssName()
 	}
 	xcss, err := os.ReadFile(*cssfile)
 	if err == nil {
@@ -160,6 +160,34 @@ func loadCSS(cssfile *string) {
 	}
 }
 
+func pressEnter() {
+
+	fmt.Print("Press Enter to terminate")
+	fmt.Scanln()
+
+}
+
+func saveConfiguration() {
+
+	setConfigName()
+	f, err := os.Create(*cfgfile)
+	checkerr(err)
+	defer f.Close()
+	f.WriteString(internal_config)
+	fmt.Printf("Default configuration saved to %v\n", *cfgfile)
+
+}
+
+func saveCSS() {
+
+	setCssName()
+	f, err := os.Create(*cssfile)
+	checkerr(err)
+	defer f.Close()
+	f.WriteString(css)
+	fmt.Printf("Default styling saved to %v\n", *cssfile)
+
+}
 func setConfigName() {
 
 	if *cfgfile != "" { // Manually set on commandline
@@ -200,7 +228,7 @@ func loadConfiguration(cfgfile *string) {
 	}
 
 	if *cfgfile == "" {
-		*cfgfile = "boxes.yaml"
+		setConfigName()
 	}
 	yml, err := os.ReadFile(*cfgfile)
 	if err == nil {
